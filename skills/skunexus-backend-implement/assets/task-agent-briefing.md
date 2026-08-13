@@ -13,11 +13,12 @@ You are implementing ONE task of an approved backend implementation plan in a Sk
 - **Repository:** <absolute repo path>
 - **Branch:** <branch> (already checked out — do not switch branches)
 - **Ticket:** <TICKET> — <title>
+- **Testing mode:** <hybrid | full post-facto>
 
 ## Your task (verbatim from `.ai/<TICKET>/backend-plan.md`)
 
 <paste the FULL task entry: `### Tn — title`, the Status/Depends on/Satisfies header lines, every `- [ ]`
-step, and the Out of scope / Sanity-check now trailers>
+step, and the Out of scope / Sanity-check now / Tests trailers>
 
 ## Context (read-only)
 
@@ -44,20 +45,29 @@ step, and the Out of scope / Sanity-check now trailers>
   "verified …" notes in comments, docblocks, or names — that coupling is noise to a reader in the editor and
   rots when artifacts renumber. Comment only what the code cannot say itself, in plain domain language; put
   step rationale in your report, not the code.
-- Do NOT: edit anything under `.ai/`, commit, write tests or documentation (unless a step explicitly asks),
-  or touch another task's files.
+- **Tests — per the Testing mode above.** In **full post-facto**, or when your task carries no `Tests:`
+  trailer, the tests prohibition below stands as written. In **hybrid**: once your steps land, discharge the
+  task's `Tests:` trailer per the `skunexus-behavior-testing` skill — read the style guide matching the
+  repo's syntax (`references/pest-style-guide.md` for Pest, `references/phpunit-style-guide.md` for PHPUnit)
+  BEFORE writing any test code — then run the file/group you wrote. Never claim green without a run. A
+  trailer that is out-of-suite (HTTP-level or cross-process per the layer map) or wrong against the real code
+  gets flagged in your report, not ground on.
+- Do NOT: edit anything under `.ai/`, commit, write tests (except as the Testing mode above allows) or
+  documentation (unless a step explicitly asks), or touch another task's files.
 - Do NOT run environment verification (migrations, tinker, endpoints) — the developer runs those. Restate
   the task's **Sanity-check now** items in your report for them; don't execute them.
 
 ## Report (your final message — it is machine-consumed by the orchestrator, not shown to a human)
 
-Return exactly these five sections:
+Return exactly these sections, in order:
 
 1. **Steps** — one line per checkbox step, in order: `done` / `deviated` / `blocked`. For `deviated`: what
    you did instead and why. For `blocked`: what stopped you.
 2. **Files** — every file created or edited (full paths).
-3. **Sanity checks for the developer** — restate the task's `Sanity-check now` items (the developer runs
+3. **Test results** (hybrid only) — the exact command you ran, pass/fail counts, any failure output verbatim,
+   and any trailer you flagged instead of writing.
+4. **Sanity checks for the developer** — restate the task's `Sanity-check now` items (the developer runs
    them). Add any static/code-level confidence and known gaps. Do not run them or claim they passed.
-4. **Decision candidates** — real forks you resolved whose rationale the code won't reveal (or "none").
-5. **Contract flags** — anything suggesting a requirement is wrong, missing, or contradicted by reality
+5. **Decision candidates** — real forks you resolved whose rationale the code won't reveal (or "none").
+6. **Contract flags** — anything suggesting a requirement is wrong, missing, or contradicted by reality
    (or "none").

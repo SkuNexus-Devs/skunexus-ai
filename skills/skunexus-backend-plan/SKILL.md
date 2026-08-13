@@ -207,6 +207,10 @@ Each subagent should map, for its area:
 - **Conventions to follow** — naming, structure, error handling, the validation split (FormRequest vs handler).
 - **Exact signatures** of anything tasks will call, extend, or implement.
 - **Scope-affecting constraints** — a needed migration, a breaking change, an external dependency.
+- **Test terrain** — which syntax the repo uses (Pest if `vendor/bin/pest` exists or composer's `test` script
+  runs pest, else PHPUnit), which `tests/Behavior/` vocabulary already exists (`{Domain}ScenarioTrait`
+  builders, `{Domain}AssertionsTrait`), and the existing test files nearest this area — so tasks name vocabulary to reuse
+  instead of inventing it.
 
 Have each subagent **return its structured findings** into the conversation, and draft the plan (Step 3)
 directly from them — don't persist a separate map file. The useful content lands in the task bodies, and the
@@ -228,9 +232,21 @@ see the shape to react to it.
 - **Make each task self-contained.** Header lines first — `**Status:**` (`not_started` unless real prior
   work exists, evidenced in an **Existing work** line), `**Depends on:**`, `**Satisfies:** R2` (or `A2`) —
   then the flat `- [ ]` list of atomic steps with files/classes named inline (see the operating principle),
-  then optional one-line `**Out of scope:**` / `**Sanity-check now:**` trailers. Self-contained means
-  independent of other tasks' *plan entries* — when a task builds on a dependency, point to what that
+  then optional one-line `**Out of scope:**` / `**Sanity-check now:**` / `**Tests:**` trailers. Self-contained
+  means independent of other tasks' *plan entries* — when a task builds on a dependency, point to what that
   dependency creates (the implementor reads its real code) rather than re-pasting its contract.
+- **Name what proves each behavior-bearing task — the `Tests:` trailer.** It is what lets the implementor
+  verify its own work instead of handing you a guess, so a task without one is a task nothing can check.
+  A task qualifies when it adds or
+  changes behavior per `skunexus-behavior-testing`'s quick decision table (new command, plugin on an existing
+  command, state transition, vendor handler override, factory/interface override, GraphQL field/type, REST
+  endpoint, field resolver); a pure migration, config-only, refactor or docs task doesn't and gets no trailer.
+  Every qualifying task carries one line — `**Tests:** <test file path> — "<falsifiable proposition>", "<guard
+  proposition>"` — the path placed per that skill's layer map, the propositions **quoted from the acceptance
+  the task `Satisfies`** (`Rn` from the PRD, or `An` from the inline Goal & Acceptance), not re-invented. The
+  propositions are **not** checkbox steps (status stays derived from the steps alone), and a test is **never
+  its own task** in the DAG — a red test task could never be `finished`. *When* the trailer is discharged is
+  `skunexus-backend-implement`'s business (its testing mode decides), not the plan's.
 - **Wire the DAG.** Each task's `depends_on`; then derive the **execution waves** (wave 1 = no deps; wave N =
   depends only on earlier waves) so parallelism is obvious to a human and an implementor.
 - **Declare the Frontend-facing surface — the intended seam, not the handoff.** Name the public surface this
@@ -247,7 +263,9 @@ Then **self-review** before showing anything: is every requirement covered by �
 to one (or is it justified scaffolding)? is the graph acyclic? could an agent run each task from its own entry plus its
 dependencies' real code, without reading another task's entry? is every step one atomic, verb-first action
 naming its concrete file/class inline — no prose walls, no "see above", no placeholder ("add validation",
-"handle errors") without the specific failure and exception named? Fix gaps now.
+"handle errors") without the specific failure and exception named? does every qualifying task carry a
+`Tests:` trailer naming a real test file plus its propositions? is every `Rn`/`An` covered by at least one
+proposition across those trailers? Fix gaps now.
 
 **Seed `decisions.md` only if planning produced a genuine decision** — apply the bar in "The decisions log"
 below. If nothing clears it, don't create the file.
@@ -314,7 +332,7 @@ don't reorder.
    first.* Collapsed for a one/two-task plan.
 4. **Tasks** — detailed, in dependency order; each self-contained: `Status` / `Depends on` / `Satisfies`
    header lines, then flat `- [ ]` atomic steps (files/classes inline), then optional one-line
-   `Out of scope` / `Sanity-check now` trailers.
+   `Out of scope` / `Sanity-check now` / `Tests` trailers (the last on every behavior-bearing task).
 5. **Frontend-facing surface (intended)** — one line each for the public surface this DAG introduces
    (endpoints/resolvers/events): the intended seam a later FE-handoff step reconciles against, *not* the
    as-built handoff (full request/response/error shapes come post-implementation, from the real diff).

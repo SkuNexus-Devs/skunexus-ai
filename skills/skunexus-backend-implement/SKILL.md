@@ -93,6 +93,13 @@ These are the soul of the skill. The mechanics below serve them.
   executing checks, **surface the task's `Sanity-check now` list to the developer** as the checks *they*
   should run, plus any code-level confidence and known gaps you want them to watch. The honest handoff is
   "here's what I built and how you can confirm it," never a green claim you didn't earn.
+  **The one exception is the in-suite behavior tests — they are not "the environment."** They run on SQLite
+  in memory, so you write them, run them, and report the real output: `vendor/bin/pest <file>` in Pest repos,
+  `php artisan test --compact --filter=<name>` (or `vendor/bin/paratest` for the suite) in PHPUnit repos —
+  per `skunexus-behavior-testing`. That exception is what closes the verify loop: a red test is a bug you
+  caught yourself, so you fix it and keep going instead of handing the developer a guess and waiting. Nothing
+  else moves: `Sanity-check now` items are still restated for the developer and never executed, and a passing
+  test group is evidence for exactly what it asserted, never for anything you only checked statically.
 
 - **Ceremony must be earned (proportionality).** A trivial, well-described change gets implemented directly
   with **no artifacts at all** — downstream skills already fall back gracefully (`prd.md` → the plan's Goal &
@@ -142,6 +149,28 @@ At mode start, confirm the branch and the commit convention once: default is **c
 repo's existing style (`<TICKET>: <summary>` — include the task id, e.g. `LO-58: T3 create-RMA command +
 endpoint`). Per-task commits are what make the final review navigable and any task revertible.
 
+Confirm the **testing mode** in the same exchange — but only when the plan actually carries `Tests:` trailers.
+**A plan with no `Tests:` trailers skips the dial entirely: don't raise it, don't write tests, run exactly as
+today.** When trailers exist:
+
+- **hybrid** (default) — each task's trailer is discharged post facto as part of that task. Default because
+  it closes the verify loop at the smallest unit: the task that broke something is still the task in hand.
+- **full post-facto** — tasks run untouched; one test pass after the last one.
+- **full TDD** — tests lead the code; opt-in, and the slowest to steer.
+
+Mode semantics:
+
+- **hybrid:** after a task's steps land, discharge that task's trailer — load `skunexus-behavior-testing`
+  (including its mandatory style-guide read) *before* writing test code, write the tests, run the file/group,
+  put the real output in the task hand-off, and rewrite the trailer in the plan as `**Tests (landed):**`.
+- **full post-facto:** tasks run exactly as today; after the last task, one pass discharges every trailer,
+  grouped by test file, in its own commit(s) (`<TICKET>: behavior tests`), results reported at final review.
+- **full TDD:** the trailer propositions become the skeleton titles; red → green per vertical slice per
+  `skunexus-tdd-testing`, which owns the loop. It never edits the plan document.
+- **Escape hatch (all modes):** a trailer that proves out-of-suite (the layer map puts it at HTTP level or
+  cross-process) or simply wrong against the real code gets flagged in the hand-off with one line of why.
+  Never grind on a test that doesn't make sense; never silently drop one.
+
 #### Mode 1 — task-by-task
 
 Loop until the developer stops or the plan is done:
@@ -153,12 +182,15 @@ Loop until the developer stops or the plan is done:
    that's how a run soft-blocks itself.
 2. **Implement in this thread.** Re-read the task entry; read the dependency code; work the checkbox list in
    order, checking each box as its step lands. Deviations follow the tense rule. Scope discipline: the
-   entry's `Out of scope` line is binding — resist fixing adjacent code you pass.
-3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints.
-   Instead, restate the task's `Sanity-check now` items as the checks the developer should run, and note any
-   code-level confidence or gaps.
-4. **Hand off for review.** Summarize in chat: files touched, steps deviated (and why), the `Sanity-check now`
-   items for the developer to run, any decision candidates. Then the developer reviews the diff in their editor. Process feedback through
+   entry's `Out of scope` line is binding — resist fixing adjacent code you pass. In **hybrid**, the task's
+   `Tests:` trailer is part of the task: once the steps land, discharge it and mark it `**Tests (landed):**`
+   before handing off.
+3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints
+   — the in-suite tests of step 2 are not that. Restate the task's `Sanity-check now` items as the checks the
+   developer should run, and note any code-level confidence or gaps.
+4. **Hand off for review.** Summarize in chat: files touched, steps deviated (and why), the real output of
+   the test run (hybrid) alongside the `Sanity-check now` items for the developer to run, any decision
+   candidates. Then the developer reviews the diff in their editor. Process feedback through
    the triage table; if a fix moves a seam, ripple-sweep the pending tasks now, not later. Loop until they
    approve the task.
 5. **Close out.** Commit (if agreed), confirm the task's boxes/status are truthful, append any earned
@@ -187,17 +219,22 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    downgrade.
 4. **Brief and spawn.** Fill `assets/task-agent-briefing.md` per task — verbatim task entry, contract
    pointers, the dependency code to read, the prohibitions (no `.ai/` writes, no commits, no scope creep) —
-   and spawn as a `general-purpose` agent. Launch independent tasks in parallel.
+   and spawn as a `general-purpose` agent. Launch independent tasks in parallel. State the testing mode in
+   the briefing: in **hybrid** the agent discharges its own task's `Tests:` trailer; in **full post-facto**
+   (or with no trailer) the briefing's no-tests prohibition stands.
 5. **On each return, review before you record.** Read the agent's report against the actual diff of its
    predicted files; spot-check the seams other tasks will consume (statically — don't run migrations/tinker/
-   endpoints; environment verification is the developer's). Only then, as the single writer: check the boxes,
+   endpoints; environment verification is the developer's). In hybrid, re-run the returned task's test
+   file/group yourself rather than trusting the report. Only then, as the single writer: check the boxes,
    flip the status, record amendments, append earned decisions, and commit. Then launch whatever just became eligible.
 6. **Handle trouble without guessing.** A shallow or failed report → re-run the gaps on a stronger model or
    implement them in-thread; never patch blind over work you don't trust. An agent's contract flag (a
    requirement looks wrong or missing) → pause that task's dependent subtree only, keep independent tasks
    running, and put the question to the developer — the contract is never yours to guess.
-7. **Final review.** Present the run report: per task one line (what landed, deviations), the per-task
-   `Sanity-check now` items for the developer to run, artifact updates, the commit list. Hand off — the developer reviews the whole branch in their
+7. **Final review.** In **full post-facto**, the test pass runs first — after the last task, before this
+   review: orchestrator-run, or one test-authoring agent per domain when the surface is large. Run all
+   touched test groups and report the real output. Present the run report: per task one line (what landed,
+   deviations), the per-task `Sanity-check now` items for the developer to run, artifact updates, the commit list. Hand off — the developer reviews the whole branch in their
    editor, commit by commit. Triage their feedback; delegate mechanical fixes to cheap agents, keep
    judgment fixes in-thread. Approval ends the run.
 
@@ -212,7 +249,9 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    its root cause and proposed fix are the settled diagnosis (verify against the code you touch rather than
    re-hunting the bug), and its `A1…An` bullets are what the diff must satisfy. Implement in-thread, hand off for diff review (the developer
    runs any environment verification), fix on feedback. If a genuine decision surfaces — a real fork whose rationale the code won't reveal — offer
-   to record it in `.ai/<TICKET>/decisions.md`; otherwise leave no trace but the diff.
+   to record it in `.ai/<TICKET>/decisions.md`; otherwise leave no trace but the diff. Trivial changes stay
+   test-free by default; for a confirmed-bug fix off an approved `investigation.md`, offer a repro test
+   (`skunexus-behavior-testing`) — write it only if the developer asks.
 3. **Escalate visibly when "trivial" stops being true.** Triggers: the change wants several independent
    tasks; a migration or shared seam that multiple edits build on; product-level ambiguity you'd have to
    guess; materially more surfaces than the prompt implied. Stop, summarize what you've learned (mapped
@@ -234,7 +273,10 @@ request; never require one.
    developer. An item that contradicts a recorded decision gets flagged with the recorded rationale; the
    developer chooses: change course (→ dated **superseding** entry, provenance-tagged with where the change
    came from) or uphold (→ dated **addendum** on the entry, "re-raised \<date\>, upheld" — so the *next*
-   round doesn't repeat it either; this is the versioning, no other mechanism needed).
+   round doesn't repeat it either; this is the versioning, no other mechanism needed). A change to *behavior*
+   carries its tests: the map names the test files whose propositions move with it, they are updated in the
+   same change (`skunexus-behavior-testing` — the name is the contract), and the touched groups are green
+   before hand-off.
 3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule;
    requirement-level changes patch `prd.md` with a changelog line.
 4. **Report per item** — fixed / upheld with rationale / needs a developer call — then hand off for diff
@@ -243,6 +285,19 @@ request; never require one.
 ### Wrap-up
 
 When the last task is approved: every `Status` reads `finished` and no box lies; deviations are amended,
-earned decisions appended, the PRD patched only where requirements actually moved. Say what comes next in
-the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing steps are their own
-downstream skills) and stop — don't write the PR description here.
+earned decisions appended, the PRD patched only where requirements actually moved.
+
+When the ticket landed tests, regenerate `.ai/<TICKET>/spec-from-tests.md` with the `skunexus-spec-extract`
+skill — a standing artifact, always regenerated, never hand-edited. Its input is **every test file the branch
+added or changed** (`git diff --name-only <base>...HEAD -- '*Test.php'`), each rendered whole: a ticket that
+adds one test here and two there gets all three files' current contract, never a diff of test lines. It reads
+both syntaxes (`--mode` defaults to `pest`); a run that renders 0 scenarios means the tests fell outside the
+grammar, which is a signal to fix them — never a reason to hand-write the file. Say so in chat.
+
+Then read that spec against the acceptance criteria in the existing lookup order (`prd.md` →
+`investigation.md` → the plan's inline Goal & Acceptance) and report two lists: which `Rn`/`An` have no
+scenario, and which scenarios map to no acceptance id. It is a report to the developer, **not a gate** —
+thin coverage is theirs to accept.
+
+Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
+steps are their own downstream skills) and stop — don't write the PR description here.
