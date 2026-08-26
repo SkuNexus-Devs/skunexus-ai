@@ -267,7 +267,7 @@ Syntax written now migrates forward with the official upgrade Rector sets.
 ## 9. Your tests are the spec — spec-extract
 
 `spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
-the artifact QA reads, the FE handoff quotes, the spec-vs-PRD review diffs.
+the artifact QA reads, the FE handoff quotes, the acceptance coverage check.
 
 **The Pest grammar has shipped** — `--mode` defaults to `pest`, `--mode=phpunit` reads a class-syntax
 tree, and a converted 40-file suite extracts at parity with its PHPUnit original. Pass the extractor a

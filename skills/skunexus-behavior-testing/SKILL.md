@@ -389,7 +389,7 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 
 ## The Test Is Also the Published Spec
 
-`spec:extract` (the `skunexus-spec-extract` skill) deterministically renders any test file as Given/When/Then prose — the gwt.md a ticket attaches, the spec-vs-PRD diff, the FE handoff quote. Its input language IS this skill's grammar: a test written per this doctrine extracts as readable English with **zero extra work**. Never contort a test for the extractor — when its output reads wrong, escalate cheapest-first, and notice the first rungs improve the test itself:
+`spec:extract` (the `skunexus-spec-extract` skill) deterministically renders any test file as Given/When/Then prose — the gwt.md a ticket attaches, the acceptance coverage check, the FE handoff quote. Its input language IS this skill's grammar: a test written per this doctrine extracts as readable English with **zero extra work**. Never contort a test for the extractor — when its output reads wrong, escalate cheapest-first, and notice the first rungs improve the test itself:
 
 1. **Fix the name/shape.** A custom assertion whose phrase ends on a copula or closes on a preposition promotes its subject (`assertHospitalIssueIs` → "the fulfillment's hospital issue is 'withdrawn'"); one that can't renders a greppable `⚠ RAW —` marker instead of fake English.
 2. **`#[TestDox('{param} …')]`** on the assertion helper or `given*`/`when*` wrapper — PHPUnit-native, inert at runtime, one line at the definition fixes every call site. Default is NO TestDox: right-reading derived prose needs no second source of truth.

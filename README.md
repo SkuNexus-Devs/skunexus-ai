@@ -66,7 +66,7 @@ Two entry points, one build spine, three wrap-up documents plus the spec rendere
 | Ticket's work should be documented for the team | `skunexus-backend-summary` — *"write the backend summary"* |
 | Writing, converting, naming or placing a test | `skunexus-behavior-testing` — *"write a test for this command"*, *"where does this test go"* |
 | New behavior you want driven test-first | `skunexus-tdd-testing` — *"drive it test-first"*, *"TDD this"* |
-| You want to read back what a suite actually asserts | `skunexus-spec-extract` — *"the GWT spec of these tests"*, *"spec vs PRD"* |
+| You want to read back what a suite actually asserts | `skunexus-spec-extract` — *"the GWT spec of these tests"*, *"does every acceptance have a scenario"* |
 
 ---
 
@@ -145,7 +145,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 **What happens** — three doors, chosen by what exists:
 
-- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code), *full post-facto* (one test pass at the end), or *full TDD* (test-first, via `skunexus-tdd-testing`). A plan with no test trailers skips the question entirely.
+- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code), *full post-facto* (one test pass at the end), or *full TDD* (test-first, via `skunexus-tdd-testing`). A plan with no test trailers skips the question entirely.
 - **Door B — no plan.** For a trivial, well-described change: implemented directly, no artifacts, the diff is the record. If it stops being trivial mid-way, the skill stops, summarizes what it learned, and recommends escalating to planning — your call.
 - **Door C — changes on implemented work.** Your conclusions, QA findings, or relayed PR-review comments get triaged item-by-item to the right altitude: code fix, plan amendment, PRD patch, or a `decisions.md` supersede. Items contradicting a recorded decision are flagged with the original rationale so settled forks don't get re-litigated by accident.
 
@@ -203,7 +203,7 @@ Three companion skills the build spine leans on. You rarely invoke them by name 
 
 ### 9. `skunexus-tdd-testing` — scenarios → code, test-first
 
-**When:** you want new behavior driven test-first. *"Drive it test-first"*, *"TDD this"*. Optional — the default is tests after the code.
+**When:** you want new behavior driven test-first. *"Drive it test-first"*, *"TDD this"*. Optional — the default is tests after the code. You pick it once — as the **full TDD** testing mode when `skunexus-backend-implement` asks — not per task; ad hoc, the phrasing triggers it.
 
 **What happens:** the scenarios become a runnable skeleton of `markTestIncomplete` Given/When/Then sentences (that's the spec, and it's reviewable). Then one vertical slice at a time: watch it fail for the stated reason, write the minimum to pass, refactor only on green. The first slice is a tracer bullet that proves the wiring — provider order, dispatchability, DI — so later failures point at behavior, not plumbing.
 

@@ -10,7 +10,8 @@
 
 You are implementing ONE task of an approved backend implementation plan in a SkuNexus client repository.
 
-- **Repository:** <absolute repo path>
+- **Repository:** <absolute repo path — the agent's own worktree when isolation is on; run `composer install`
+  there before anything else if `vendor/` is missing>
 - **Branch:** <branch> (already checked out — do not switch branches)
 - **Ticket:** <TICKET> — <title>
 - **Testing mode:** <hybrid | full post-facto>
@@ -52,6 +53,16 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
   BEFORE writing any test code — then run the file/group you wrote. Never claim green without a run. A
   trailer that is out-of-suite (HTTP-level or cross-process per the layer map) or wrong against the real code
   gets flagged in your report, not ground on.
+- **A red test is yours to act on, never to hide.** Classify it: (a) your implementation is wrong → fix it
+  within your task's files and re-run, at most three red→fix rounds; (b) the test is wrong against the real
+  code → flag it (the escape hatch above); (c) the acceptance it quotes looks wrong → a Contract flag, and
+  stop on that trailer; (d) the failure is a fatal/parse/autoload error in a file outside your task's file
+  set → a neighbouring agent is mid-edit, not your red: wait a moment, re-run once, then report it as
+  `environment`. Never make a test pass by weakening it — no deleted assertion, no `markTestSkipped`, no
+  loosened expectation — and never touch another task's file to get green. Still red after that → return
+  with the failure output verbatim and its class; the orchestrator re-runs on a settled tree and decides.
+- New tests are written in the doctrine's grammar even when the file they join holds older-shaped tests.
+  Leave those alone unless your change broke them (dev guide §8) — modernising them is out of scope.
 - Do NOT: edit anything under `.ai/`, commit, write tests (except as the Testing mode above allows) or
   documentation (unless a step explicitly asks), or touch another task's files.
 - Do NOT run environment verification (migrations, tinker, endpoints) — the developer runs those. Restate
@@ -64,7 +75,8 @@ Return exactly these sections, in order:
 1. **Steps** — one line per checkbox step, in order: `done` / `deviated` / `blocked`. For `deviated`: what
    you did instead and why. For `blocked`: what stopped you.
 2. **Files** — every file created or edited (full paths).
-3. **Test results** (hybrid only) — the exact command you ran, pass/fail counts, any failure output verbatim,
+3. **Test results** (hybrid only) — the exact command you ran, pass/fail counts, any failure output verbatim
+   with its class (`implementation` / `test wrong` / `contract` / `environment`) and the fix rounds spent,
    and any trailer you flagged instead of writing.
 4. **Sanity checks for the developer** — restate the task's `Sanity-check now` items (the developer runs
    them). Add any static/code-level confidence and known gaps. Do not run them or claim they passed.

@@ -2,15 +2,16 @@
 name: skunexus-spec-extract
 description: >-
   Use when you need the Given/When/Then behavior spec of a SkuNexus test suite — reading back what a
-  test file actually asserts, producing .ai/<TICKET>/spec-from-tests.md for a ticket, comparing tests
-  against a PRD, or reviewing a PR through its tests. Deterministic AST-based extractor (no LLM):
-  renders each test as Given/When/Then prose from the tests/Behavior vocabulary. Do NOT use for:
+  test file actually asserts, producing .ai/<TICKET>/spec-from-tests.md for a ticket, running the
+  acceptance coverage check (which PRD Rn has no scenario), or reviewing a PR through its tests.
+  Deterministic AST-based extractor (no LLM): renders each test as Given/When/Then prose from the
+  tests/Behavior vocabulary. Do NOT use for:
   writing tests (skunexus-behavior-testing), driving new behavior test-first (skunexus-tdd-testing),
   running tests (composer test), planning or breaking down the work (skunexus-backend-plan),
   implementing production code (skunexus-backend-implement), writing the PR description that quotes
   the spec (skunexus-backend-pr), or QA testing steps (separate skill). Triggered by: gwt,
   given/when/then, behavior spec, spec from tests, spec:extract, spec-extract, what do these tests
-  assert, spec vs PRD.
+  assert, acceptance coverage, PRD coverage.
 user-invocable: true
 ---
 
@@ -33,6 +34,7 @@ $S --help
 
 **The ticket artifact.** `.ai/<TICKET>/spec-from-tests.md` is a standing workflow artifact — regenerated at `skunexus-backend-implement` wrap-up and read by `skunexus-backend-pr`, `skunexus-backend-summary` and `skunexus-fe-handoff`.
 It is a render, never hand-edited: prose that reads wrong is fixed in the test names and helpers, then the file is re-run.
+It is also **not a second spec**: the PRD is the spec, the tests are its proof, and this file only makes the proof readable — a gap between the two is resolved in the PRD (patch + changelog) or in the tests, never here.
 
 ## Arguments
 

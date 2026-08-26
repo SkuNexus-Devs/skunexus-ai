@@ -158,6 +158,10 @@ today.** When trailers exist:
 - **full post-facto** — tasks run untouched; one test pass after the last one.
 - **full TDD** — tests lead the code; opt-in, and the slowest to steer.
 
+The dial is **per run, not per developer or repo**: asked for each plan, re-confirmed on a resume from disk,
+and changeable at any task boundary — nothing in the plan records the mode, so switching costs nothing;
+trailers not yet discharged simply follow the new mode, and `**Tests (landed):**` ones stay landed.
+
 Mode semantics:
 
 - **hybrid:** after a task's steps land, discharge that task's trailer — load `skunexus-behavior-testing`
@@ -170,6 +174,11 @@ Mode semantics:
 - **Escape hatch (all modes):** a trailer that proves out-of-suite (the layer map puts it at HTTP level or
   cross-process) or simply wrong against the real code gets flagged in the hand-off with one line of why.
   Never grind on a test that doesn't make sense; never silently drop one.
+- **Existing tests (all modes):** new tests follow `skunexus-behavior-testing`'s grammar even inside a file
+  that already holds older-shaped tests; those are left alone unless the change broke them (dev guide §8 —
+  repair, reshape or convert only what costs something; modernising is never a side effect). A touched file
+  is rendered whole at wrap-up, so `⚠` markers on its pre-existing scenarios are that file's debt, not the
+  ticket's.
 
 #### Mode 1 — task-by-task
 
@@ -203,7 +212,18 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
 1. **Preflight.** Re-read the whole plan. Surface anything that gates an autonomous run: an Open Question
    that blocks a task (deliberately-deferred ones usually don't), a `started` task with untrustworthy boxes,
    a dirty working tree. Confirm branch + commit-per-task with the developer; this is their last checkpoint
-   until the final review.
+   until the final review. Confirm **agent isolation** in the same breath — two valid shapes:
+   - **shared tree** (default for small plans) — every agent edits the one checkout; the file-disjoint rule
+     below is what keeps them apart, and a neighbour's half-written file can still fatal another agent's
+     test run (reported as `environment`, settled by your re-run).
+   - **worktree per agent** — spawn with `isolation: worktree` (Claude Code creates a git worktree under
+     `.claude/worktrees/`; PhpStorm sees it as its own root and branch). No shared tree, so no neighbour
+     fatals, no file-set prediction needed, and the agent's own test run is trustworthy. Cost: `vendor/`
+     is not in a fresh worktree — `composer install` (warm cache, well under a minute) per agent, never a
+     symlink (PHP resolves `__DIR__` through it and autoloads the *main* tree). Prefer it when tasks
+     touch shared registration points (providers, `routes/api.php`, config), when the plan is large enough
+     that serialization would cost more than the installs, or whenever in-agent test results must be
+     trusted as-is.
 2. **Schedule continuously — dependency-ready AND file-disjoint.** Don't run rigid waves; launch a task the
    moment (a) its `depends_on` are all finished and (b) its predicted file set is disjoint from every
    in-flight task's. Predict file sets from the exact paths named in the task's steps, **plus the shared
@@ -225,7 +245,15 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
 5. **On each return, review before you record.** Read the agent's report against the actual diff of its
    predicted files; spot-check the seams other tasks will consume (statically — don't run migrations/tinker/
    endpoints; environment verification is the developer's). In hybrid, re-run the returned task's test
-   file/group yourself rather than trusting the report. Only then, as the single writer: check the boxes,
+   file/group yourself rather than trusting the report — this serialized run on a settled tree is the
+   authoritative one and the agent's own run is advisory, because parallel agents share one working tree
+   and a neighbour's half-written provider can fatal an unrelated run (the DB never interferes: `:memory:`
+   SQLite is per process, which is what `--parallel` relies on every day). A task returned red routes by
+   its class: `implementation` still red after the agent's three rounds → step 6; `test wrong` → the flag
+   stays in the hand-off; `contract` → step 6's contract-flag path; `environment` → your re-run settles it.
+   With **worktree isolation**, bring the task home first — `git -C <worktree> add -A && git -C <worktree>
+   diff --cached | git apply` onto the ticket branch, then remove the worktree — so the agent still never
+   commits and you still commit once per task. Only then, as the single writer: check the boxes,
    flip the status, record amendments, append earned decisions, and commit. Then launch whatever just became eligible.
 6. **Handle trouble without guessing.** A shallow or failed report → re-run the gaps on a stronger model or
    implement them in-thread; never patch blind over work you don't trust. An agent's contract flag (a
@@ -250,8 +278,11 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    re-hunting the bug), and its `A1…An` bullets are what the diff must satisfy. Implement in-thread, hand off for diff review (the developer
    runs any environment verification), fix on feedback. If a genuine decision surfaces — a real fork whose rationale the code won't reveal — offer
    to record it in `.ai/<TICKET>/decisions.md`; otherwise leave no trace but the diff. Trivial changes stay
-   test-free by default; for a confirmed-bug fix off an approved `investigation.md`, offer a repro test
-   (`skunexus-behavior-testing`) — write it only if the developer asks.
+   test-free by default. Offer a test — one line: the file and the proposition a `Tests:` trailer would have
+   carried — when the change is behavior-bearing per `skunexus-behavior-testing`'s quick decision table (a
+   new command, plugin, transition, override, GraphQL field, endpoint, resolver) or is a confirmed-bug fix
+   off an approved `investigation.md` (a repro test). Write it only if the developer says yes; then run it
+   and report the real output.
 3. **Escalate visibly when "trivial" stops being true.** Triggers: the change wants several independent
    tasks; a migration or shared seam that multiple edits build on; product-level ambiguity you'd have to
    guess; materially more surfaces than the prompt implied. Stop, summarize what you've learned (mapped
@@ -294,10 +325,16 @@ adds one test here and two there gets all three files' current contract, never a
 both syntaxes (`--mode` defaults to `pest`); a run that renders 0 scenarios means the tests fell outside the
 grammar, which is a signal to fix them — never a reason to hand-write the file. Say so in chat.
 
-Then read that spec against the acceptance criteria in the existing lookup order (`prd.md` →
-`investigation.md` → the plan's inline Goal & Acceptance) and report two lists: which `Rn`/`An` have no
-scenario, and which scenarios map to no acceptance id. It is a report to the developer, **not a gate** —
-thin coverage is theirs to accept.
+Then run the **acceptance coverage check**: read that spec against the acceptance criteria in the existing
+lookup order (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance) and report two lists —
+`Rn`/`An` with no scenario, and scenarios that map to no acceptance id. The PRD is the spec and the tests
+are its proof; the two never stay divergent, so every line of both lists resolves before hand-off:
+
+- an `Rn` with no scenario gets one line of why — proven out-of-suite (layer map), covered by another
+  requirement's scenario, or an accepted gap. Thin coverage is the developer's to accept, **not a gate** —
+  but the acceptance is recorded (plan or `decisions.md`), never silent.
+- a scenario with no `Rn` is behavior nobody asked for: either the PRD gains the line (patch + changelog,
+  as Door C does) or the test goes. Never a test that quietly outruns its contract.
 
 Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
 steps are their own downstream skills) and stop — don't write the PR description here.

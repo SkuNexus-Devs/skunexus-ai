@@ -209,8 +209,9 @@ Each subagent should map, for its area:
 - **Scope-affecting constraints** — a needed migration, a breaking change, an external dependency.
 - **Test terrain** — which syntax the repo uses (Pest if `vendor/bin/pest` exists or composer's `test` script
   runs pest, else PHPUnit), which `tests/Behavior/` vocabulary already exists (`{Domain}ScenarioTrait`
-  builders, `{Domain}AssertionsTrait`), and the existing test files nearest this area — so tasks name vocabulary to reuse
-  instead of inventing it.
+  builders, `{Domain}AssertionsTrait`), the existing test files nearest this area — so tasks name vocabulary to reuse
+  instead of inventing it — and that the test database is `:memory:` SQLite (`phpunit.xml` / `tests/Pest.php`):
+  a file-backed test DB would make the implement skill's parallel test runs collide, so name it here.
 
 Have each subagent **return its structured findings** into the conversation, and draft the plan (Step 3)
 directly from them — don't persist a separate map file. The useful content lands in the task bodies, and the
@@ -242,8 +243,13 @@ see the shape to react to it.
   command, state transition, vendor handler override, factory/interface override, GraphQL field/type, REST
   endpoint, field resolver); a pure migration, config-only, refactor or docs task doesn't and gets no trailer.
   Every qualifying task carries one line — `**Tests:** <test file path> — "<falsifiable proposition>", "<guard
-  proposition>"` — the path placed per that skill's layer map, the propositions **quoted from the acceptance
-  the task `Satisfies`** (`Rn` from the PRD, or `An` from the inline Goal & Acceptance), not re-invented. The
+  proposition>"` — the path placed per that skill's layer map — the subject is a command, an endpoint or a pure algorithm,
+  so `tests/Feature/<Domain>/<Command>Test.php`, `tests/Feature/GraphQL/…`, `tests/Unit/…` or
+  `tests/Integrations/…` as the map says, and often an **existing** file (a plugin, transition, override or
+  resolver proves itself in the upstream command's file) — the propositions **quoted from the acceptance
+  the task `Satisfies`** (`Rn` from the PRD, or `An` from the inline Goal & Acceptance), not re-invented.
+  A task whose only proof is out-of-suite (auth/CSRF/throttle, a live worker, a connector sandbox) gets no
+  trailer; its `Sanity-check now` line says so. The
   propositions are **not** checkbox steps (status stays derived from the steps alone), and a test is **never
   its own task** in the DAG — a red test task could never be `finished`. *When* the trailer is discharged is
   `skunexus-backend-implement`'s business (its testing mode decides), not the plan's.

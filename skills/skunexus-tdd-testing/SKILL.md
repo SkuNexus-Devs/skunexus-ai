@@ -18,6 +18,8 @@ user-invocable: true
 
 **Announce at start:** "I'm using the skunexus-tdd-testing skill to drive `<behavior>` test-first."
 
+**How you reach it:** inside the workflow, pick **full TDD** once when `skunexus-backend-implement` asks for the testing mode — it loads this skill per task itself; you never invoke it task by task. Outside a plan, say *test-first* / *TDD this* and it triggers on the phrasing; `/skunexus-tdd-testing` is only for when it didn't. It never competes with `skunexus-behavior-testing` — it loads it.
+
 **Violating the letter of this rule is violating the spirit of this rule.**
 
 ## The Iron Law
@@ -125,7 +127,7 @@ One tracer proves: provider order is correct, the command is dispatchable, no mi
 |-----------|--------|
 | The first RED fails with a different error than expected (wrong interface, method name, signature) | A plan-vs-codebase mismatch is surfacing — the loop's documented early payoff. Correct the test's assumptions first; implement only once the red fails for the *stated* reason. |
 | GREEN is unreachable without touching a second command | The slice was two slices. Split the scenario into two skeleton titles and re-slice vertically. |
-| Mid-slice, the scenario sentence turns out to be wrong | The skeleton is the spec, and the spec is code — edit the title and GWT sentence, re-run RED, then implement against the corrected proposition. |
+| Mid-slice, the scenario sentence turns out to be wrong | If the title was quoted from a PRD/plan acceptance, this is a contract flag: the PRD (or inline acceptance) moves first, then the title — never a silent rename that lets the test outrun its contract. If the sentence was this loop's own, edit the title and GWT sentence, re-run RED, then implement against the corrected proposition. |
 | A later test fails and no tracer was ever written | Multiple unknowns are entangled (new code? wiring? middleware?). Write the tracer now to re-prove the path, then debug the behavior on top of it. |
 
 ## NEVER Rules

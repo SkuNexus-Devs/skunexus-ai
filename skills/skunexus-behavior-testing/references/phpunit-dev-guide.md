@@ -182,7 +182,7 @@ One-line repairs stay one-line repairs. The conversion pays for itself only when
 ## 9. Your tests are the spec — read them back with spec-extract
 
 `spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
-the artifact QA reads, the FE handoff quotes, the spec-vs-PRD review diffs. It reads exactly the grammar
+the artifact QA reads, the FE handoff quotes, the acceptance coverage check. It reads exactly the grammar
 of §3: **if you followed this guide, the spec is already good.** Run it next to `--testdox` before you
 commit:
 

@@ -295,7 +295,7 @@ Nothing is created speculatively at any tier — every promotion is triggered by
 
 The team ships a deterministic GWT extractor (`spec:extract`, the `skunexus-spec-extract` skill): it parses a test
 file's AST and renders every `#[Test]` as Given/When/Then prose — the gwt.md a ticket attaches, the
-spec-vs-PRD diff, the FE handoff quote. Its input language IS the grammar of §§1–9: a test written per
+acceptance coverage check, the FE handoff quote. Its input language IS the grammar of §§1–9: a test written per
 this guide extracts as readable English with zero extra work — vocabulary `when*` wrappers become passive
 command prose ("the RMA is closed with reason 'never arrived'"), article builders read as their articles,
 `assertThrows` splits into the attempt and "it is rejected — …", `setUp` becomes the Background with
