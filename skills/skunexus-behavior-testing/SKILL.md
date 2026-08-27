@@ -9,7 +9,10 @@ description: >-
   tests exercise (skunexus-backend-implement), rendering a finished suite as a Given/When/Then spec
   (skunexus-spec-extract), or PR descriptions (skunexus-backend-pr). Triggered by: Feature test,
   PHPUnit, Pest, test(), expect(), uses(), beforeEach, bus->handle, Bus::fake, rebootHandlers,
-  Given/When/Then, tests/Behavior, test naming, what to mock.
+  Given/When/Then, tests/Behavior, test naming, what to mock. ALSO use for the second pass over a landed
+  suite whose rendered spec reads as machine transcript — "improve spec readability", "the spec-from-tests
+  is unreadable", "the Given is missing the differentiator", "spec readability pass", "phrase dump", "TestDox
+  slot" — which audits, FIXES the tests, verifies, and hands the extractor a change-request list.
 user-invocable: true
 ---
 
@@ -320,6 +323,9 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 | "The name says it stays pending; asserting it isn't closed is the same thing." | It passes for Approved, Declined and any corrupt value. The name already told you which state to assert — assert that one, positively. |
 | "The key is present; the value comes from the resolver, so presence is enough." | A renamed field, a null, or a wrong-but-non-empty value all pass. Assert the value the Given fixed. |
 | "The helper fails with a good message — that *is* my assertion." | A `the*`/`a*` helper retrieves or creates; the moment it can fail, half the contract is invisible in the body. Rename it `assert*` and state the clause in the test. |
+| "The spec has 0 `⚠`, so it's readable." | `⚠` measures where the extractor gave up, not where the reader does. Run the grep block in `spec-readability-pass.md` §1 — long bullets, phrase dumps, blank Thens. |
+| "Five scenarios render the same body, but the titles tell them apart." | The Given is missing the differentiator. Move the arrangement into `given*` file functions with slots; probe the render in a scratch dir first. |
+| "The plan says this TestDox will render as …" | A predicted render is a guess. Run the phar on a probe copy and quote the line. |
 
 ## NEVER Rules
 
@@ -352,6 +358,14 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 - **NEVER put an assertion or `fail()` inside a `the*` / `a*` vocabulary helper.** Article-grammar words retrieve and create; one that can fail the test hides half the contract from the body and from the extracted spec. A helper that judges is named `assert*`, and the clause it decides is stated in the test.
 - **NEVER verify side effects via raw DB reads in a behavior test** (`DB::table(...)`, raw SQL). Use the read-side production callers use. Sole exception: the independent oracle inside a *persistence* test.
 - **NEVER assert "listener registered" or "class X exists in `PROVIDERS` array"** — a tautology against the literal. Assert the observable effect via bus dispatch or endpoint POST.
+
+### The rendered spec
+
+- **NEVER hand-edit `spec-from-tests.md`** — it is regenerated; fixes go in the tests or in a change request to the tool.
+- **NEVER let a `#[TestDox]` say what the helper does not do** — verify every sentence against the body; a wrong spec is worse than an ugly one.
+- **NEVER feed a `{slot}` a top-level local** — it inlines the local's whole assignment into the Then. Pass the domain number, a literal, or a `$this->` property.
+- **NEVER assert inside a `when*` helper** — return the value and assert in the body, or the Then never renders and sibling scenarios silently differ.
+- **NEVER leave a parameterised scenario builder without a `#[TestDox]`** — its derived prose is a parameter dump on every call.
 
 ### Pest-specific
 
@@ -395,9 +409,26 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 2. **`#[TestDox('{param} …')]`** on the assertion helper or `given*`/`when*` wrapper — PHPUnit-native, inert at runtime, one line at the definition fixes every call site. Default is NO TestDox: right-reading derived prose needs no second source of truth.
 3. **A dialect config word** — only for a domain word that inflects wrong in *every* suite ("unholded") or an acronym casing; never for one test's prose.
 
-Placement gotchas that silently eat prose: a `//` note goes ABOVE `#[Test]` (between attribute and `function` it vanishes); the class docblock goes after `namespace`; assertions inside closures/loops render `⚠ NOTHING READ` — which the body grammar bans anyway (the extractor is the lint). Read a new file back with `spec-extract <file>` next to `--testdox` before committing; `grep '⚠ RAW\|⚠ NOTHING READ'` over rendered specs is the suite's prose-debt metric. Full guidance: the style guide §10.
+**One default changed by experience:** every scenario builder with two or more parameters carries a `#[TestDox]` from the start — derived prose for a parameterised builder dumps every argument with its parameter name (`an imported shopify order of number 936285, shopify created at settled long before the sweep`, ×127 in one suite). The measured rules for what a `{slot}` renders (a top-level local inlines its whole assignment; an empty array and a defaulted parameter render as nothing; a nested helper's own TestDox is ignored) and the sixteen-item first-pass checklist are the style guide §10.6–10.7 — read them before writing a builder or an assertion with slots.
+
+Placement gotchas that silently eat prose: a `//` note goes ABOVE `#[Test]` (between attribute and `function` it vanishes); the class docblock goes after `namespace`; assertions inside closures/loops render `⚠ NOTHING READ` — which the body grammar bans anyway (the extractor is the lint). Read a new file back with `spec-extract <file>` next to `--testdox` before committing; `grep '⚠ RAW\|⚠ NOTHING READ'` over rendered specs is the suite's prose-debt metric — and if the read-back looks like machine transcript despite 0 `⚠`, **offer** the optional second pass (next section) rather than fixing ad hoc. Full guidance: the style guide §10.
 
 **Status — the extractor reads both syntaxes.** `--mode` defaults to `pest` (`test()` → scenario, `beforeEach` → Background, bare `given()` or a bare `givenX()` call → Given, `when*` functions → passive command prose, `expect()` families → Thens, `#[TestDox]` on file-level helpers); `--mode=phpunit` reads `#[Test]` classes. A converted 40-file suite extracts at parity with its PHPUnit original, so either syntax is a first-class spec source. Two Pest-only rules that decide whether the prose reads: mark a Given **once** — `given(fn () => $this->…)` or a bare `givenX();`, never `given(fn () => givenX())` — and pass the extractor a **directory**, not a shell glob. Style guide §3 and §10.5.
+
+## The Spec-Readability Pass — second pass over a landed suite
+
+A green suite with `0 ⚠` can still render 86 unreadable bullets. **The pass is optional and the developer decides:** after the first render of a new suite, or when someone says the spec "needs a lot of improvement", run the two-minute measure block (reference §1, read-only) and **ask** with the numbers — `AskUserQuestion`: "long bullets N, phrase dumps N, blank Thens N, setting values stated: no. Run the readability pass now (≈K test files edited, suite stays green), or leave it?" Start only on a yes; "later" goes in the ticket's follow-ups. When it runs, `references/spec-readability-pass.md` is a **mandatory read first.** It is audit → **apply** → verify → iterate, not a report:
+
+1. **Baseline** — suite counts (tests *and* assertions), scenario counts, a before-copy of the render.
+2. **Measure** — the grep block: long bullets, phrase dumps, blank Thens, proper-noun verbs, repeated glosses, Then-repeats-Given, lowercase nouns/headings, why-notes rendered; then by eye: are the setting values anywhere, can sibling scenarios be told apart from their bullets.
+3. **Three roles, written down separately, then reconciled** — a cold reader (spec only, as PM/PO and FE dev), a fidelity reviewer (§5.8 promise ledger against source, verdict test-shape / vocabulary / extractor per defect), a fix planner (cheapest rung, **every render measured on a probe**). Synthesise: rank by damage, make the disagreement calls.
+4. **Apply** in order scenario trait → assertions trait → Feature test → Unit files → dialect overlay; re-read whole files, run the suite, grep every replaced name after each.
+5. **Verify with a fresh-eyes verifier who didn't write the fixes** — defect table with quoted evidence, contract drift, **every TestDox sentence true of its body**, duplicated literals equal their consts, orphans (dead returns, unswept siblings, jargon left in the domain trait), style, PM spot-read. Then a cleanup pass.
+6. **Gate** — same test count, assertion delta named, replaced names at zero, no duplicated methods, regenerated spec with the metrics in single digits.
+7. **Deliver** — the regenerated spec, a `decisions.md` entry with the debt deliberately left (title-vs-body contract items are the developer's call), and `.ai/<TICKET>/spec-extract-requests.md` for the tool — **fix the tests now, don't wait for the tool.**
+8. **Iterate** on the developer's review; the two recurring asks ("does it need N orders?", "the Given is missing the differentiator") have standard answers in the reference §9.
+
+The generalised defect catalogue (symptom → cause → fix), the disagreement calls, the NEVER list and the diagnostics table are in the reference — as is a one-paragraph hint on how the roles map to agents if you choose to split the work (the three readings are independent; apply splits by disjoint file sets; the verifier didn't write the fixes).
 
 ## Related Skills
 

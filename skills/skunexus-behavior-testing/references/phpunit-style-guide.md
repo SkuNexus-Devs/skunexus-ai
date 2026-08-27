@@ -375,6 +375,16 @@ Then the two debt greps over the rendered spec, both of which should trend to ze
 `⚠ RAW` (an assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar
 cannot see — almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job.
 
+
+### 10.6 Slot rendering rules and the first-pass checklist — see the Pest guide
+
+The `#[TestDox]` slot rules are syntax-neutral: what a slot renders when fed a literal, a const, a
+default, a property, a **top-level local** (inlined whole), an empty array (nothing) or a nested helper
+(its own TestDox ignored) is measured in `pest-style-guide.md` §10.6, and the sixteen authoring rules that
+follow from a landed suite's defects are §10.7 — read both; every item applies to a `#[Test]` class with
+`private` helpers and `setUp()` in place of `beforeEach`. The second pass over a suite that already
+renders badly is `spec-readability-pass.md`.
+
 ---
 
 *Enforcement: the review question — "read the test name and body aloud; did you hear the

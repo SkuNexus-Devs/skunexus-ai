@@ -591,8 +591,15 @@ prose-override channel it is on a PHPUnit helper method. Three homes, in descend
 3. **On a test** — unnecessary in Pest: the `test()` description *is* authored prose (§4). Use mixed case in
    the description instead of reaching for an attribute.
 
-Default: **no TestDox.** If the derived English is right, an attribute is a second source of truth that can
-drift. Slots must name real parameters — a typo'd `{slot}` leaks into the spec verbatim.
+Default: **no TestDox on `when*` and `assert*` helpers whose derived English reads** — there an attribute
+is a second source of truth that can drift. **Default: TestDox on every scenario builder with two or more
+parameters** — derived prose for a parameterised builder dumps every argument with its parameter name and
+the constant's *name* spelled out (`an imported shopify order of number 936285, shopify created at settled
+long before the sweep`, 127 times in one suite), and the docblock gloss renders on every call. One
+`#[TestDox('order #{number} already imported, created {shopifyCreatedAt}')]` at the definition fixes all
+of them and retires the gloss (the attribute outranks the docblock). Slots must name real parameters — a
+typo'd `{slot}` leaks into the spec verbatim — and every sentence must be **true of the body**: a TestDox
+that claims a link the fake does not have is a wrong spec, which is worse than an ugly one.
 
 ### 10.4 Dialect words — last resort, evidence required
 
@@ -625,6 +632,74 @@ Then the two debt greps over the rendered spec, both of which should trend to ze
 assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar cannot see —
 almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job. Read the §5.8
 ledger by eye alongside it — the promise audit is the part no tool does.
+
+### 10.6 What a `{slot}` renders — measured, not documented
+
+Probed against the packed phar with scratch files — re-probe when the phar changes. These decide which
+rung fixes a line; the ones marked ↑ are extractor limitations to file upstream (the readability pass's
+`spec-extract-requests.md` deliverable is where they are listed, with repro and workaround).
+
+| The slot is fed… | Renders as |
+|---|---|
+| an `int` literal | bare `936285` (a quantity-named param gets its unit: `$qty` → `7 units`) |
+| a `string` literal or `string` const | `<param label> “value”` — `$orderName` → `order name “#936290”`; a numeric-looking string loses the label ↑ |
+| an array of **1** | `<param label> “#936290”` — label kept ↑ |
+| an array of **2+** | `“#1”, “#2” and “#3”` — label dropped ↑ |
+| an empty array | **nothing** — the sentence ends `exactly ` ↑ → wrap: `assertNoCandidatesDispatched()` → "repulls nothing" |
+| a parameter left to its default | **nothing** ↑ → never slot an optional; a `times:` count needs a wrapper (`…TwiceFor`) with "once" in the default sentence |
+| a constant via a default (`int $x = self::X`) | nothing ↑ → write the value into the sentence, comment "keep in step with the const" |
+| `$this->prop` | the property name as English — `$this->otherStore` → `the other store` |
+| a **local assigned at test top level** | the **whole assigned expression, inlined** ↑ — the cause of every "Then that repeats its Given" |
+| a nested value helper carrying its own `#[TestDox]` | the attribute is **ignored**; the helper's derived name renders (`of days 70`) ↑ → no-arg readers named for meaning |
+| `given(fn () => $this->prop = CONST)` | `Given the test` ↑ → assign a trait reader bare: `$this->unknownStore = $this->anIntegrationIdNoStoreCarries();` |
+| a Background step opening with a proper noun | first character lowercased after TestDox ↑ → start with the article or the domain noun |
+| a docblock gloss opening with a proper noun | lowercased, initialisms not applied ↑ → reword |
+| a raw harness call in `beforeEach` (`Carbon::setTestNow`, `rebootHandlers([...])`) | invented prose (`the carbon set test now “…”`) instead of `⚠ RAW` ↑ → a named scenario helper with TestDox |
+| a helper whose name **starts with a proper noun** (`shopifyRejects…`) | read as the subject and passivised — `rejects … are shopifyed` ↑ → subject-first name (`theCandidateLookupsAreRejected`) |
+
+### 10.7 Authoring rules that keep the render readable — the first-pass checklist
+
+Each of these was a defect class in a landed suite; writing to them costs nothing and saves the second pass
+(`spec-readability-pass.md`).
+
+1. **Every builder with ≥2 params carries a `#[TestDox]`** with the domain noun first: `order #{number} …`,
+   never `an imported shopify order of number …`. Where a gloss carried information, it goes *in* the sentence.
+2. **Helpers take the domain number, not the transport id.** `assertRepulledFor(936290)`, not
+   `assertRepulledFor($gid)`; the gid is built inside (`orderGid()`), so no local ever holds it. Then the
+   builders return `void` — a `: string` nobody reads is an orphan a green suite can't see.
+3. **Actors are properties, never locals**, when an assertion or a `when*` needs to say *which*:
+   `$this->store`, `$this->otherStore`, `$this->unknownStore`, with a `{store}` slot on `assertCursorAt`
+   and on `whenTheSweepCommandRunsFor`. Two cursors asserted with no store named is a §5.8 hole, not prose.
+4. **Harness calls are named scenario helpers** — `theClockIsFixedAt(…)`, `queuedRepullsAreRecordedNotRun()`,
+   `aRepullByIdsHandingBackEveryRequestedId()`. Boundary fakes stay visible; only the wording is domain.
+5. **Setting values are in the Background sentence** — `a sweep with a 60-minute grace window, a 60-day
+   age-out and 2 failures before giving up` — with a comment that they restate the consts. "Older than the
+   age-out" is unfalsifiable to a reader who is never told the age-out.
+6. **Time offsets are named readers derived from the consts** — `pastTheAgeOut()`, `justInsideTheAgeOut()`,
+   `insideTheGraceWindow()` — not `daysBeforeTheSweep(70)` at the call site.
+7. **A `when*` never asserts.** It returns the exit code / result; the body asserts it, so the Then renders
+   and every sibling scenario shows the same Then.
+8. **Counts are in the sentence** — "is repulled once" in the default, `assert…TwiceFor()` → "a second
+   time". A slot-less count is a title promise ("a single retry", "again") the spec cannot show.
+9. **The empty case has its own word** — `assertNoCandidatesDispatched()`, `toBeEmpty()`.
+10. **An assertion's TestDox names the observable, not the rule** — `the eligibility lookup carries
+    {pullFilterTerm} and narrows by no created_at or updated_at window`, never a restatement of the title.
+11. **Helper names start with the domain subject**, never with a proper noun (`shopify…`); docblocks and
+    Background TestDoxes don't open with one either.
+12. **`//` *why* notes go above `test()`**, not in the body — they are the suite's best content and only
+    render there.
+13. **Descriptions that contain any uppercase (`Shopify`) start with a capital** — they render verbatim.
+14. **Pure unit tests whose scenarios differ only in arrangement** put the arrangement in `given*` file
+    functions with slots (`givenShopifyReturned(name)`, `givenThePullWouldImport(name)`), a `beforeEach`
+    that names the empty starting state, and a no-arg `when*` reading `$this` — otherwise five scenarios
+    render identical bodies. **Pest gotcha:** `test()` is a `HigherOrderTapProxy` whose `__get` returns
+    arrays by value — `test()->list[] = $x` appends to a copy and `test()->prop ?? []` misfires (no
+    `__isset`); write whole arrays: `test()->list = [...test()->list, $x]`.
+15. **Fixtures hold the minimum the proposition needs** — "gapless history" is two adjacent numbers, not
+    six; where consecutive numbers matter, a range builder (`importedShopifyOrdersFrom(936291, to: 936294, …)`)
+    renders one line.
+16. **Probe before you promise.** Render a scratch copy with the phar and quote the line; a "should render
+    as" in a plan is a guess.
 
 ---
 

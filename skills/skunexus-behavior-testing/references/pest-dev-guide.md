@@ -294,3 +294,9 @@ What decides whether the output reads as English — none of it changes how Pest
 A domain word that inflects wrong in *every* suite ("unholded") is a one-line dialect-config entry in the
 extractor repo — file it there once, with the word and where it renders wrong. Never work around grammar
 in the test, and never add a dialect word for one test's prose.
+
+**Two things the first landed suite taught:** give every scenario builder with two or more parameters a
+`#[TestDox('order #{number} …')]` from the start (derived prose is a parameter dump otherwise), and never
+pass a `{slot}` a top-level local (it inlines the whole builder call into the Then) — the measured slot rules
+are the style guide §10.6, the checklist §10.7. If a suite already renders badly, the second pass is
+`spec-readability-pass.md`: it fixes the tests, not the spec.

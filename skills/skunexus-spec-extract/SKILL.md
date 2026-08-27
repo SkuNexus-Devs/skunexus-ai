@@ -148,3 +148,5 @@ cp bin/spec-extract.phar <this skill's folder>/scripts/   # refresh this skill
 - `skunexus-behavior-testing` — the grammar this extractor reads; its style guides §10 (`pest-style-guide.md` / `phpunit-style-guide.md`) are the authoring guidance that keeps this output readable. Write tests per that skill and the spec comes out right.
 
 This skill renders existing tests as a spec and stops there: it does not write them (`skunexus-behavior-testing`), drive them test-first (`skunexus-tdd-testing`), run them (`composer test`), or turn the spec into a PR description (`skunexus-backend-pr`) or QA testing steps (separate skill).
+
+- **`skunexus-behavior-testing`** — `references/spec-readability-pass.md` is the second pass over a suite whose render is faithful but unreadable (audit → fix the tests → verify); its §10.6 is the measured table of what a `#[TestDox]` `{slot}` renders, and `.ai/<TICKET>/spec-extract-requests.md` is the change-request list a pass hands this tool.
