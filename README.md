@@ -153,7 +153,7 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 **What happens:** the skill reads the merge-base diff and the ticket artifacts (PRD/decisions for the *why*, the diff as final authority on the *what*), detects PR history (open PR → propose updating just the stale parts; earlier merged PR on the ticket → propose a delta-only description), and sweeps for the things reviewers must be told: env/config changes existing installs must apply, migrations and their risks, before/after behavior with real examples. Any why-gap it can't recover from artifacts becomes a targeted question to you *before* drafting.
 
-**You get:** `.ai/<TICKET>/pr.md` — title + body exactly as GitHub will show it, in one of the blessed shapes (behavior change / new feature / bug fix). Review it in your editor; **only on your explicit "post it"** does the skill push the branch and open a **draft** PR via `gh` (or edit the existing one). The URL is written back into the file.
+**You get:** `.ai/<TICKET>/pr.md` — title + body in one of the blessed shapes (behavior change / new feature / bug fix), wrapped for comfortable reading in your editor; the body is unwrapped only on its way to GitHub, because GFM turns every newline in a PR description into a `<br>` (see [Skill helpers](#skill-helpers)). Review it in your editor; **only on your explicit "post it"** does the skill push the branch and open a **draft** PR via `gh` (or edit the existing one). The URL is written back into the file.
 
 **It will not** post anything before approval, mark the PR ready-for-review, set reviewers/labels, or include FE handoff notes and testing steps — those are separate skills.
 
@@ -224,7 +224,26 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 - **You own the environment.** Expect every implementation and investigation to end with a checklist of things only you can run. That's not laziness — it's the honesty rule that keeps "done" meaning done.
 - **Don't fear the ceremony — it scales down.** Say *"skip the ceremony"* or *"just plan this, no PRD"* and the skills right-size. They'll tell you when a change has outgrown the shortcut, and continuing anyway is a legitimate answer.
 - **`decisions.md` being absent is normal.** It's created only for genuine forks whose rationale the code can't reveal. Two real entries get read; twenty trivial ones bury them.
-- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions). Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions); an executable helper the skill calls sits next to its `SKILL.md`. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+
+## Skill helpers
+
+Some skills ship an executable next to their `SKILL.md`, so the instruction set and the tool it calls travel together.
+
+### `skunexus-backend-pr/md-paragraphs.py` — re-flow markdown paragraphs
+
+GitHub renders markdown in two modes: in a `.md` file in a repository a single newline inside a paragraph collapses to a space, but in a PR description, issue body or comment GFM turns it into a `<br>`. So prose that reads well wrapped in your editor renders as ragged, hard-broken lines once posted. The split this repo settles on: `pr.md` stays **wrapped** (you review it in your editor), and only the stream handed to `gh --body-file` is **unwrapped**.
+
+```bash
+# what goes to GitHub: metadata block dropped, paragraphs joined into single lines
+python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body > /tmp/pr-body.md
+gh pr create --draft --base dev --title "<title>" --body-file /tmp/pr-body.md
+
+# the other direction, when a draft arrived with one-line paragraphs
+python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --wrap 110 --write
+```
+
+Untouched in both directions: the leading `---` frontmatter, headings, table rows, list markers, block quotes and the inside of fenced code blocks. The roundtrip is stable — re-wrapping an unwrapped body yields the same text — so a formatting pass can be verified not to have changed the content.
 
 ## Not in this repo (yet)
 
