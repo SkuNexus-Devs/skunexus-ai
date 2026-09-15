@@ -54,7 +54,8 @@ stop seeing whole sentences. A group-scoped `beforeEach` re-blurs the shared Giv
 just fixed — arrange-failures and contract-failures merge again, for a subset of the file. And composed
 headings (*closing a split order › closes when the last fulfillment completes*) don't travel: scenarios get
 quoted standalone into PRD diffs, QA notes and FE handoffs, where a flat proposition survives whole and a
-heading needs its context reassembled. A file that wants two groups wants two files (§8).
+heading needs its context reassembled. A file that wants two groups wants two files (§8). The extractor still
+*renders* `describe()` so foreign or converted files don't vanish — tolerance, not the idiom.
 Pest's default output already prints the description list — no `--testdox` needed.
 
 ### 0.1 Installing Pest on a client repo that doesn't have it (one-time)
@@ -228,7 +229,8 @@ Two consequences of the second row that a whole suite conversion found the hard 
 - **A trait constant has no name a file-level function can spell.** There is no `self` in a function, and PHP
   forbids reaching a trait constant through the trait: `HospitalScenarioTrait::ITEM_QTY` is a fatal
   `Cannot access trait constant … directly`. The one working shape is **`test()->target::ITEM_QTY`** — the
-  test case object read off the proxy, then an ordinary `::` fetch. Better still, take the const as
+  test case object read off the proxy, then an ordinary `::` fetch. spec-extract folds that back to `self::X`
+  and renders the value, so the step still reads "4 units" and not "the test". Better still, take the const as
   a parameter and pass `self::X` from the closure — then the function needs no shape at all.
 - **The container is reached with `app()`, never `test()->app`.** `$app` is `protected` on Laravel's own
   `TestCase`, so the "make it public" cure that works for `bus()` is not available — it is not our class.
@@ -240,11 +242,12 @@ Two consequences of the second row that a whole suite conversion found the hard 
 
 **`beforeEach` holds the shared Given, and only state.** Every test in the file must want all of it. No
 dispatch of the command under test, no assertions, ever. Put the `// GIVEN …` headline comment on its first
-statement, and let it carry the settings the scenarios lean on — `// GIVEN a sweep with a 60-minute grace
-window and a 60-day age-out` — because "older than the age-out" is unfalsifiable to a reader who was never
-told the age-out; the correspondence principle (§5.1) covers constants too. If only half the tests share a
-piece of setup, that piece moves into those tests — or the file wants to be two files. `parent::setUp()` has
-no Pest equivalent and no substitute; Pest chains the base class itself.
+statement (the extractor reads it there and nowhere else), and let it carry the settings the scenarios lean
+on — `// GIVEN a sweep with a 60-minute grace window and a 60-day age-out` — because "older than the age-out"
+is unfalsifiable to a reader who was never told the age-out; the correspondence principle (§5.1) covers
+constants too. If only half the tests share a piece of setup, that piece moves into those tests — or the file
+wants to be two files. `parent::setUp()` has no Pest equivalent and no substitute; Pest chains the base class
+itself.
 
 **Harness calls in the shared Given wear a vocabulary name.** `Carbon::setTestNow(...)`, `Queue::fake()` and
 `rebootHandlers([...])` are configuration, not sentences; `$this->theClockIsFixedAt($noon)` and
@@ -267,8 +270,16 @@ stays in properties, and the marker carries no string label (nothing to drift). 
 `$this->given(...)`; the two coexist without conflict.
 
 **One marker per step — the name or the wrapper, never both.** `given(fn () => givenTheRmaIsApproved())`
-marks the step twice. A `given*`-named function is already marked; call it bare. A name that does **not**
-start with `given` needs the wrapper.
+marks the step twice, and the cost is not cosmetic: prose extraction reads the inner call's leading `given` as
+the sentence's verb, so it renders *"the RMA is **is givened** approved"*. A `given*`-named function is
+already marked; call it bare. A name that does **not** start with `given` needs the wrapper. Stripping the
+prefix to keep the wrapper is the wrong repair — the next word becomes the verb, and
+`given(fn () => everyUnitOfTheItemIsInATote())` reads *"unit of the item is is everyed in a tote"*.
+
+The bare call earns something extra: it is the **only** shape whose body is read. The extractor follows a bare
+`given*` call one hop and renders the first vocabulary call inside it as a second-level detail — `a bay that
+cannot cover the shortage — by a hospital item short of six units`. Inside a `given(fn () => …)` wrapper that
+hop is invisible and the detail is lost.
 
 **The PHPUnit "named private `given*` method" form does not dissolve in Pest — it graduates or goes global.**
 There is no file-private named function, so a delta that *states a rule's condition* and recurs
@@ -282,7 +293,7 @@ in the test must be the same words — which is also why such a helper is never 
 the name, and the name was the sentence.
 
 With deltas marked, **the body grammar is total: every line in a test body starts with `given`, `when`,
-`expect`, or `assert`.** That is mechanically checkable, and it makes the file read as its own spec:
+`expect`, or `assert`.** That is mechanically checkable, and it makes spec extraction a name-splitter:
 *Given every line is accepted, when close, then the RMA is closed*.
 
 **The When lives in the test body, always** — one line, calling the file's namespaced `when` + domain-verb
@@ -304,7 +315,7 @@ read:
 
 - **Entity reads → higher-order expectations, the preferred shape:**
   `expect($rma)->getState()->toBe(Closed::STATE)` reads subject → accessor → matcher ("the RMA's state is
-  closed").
+  closed") and gives the extractor a mechanical rendering.
 - **Domain propositions → the trait's `$this->assert*` calls, unchanged.** They fail in domain language
   ("Expected order 42 to be 'closed', but it is 'in_fulfillment'"). **Do not rewrite them into `expect()`
   chains** — a bare matcher mismatch dump is a downgrade.
@@ -332,6 +343,9 @@ Then before the When and makes everything after the When unreachable.
 they carry no proposition. Present tense, subject–verb–outcome, lowercase and spaced (the mechanical mapping
 from the PHPUnit snake_case name: replace `_` with a space, drop nothing else).
 
+- **Lowercase is the default and it matters downstream.** An all-lowercase description is sentence-cased and
+  initialism-corrected by the extractor ("rma" → "RMA"); a description containing *any* uppercase is treated
+  as authored prose and rendered verbatim. Use mixed case only when you mean to override the casing.
 - **Guards name the rule, not the mechanics:** `'a pending rma cannot be force closed'` — the exception class
   is asserted in the body, not encoded in the description.
 - **Builders:** indefinite article = creates (`aWarehouse()`, `anActiveProduct()`); definite article =
@@ -426,8 +440,9 @@ from the PHPUnit snake_case name: replace `_` with a space, drop nothing else).
    `toHaveKey|not->toBeEmpty|toBeGreaterThan` · `fail\(` in a function not named `assert*` ·
    a description containing `every|all|each|both` in a file whose `beforeEach` builds one actor.
 
-   **The read-back.** The runner gives you the descriptions; the bodies you must read. Read each body's clauses
-   back against its description: the mismatch is obvious in prose and near-invisible in a diff.
+   **The read-back.** The runner gives you the descriptions; the bodies you must read. Render the file's spec
+   (§10.5) and check each clause against its description: the mismatch is obvious in prose and near-invisible
+   in a diff.
 
 9. **Sibling tests with identical bodies are a red flag.** A matrix of one proposition is a dataset (§5.3);
    five *different* propositions sharing one body means the differentiator lives only in the descriptions.
@@ -547,6 +562,185 @@ stay `private`. Prefer arranging the call so the trait method is reached from th
 from the global.
 
 Nothing is created speculatively at any tier — every promotion is triggered by a real consumer.
+
+---
+
+## 10. The test is also the published spec — writing for spec-extract
+
+**Status: the Pest grammar has shipped.** The extractor reads both syntaxes — `--mode` defaults to `pest`,
+`--mode=phpunit` for a class-syntax tree. A 40-file Pest suite extracts at full parity with its PHPUnit
+original: same scenario count, same Background, same steps, the difference down to the one test that was
+deliberately renamed. So a converted suite is a first-class spec source, and nothing below is speculative
+shaping.
+
+What the Pest grammar will read, and therefore what to write:
+
+| You write | The spec shows |
+|---|---|
+| `test('force closing an approved rma closes it', …)` | a scenario heading, sentence-cased with dialect initialisms — "Force closing an approved RMA closes it" |
+| a description containing **any** uppercase | rendered **verbatim** — the authored-prose channel (`closes an OrderRMA` is never mangled) |
+| `beforeEach(fn)` with `// GIVEN …` on its first statement | the **Background**, under that headline |
+| `uses({Domain}ScenarioTrait::class)` | the vocabulary the step prose is resolved against |
+| bare `given(fn () => $this->…)` | a **Given** step |
+| a bare `givenX();` call to a file-level `given*` function | a **Given** step, plus a `— by …` detail read one hop into its body |
+| a file-level `when*` function wrapping `test()->bus()->handle(new XCommand(…))` | passive command prose — "the RMA is closed with reason 'never arrived'" |
+| `test()->target::ITEM_QTY` in a step's arguments | the constant's **value** — "4 units", folded back to `self::X` |
+| `expect($rma)->getState()->toBe(X)` | a **Then**, read subject → accessor → matcher |
+| `expect(fn () => when…())->toThrow(X::class)` | the attempt, then "it is rejected — …" |
+| `expect(fn () => when…())->toThrow(X::class, MESSAGE)` | the same, plus "and the rejection message contains …" |
+| `$this->assert*` trait calls | Thens, exactly as in PHPUnit suites |
+| `->with(['pending' => […]])`, or `->with('name')` + `dataset('name', fn)` | a **Where** step listing the case names |
+| a file docblock after `namespace`; a `//` note above a `test()` call | the file blockquote; the scenario note |
+
+### 10.1 Free rides — and the placement gotchas that silently eat them
+
+- The `// GIVEN` comment is read on `beforeEach`'s **first statement** and nowhere else.
+- The file docblock belongs **after** `namespace` (above it, php-parser hands it to the namespace node).
+- `markTestSkipped('the ACL check is missing')` renders `⚠ NOT RUNNING — the ACL check is missing`; the
+  argless call renders only a default.
+- **Keep `when*` wrappers one hop above the dispatch.** One wrapper deep, the spec reads the command; two
+  deep, it falls back to the wrapper's own name.
+- **Assertions inside closures, loops, or `each` chains are invisible** — the scenario renders
+  `⚠ NOTHING READ`. §5.3 bans body logic anyway; the extractor is the lint that makes the ban visible.
+  (`given(fn () => …)` and `expect(fn () => …)->toThrow()` are recognized shapes, not "logic".)
+
+### 10.2 Custom assertions and expectations — shape the name so the subject promotes
+
+A custom `assert*` helper's subject (the **last** variable argument) promotes into the phrase whenever the
+name can host it: a phrase ending on a copula (`assertHospitalIssueIs`) or closing on a preposition with one
+argument (`assertNoAllocationsFor`) reads as "the fulfillment's hospital issue is 'withdrawn'". A name that
+can't host its subject renders as marked call syntax — `⚠ RAW — tote qty for(the cart, the item, 1)` —
+honest, greppable, ugly. Higher-order `expect()` chains promote their subject for free, which is one reason
+they are the preferred entity-read shape. An `expect()` matcher outside the recognized set falls to
+`⚠ RAW` rather than an invented sentence.
+
+Custom `expect()->extend('toHoldQty', …)` expectations (Pest's sanctioned home for a helper that judges) are
+a **phase-2** move, not yet in any suite and not yet read by the grammar. Until then, domain assertions stay
+`assert*` trait methods. Whichever form, the rule holds: a helper that can fail is named for the judgment it
+makes, and its clause is visible in the test.
+
+### 10.3 `#[TestDox]` — the one-line override, used sparingly
+
+`#[TestDox('…')]` on a **file-level Pest helper function** is legal PHP, inert to Pest, and is the same
+prose-override channel it is on a PHPUnit helper method. Three homes, in descending order of warrant:
+
+1. **On an assertion helper** whose derived prose is `⚠ RAW`: `#[TestDox('{tote} holds {qty} of {item}')]` —
+   `{param}` slots fill from the call's arguments by parameter name; one line at the definition fixes every
+   call site.
+2. **On a `when*` function** whose derived sentence reads wrong: the template replaces the derived prose
+   verbatim (write the finished sentence — it is not passivised for you).
+3. **On a test** — unnecessary in Pest: the `test()` description *is* authored prose (§4). Use mixed case in
+   the description instead of reaching for an attribute.
+
+Default: **no TestDox on `when*` and `assert*` helpers whose derived English reads** — there an attribute
+is a second source of truth that can drift. **Default: TestDox on every scenario builder with two or more
+parameters** — derived prose for a parameterised builder dumps every argument with its parameter name and
+the constant's *name* spelled out (`an imported shopify order of number 936285, shopify created at settled
+long before the sweep`, 127 times in one suite), and the docblock gloss renders on every call. One
+`#[TestDox('order #{number} already imported, created {shopifyCreatedAt}')]` at the definition fixes all
+of them and retires the gloss (the attribute outranks the docblock). Slots must name real parameters — a
+typo'd `{slot}` leaks into the spec verbatim — and every sentence must be **true of the body**: a TestDox
+that claims a link the fake does not have is a wrong spec, which is worse than an ugly one.
+
+### 10.4 Dialect words — last resort, evidence required
+
+When a DOMAIN word inflects wrong in every suite ("unholded", "reshiped") or an acronym renders lowercase
+("sku urls"), the fix is one entry in the extractor's dialect config (irregular participle/gerund,
+initialism), filed once in the spec-extract repo
+(https://github.com/SkuNexus-Devs/dev-ian-spec-extract) — not a TestDox per call site. One word per
+demonstrated, recurring need; generic English/PHP words belong to the base dialect, SN domain words to the SN
+dialect. Never add a dialect word to fix one test's prose — that's TestDox's job; never TestDox around
+grammar — that's the dialect's job.
+
+### 10.5 The read-back and the debt greps
+
+Before committing a new test file, render it and read it as the reviewer will:
+
+```bash
+spec-extract tests/Feature/PestOrderRMA/CloseRmaTest.php   # one file, spec to stdout
+spec-extract tests --output=.ai/<TICKET>/spec-from-tests.md # the suite: pass the DIRECTORY
+spec-extract tests-orig --mode=phpunit                     # a class-syntax tree needs the flag
+```
+
+**Pass a directory, not a shell glob.** `tests/**` is expanded by bash before the tool sees it, and a
+directory argument is walked for `*Test.php` while an explicitly named *file* is read whatever it is called —
+so `tests/**` feeds it `TestCase.php`, `GraphQLTestCase.php` and `Pest.php`, which render as junk sections
+(`TestCase.php`'s `setUp()` becomes a Background full of raw PHP). With `shopt -s globstar` it is worse: every
+file *and* its parent directory get passed, so scenarios are read twice. If you really want a glob, quote it
+so the tool expands it (`'tests/Feature/Hospital/*/*Test.php'` — PHP `glob()`, one level per `*`, no `**`).
+
+Then the two debt greps over the rendered spec, both of which should trend to zero suite-wide: `⚠ RAW` (an
+assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar cannot see —
+almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job. Read the §5.8
+ledger by eye alongside it — the promise audit is the part no tool does.
+
+### 10.6 What a `{slot}` renders — measured, not documented
+
+Probed against the packed phar with scratch files — re-probe when the phar changes. These decide which
+rung fixes a line; the ones marked ↑ are extractor limitations to file upstream (the readability pass's
+`spec-extract-requests.md` deliverable is where they are listed, with repro and workaround).
+
+| The slot is fed… | Renders as |
+|---|---|
+| an `int` literal | bare `936285` (a quantity-named param gets its unit: `$qty` → `7 units`) |
+| a `string` literal or `string` const | `<param label> “value”` — `$orderName` → `order name “#936290”`; a numeric-looking string loses the label ↑ |
+| an array of **1** | `<param label> “#936290”` — label kept ↑ |
+| an array of **2+** | `“#1”, “#2” and “#3”` — label dropped ↑ |
+| an empty array | **nothing** — the sentence ends `exactly ` ↑ → wrap: `assertNoCandidatesDispatched()` → "repulls nothing" |
+| a parameter left to its default | **nothing** ↑ → never slot an optional; a `times:` count needs a wrapper (`…TwiceFor`) with "once" in the default sentence |
+| a constant via a default (`int $x = self::X`) | nothing ↑ → write the value into the sentence, comment "keep in step with the const" |
+| `$this->prop` | the property name as English — `$this->otherStore` → `the other store` |
+| a **local assigned at test top level** | the **whole assigned expression, inlined** ↑ — the cause of every "Then that repeats its Given" |
+| a nested value helper carrying its own `#[TestDox]` | the attribute is **ignored**; the helper's derived name renders (`of days 70`) ↑ → no-arg readers named for meaning |
+| `given(fn () => $this->prop = CONST)` | `Given the test` ↑ → assign a trait reader bare: `$this->unknownStore = $this->anIntegrationIdNoStoreCarries();` |
+| a Background step opening with a proper noun | first character lowercased after TestDox ↑ → start with the article or the domain noun |
+| a docblock gloss opening with a proper noun | lowercased, initialisms not applied ↑ → reword |
+| a raw harness call in `beforeEach` (`Carbon::setTestNow`, `rebootHandlers([...])`) | invented prose (`the carbon set test now “…”`) instead of `⚠ RAW` ↑ → a named scenario helper with TestDox |
+| a helper whose name **starts with a proper noun** (`shopifyRejects…`) | read as the subject and passivised — `rejects … are shopifyed` ↑ → subject-first name (`theCandidateLookupsAreRejected`) |
+
+### 10.7 Authoring rules that keep the render readable — the first-pass checklist
+
+Each of these was a defect class in a landed suite; writing to them costs nothing and saves the second pass
+(`spec-readability-pass.md`).
+
+1. **Every builder with ≥2 params carries a `#[TestDox]`** with the domain noun first: `order #{number} …`,
+   never `an imported shopify order of number …`. Where a gloss carried information, it goes *in* the sentence.
+2. **Helpers take the domain number, not the transport id.** `assertRepulledFor(936290)`, not
+   `assertRepulledFor($gid)`; the gid is built inside (`orderGid()`), so no local ever holds it. Then the
+   builders return `void` — a `: string` nobody reads is an orphan a green suite can't see.
+3. **Actors are properties, never locals**, when an assertion or a `when*` needs to say *which*:
+   `$this->store`, `$this->otherStore`, `$this->unknownStore`, with a `{store}` slot on `assertCursorAt`
+   and on `whenTheSweepCommandRunsFor`. Two cursors asserted with no store named is a §5.8 hole, not prose.
+4. **Harness calls are named scenario helpers** — `theClockIsFixedAt(…)`, `queuedRepullsAreRecordedNotRun()`,
+   `aRepullByIdsHandingBackEveryRequestedId()`. Boundary fakes stay visible; only the wording is domain.
+5. **Setting values are in the Background sentence** — `a sweep with a 60-minute grace window, a 60-day
+   age-out and 2 failures before giving up` — with a comment that they restate the consts. "Older than the
+   age-out" is unfalsifiable to a reader who is never told the age-out.
+6. **Time offsets are named readers derived from the consts** — `pastTheAgeOut()`, `justInsideTheAgeOut()`,
+   `insideTheGraceWindow()` — not `daysBeforeTheSweep(70)` at the call site.
+7. **A `when*` never asserts.** It returns the exit code / result; the body asserts it, so the Then renders
+   and every sibling scenario shows the same Then.
+8. **Counts are in the sentence** — "is repulled once" in the default, `assert…TwiceFor()` → "a second
+   time". A slot-less count is a title promise ("a single retry", "again") the spec cannot show.
+9. **The empty case has its own word** — `assertNoCandidatesDispatched()`, `toBeEmpty()`.
+10. **An assertion's TestDox names the observable, not the rule** — `the eligibility lookup carries
+    {pullFilterTerm} and narrows by no created_at or updated_at window`, never a restatement of the title.
+11. **Helper names start with the domain subject**, never with a proper noun (`shopify…`); docblocks and
+    Background TestDoxes don't open with one either.
+12. **`//` *why* notes go above `test()`**, not in the body — they are the suite's best content and only
+    render there.
+13. **Descriptions that contain any uppercase (`Shopify`) start with a capital** — they render verbatim.
+14. **Pure unit tests whose scenarios differ only in arrangement** put the arrangement in `given*` file
+    functions with slots (`givenShopifyReturned(name)`, `givenThePullWouldImport(name)`), a `beforeEach`
+    that names the empty starting state, and a no-arg `when*` reading `$this` — otherwise five scenarios
+    render identical bodies. **Pest gotcha:** `test()` is a `HigherOrderTapProxy` whose `__get` returns
+    arrays by value — `test()->list[] = $x` appends to a copy and `test()->prop ?? []` misfires (no
+    `__isset`); write whole arrays: `test()->list = [...test()->list, $x]`.
+15. **Fixtures hold the minimum the proposition needs** — "gapless history" is two adjacent numbers, not
+    six; where consecutive numbers matter, a range builder (`importedShopifyOrdersFrom(936291, to: 936294, …)`)
+    renders one line.
+16. **Probe before you promise.** Render a scratch copy with the phar and quote the line; a "should render
+    as" in a plan is a guess.
 
 ---
 

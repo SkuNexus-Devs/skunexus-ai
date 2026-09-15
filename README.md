@@ -22,6 +22,7 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    | **Atlassian MCP** (Jira) | `skunexus-jira-prd`, `skunexus-bug-hunt` | Fetching and distilling tickets |
    | **Context7 MCP** + the `skunexus-docs-c7` skill | nearly every skill | Building the platform mental model (command bus, plugins, state machines) before touching code. ⚠️ `skunexus-docs-c7` is **not in this repo yet** — get it from a teammate until it's added. |
    | **`gh` CLI**, authenticated | `skunexus-backend-pr` | Pushing the branch and opening the draft PR |
+   | **PHP 8.2+** | `skunexus-spec-extract` | Running the extractor phar — no `vendor/`, no `.env`, no booted app |
    | **Pest** (client repos) | `skunexus-behavior-testing` | Decides the authoring syntax: Pest where installed, PHPUnit otherwise (core). One-time install: `references/pest-style-guide.md` §0.1 |
 
 3. **Run Claude Code in the repo you're working on** (e.g. `skunexus-client-*`), not in this one. All workflow artifacts land in `.ai/<TICKET>/` inside that working repo.
@@ -44,10 +45,11 @@ flowchart TD
     IMPL --> PR["skunexus-backend-pr<br/>→ pr.md → draft PR on GitHub"]
     IMPL --> FE["skunexus-fe-handoff<br/>→ fe-handoff.md"]
     IMPL --> SUM["skunexus-backend-summary<br/>→ backend-summary.md"]
-    BT["skunexus-behavior-testing"] -. how every test is written .-> IMPL
+    BT["skunexus-behavior-testing<br/>(+ skunexus-tdd-testing<br/>when driving test-first)"] -. how every test is written .-> IMPL
+    IMPL -- "at wrap-up" --> SPEC["skunexus-spec-extract<br/>→ spec-from-tests.md"]
 ```
 
-Two entry points, one build spine, three wrap-up documents. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
+Two entry points, one build spine, three wrap-up documents plus the spec rendered from the tests. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
 
 ### Which skill do I start with?
 
@@ -63,6 +65,8 @@ Two entry points, one build spine, three wrap-up documents. You don't always sta
 | Frontend team needs the API contract | `skunexus-fe-handoff` — *"prepare the FE handoff"* |
 | Ticket's work should be documented for the team | `skunexus-backend-summary` — *"write the backend summary"* |
 | Writing, converting, naming or placing a test | `skunexus-behavior-testing` — *"write a test for this command"*, *"where does this test go"* |
+| New behavior you want driven test-first | `skunexus-tdd-testing` — *"drive it test-first"*, *"TDD this"* |
+| You want to read back what a suite actually asserts | `skunexus-spec-extract` — *"the GWT spec of these tests"*, *"does every acceptance have a scenario"* |
 
 ---
 
@@ -92,6 +96,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 | `pr.md`, `pr2.md`… | backend-pr | The PR title + body, exactly as posted (one file per PR round) |
 | `fe-handoff.md` | fe-handoff | Self-contained API contract for the FE team |
 | `backend-summary.md` | backend-summary | Current-state feature doc of what the ticket implemented |
+| `spec-from-tests.md` | backend-implement, via `skunexus-spec-extract` | The ticket's behavior tests rendered as a Given/When/Then spec — **never hand-edited**; fix the tests and re-run |
 
 ---
 
@@ -140,7 +145,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 **What happens** — three doors, chosen by what exists:
 
-- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code) or *full post-facto* (one test pass at the end). A plan with no test trailers skips the question entirely.
+- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code), *full post-facto* (one test pass at the end), or *full TDD* (test-first, via `skunexus-tdd-testing`). A plan with no test trailers skips the question entirely.
 - **Door B — no plan.** For a trivial, well-described change: implemented directly, no artifacts, the diff is the record. If it stops being trivial mid-way, the skill stops, summarizes what it learned, and recommends escalating to planning — your call.
 - **Door C — changes on implemented work.** Your conclusions, QA findings, or relayed PR-review comments get triaged item-by-item to the right altitude: code fix, plan amendment, PRD patch, or a `decisions.md` supersede. Items contradicting a recorded decision are flagged with the original rationale so settled forks don't get re-litigated by accident.
 
@@ -182,15 +187,39 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 ---
 
+### The testing family
+
+Three companion skills the build spine leans on. You rarely invoke them by name — the plan skill names *what* each task must prove, the implement skill decides *when* the tests get written, and both load these automatically.
+
 ### 8. `skunexus-behavior-testing` — behavior → test
 
-**When:** any test is being written, converted, renamed or placed. *"Write a test for this command"*, *"where does this test go"*, *"is this test asserting the right thing"*. You rarely invoke it by name — the plan skill names *what* each task must prove, the implement skill decides *when* the tests get written, and both load this skill automatically.
+**When:** any test is being written, converted, renamed or placed. *"Write a test for this command"*, *"where does this test go"*, *"is this test asserting the right thing"*.
 
 **What happens:** the doctrine says tests verify behavior through SN's public interfaces — the command bus and HTTP/GraphQL endpoints — never handler internals. It decides the layer (Unit / Feature / GraphQL / Integrations), the data setup, what may be mocked (system boundaries only), and the body grammar: every line starts with `given`, `when`, or an assertion, one act per test, the name a falsifiable proposition. Pest is the default syntax in client repos, PHPUnit in core — detected per repo.
 
 **You get:** tests whose names state the contract and whose bodies prove exactly it — plus the `tests/Behavior/` vocabulary (scenario builders, domain assertions) grown one word at a time, never speculatively.
 
 **It will not** plan work, implement production code, or write QA testing steps.
+
+### 9. `skunexus-tdd-testing` — scenarios → code, test-first
+
+**When:** you want new behavior driven test-first. *"Drive it test-first"*, *"TDD this"*. Optional — the default is tests after the code. You pick it once — as the **full TDD** testing mode when `skunexus-backend-implement` asks — not per task; ad hoc, the phrasing triggers it.
+
+**What happens:** the scenarios become a runnable skeleton of `markTestIncomplete` Given/When/Then sentences (that's the spec, and it's reviewable). Then one vertical slice at a time: watch it fail for the stated reason, write the minimum to pass, refactor only on green. The first slice is a tracer bullet that proves the wiring — provider order, dispatchability, DI — so later failures point at behavior, not plumbing.
+
+**You get:** implementation whose every step was pinned by a test you watched fail first.
+
+**It will not** change the plan document or decide how a test is written (that's `skunexus-behavior-testing`).
+
+### 10. `skunexus-spec-extract` — tests → Given/When/Then spec
+
+**When:** you want to read back what a suite actually asserts. *"The GWT spec of these tests"*, *"does this match the PRD"*. Runs automatically at implementation wrap-up.
+
+**What happens:** a self-contained phar (PHP 8.2+, no `vendor/`, no booted app) parses the test files and renders each scenario as prose from the test vocabulary. Deterministic — no LLM anywhere, so the same tests always produce the same document.
+
+**You get:** `.ai/<TICKET>/spec-from-tests.md`, which the PR, summary and FE-handoff skills read. Never hand-edit it — when a line reads wrong, the test name is what's wrong; fix that and re-run.
+
+**It will not** write or run tests.
 
 ---
 
@@ -204,9 +233,9 @@ claude: (jira-prd) fetches the ticket, interviews you, drafts prd.md → you app
 you:    plan the backend
 claude: (backend-plan) maps the code, drafts the task DAG → you review the manifest, then the file → approve
 you:    orchestrate it
-claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid or post-facto?
+claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid, post-facto or TDD?
         subagents build the tasks, each behavior-bearing one landing its tests green, commits per
-        task → you review the branch → approve
+        task → spec-from-tests.md regenerated → you review the branch → approve
 you:    draft the PR
 claude: (backend-pr) drafts pr.md → you approve → draft PR opened
 you:    prepare the FE handoff
@@ -241,9 +270,9 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 - **You own the environment.** Expect every implementation and investigation to end with a checklist of things only you can run. That's not laziness — it's the honesty rule that keeps "done" meaning done.
 - **Don't fear the ceremony — it scales down.** Say *"skip the ceremony"* or *"just plan this, no PRD"* and the skills right-size. They'll tell you when a change has outgrown the shortcut, and continuing anyway is a legitimate answer.
 - **`decisions.md` being absent is normal.** It's created only for genuine forks whose rationale the code can't reveal. Two real entries get read; twenty trivial ones bury them.
-- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples and the full style guides. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples and the full style guides; `scripts/` holds executables (the spec extractor's phar). Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
 
 ## Not in this repo (yet)
 
 - **`skunexus-docs-c7`** — the platform-docs mental-model skill almost every skill here leans on. Currently distributed by hand; candidate for inclusion.
-- **A QA testing-steps skill** — manual test instructions written for human testers, referenced as a separate downstream step by `skunexus-backend-pr` and `skunexus-fe-handoff`; it doesn't exist yet. Not to be confused with `skunexus-behavior-testing` above, which writes the *automated* behavior tests that ship in the diff.
+- **A QA testing-steps skill** — manual test instructions written for human testers, referenced as a separate downstream step by `skunexus-backend-pr` and `skunexus-fe-handoff`; it doesn't exist yet. Not to be confused with the testing family above: those write and read the *automated* behavior tests that ship in the diff.

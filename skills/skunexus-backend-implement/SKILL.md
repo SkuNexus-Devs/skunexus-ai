@@ -156,6 +156,7 @@ today.** When trailers exist:
 - **hybrid** (default) — each task's trailer is discharged post facto as part of that task. Default because
   it closes the verify loop at the smallest unit: the task that broke something is still the task in hand.
 - **full post-facto** — tasks run untouched; one test pass after the last one.
+- **full TDD** — tests lead the code; opt-in, and the slowest to steer.
 
 The dial is **per run, not per developer or repo**: asked for each plan, re-confirmed on a resume from disk,
 and changeable at any task boundary — nothing in the plan records the mode, so switching costs nothing;
@@ -168,12 +169,16 @@ Mode semantics:
   put the real output in the task hand-off, and rewrite the trailer in the plan as `**Tests (landed):**`.
 - **full post-facto:** tasks run exactly as today; after the last task, one pass discharges every trailer,
   grouped by test file, in its own commit(s) (`<TICKET>: behavior tests`), results reported at final review.
+- **full TDD:** the trailer propositions become the skeleton titles; red → green per vertical slice per
+  `skunexus-tdd-testing`, which owns the loop. It never edits the plan document.
 - **Escape hatch (all modes):** a trailer that proves out-of-suite (the layer map puts it at HTTP level or
   cross-process) or simply wrong against the real code gets flagged in the hand-off with one line of why.
   Never grind on a test that doesn't make sense; never silently drop one.
 - **Existing tests (all modes):** new tests follow `skunexus-behavior-testing`'s grammar even inside a file
   that already holds older-shaped tests; those are left alone unless the change broke them (dev guide §8 —
-  repair, reshape or convert only what costs something; modernising is never a side effect).
+  repair, reshape or convert only what costs something; modernising is never a side effect). A touched file
+  is rendered whole at wrap-up, so `⚠` markers on its pre-existing scenarios are that file's debt, not the
+  ticket's.
 
 #### Mode 1 — task-by-task
 
@@ -314,6 +319,24 @@ request; never require one.
 
 When the last task is approved: every `Status` reads `finished` and no box lies; deviations are amended,
 earned decisions appended, the PRD patched only where requirements actually moved.
+
+When the ticket landed tests, regenerate `.ai/<TICKET>/spec-from-tests.md` with the `skunexus-spec-extract`
+skill — a standing artifact, always regenerated, never hand-edited. Its input is **every test file the branch
+added or changed** (`git diff --name-only <base>...HEAD -- '*Test.php'`), each rendered whole: a ticket that
+adds one test here and two there gets all three files' current contract, never a diff of test lines. It reads
+both syntaxes (`--mode` defaults to `pest`); a run that renders 0 scenarios means the tests fell outside the
+grammar, which is a signal to fix them — never a reason to hand-write the file. Say so in chat.
+
+Then run the **acceptance coverage check**: read that spec against the acceptance criteria in the existing
+lookup order (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance) and report two lists —
+`Rn`/`An` with no scenario, and scenarios that map to no acceptance id. The PRD is the spec and the tests
+are its proof; the two never stay divergent, so every line of both lists resolves before hand-off:
+
+- an `Rn` with no scenario gets one line of why — proven out-of-suite (layer map), covered by another
+  requirement's scenario, or an accepted gap. Thin coverage is the developer's to accept, **not a gate** —
+  but the acceptance is recorded (plan or `decisions.md`), never silent.
+- a scenario with no `Rn` is behavior nobody asked for: either the PRD gains the line (patch + changelog,
+  as Door C does) or the test goes. Never a test that quietly outruns its contract.
 
 Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
 steps are their own downstream skills) and stop — don't write the PR description here.
