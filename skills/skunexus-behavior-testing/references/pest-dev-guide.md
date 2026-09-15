@@ -49,8 +49,9 @@ Worked example to copy from: the annotated anatomy in `pest-style-guide.md` §2 
 
 2. **Name every test as a falsifiable proposition** — lowercase, spaced, subject–verb–outcome:
    `test('force closing an approved rma closes it', …)`. Banned words: *works, correctly, properly,
-   successfully, should*. In Pest the description **is** the spec sentence — already authored prose; the
-   name has to carry it.
+   successfully, should*. In Pest the description **is** the spec sentence — already authored prose, so
+   tests never need a `#[TestDox]` escape hatch; the name has to carry it. (Helper functions still take
+   `#[TestDox]` — §9.)
 
 3. **Header + shared Given.** Keep the `namespace` (one per file — it makes the file's `const` and `when*`
    function namespaced, so cross-file collisions are structurally impossible). `uses()` attaches the
@@ -128,8 +129,10 @@ Worked example to copy from: the annotated anatomy in `pest-style-guide.md` §2 
    ```
 
    Never wrap a value-returning builder in `given()` — it returns `void`. And **never mark a step
-   twice**: `given(fn () => givenTheRmaIsApproved())` — a `given*`-named function is already marked.
-   The name or the wrapper, not both.
+   twice**: `given(fn () => givenTheRmaIsApproved())` renders *"the RMA is is givened approved"*,
+   because the inner `given` is read as the sentence's verb. The name or the wrapper, not both —
+   and don't "fix" it by stripping the prefix, which promotes the next word to verb instead.
+   The bare call is also the only shape whose body is read one hop, for the `— by …` detail.
 
 7. **Exception outcomes use `expect(fn () => …)->toThrow()`** — execution continues past the throw, so
    the guard's second clause ("…and the state did not move") lives in the same test:
@@ -263,3 +266,40 @@ properties — promote the ones shared across files to typed properties on the s
 
 Versions: PHP 8.2 caps us at Pest 3, so `uses()` is the spelling (Pest 5 documents `pest()->use(...)`).
 Syntax written now migrates forward with the official upgrade Rector sets.
+
+## 9. Your tests are the spec — spec-extract
+
+`spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
+the artifact QA reads, the FE handoff quotes, the acceptance coverage check.
+
+**The Pest grammar has shipped** — `--mode` defaults to `pest`, `--mode=phpunit` reads a class-syntax
+tree, and a converted 40-file suite extracts at parity with its PHPUnit original. Pass the extractor a
+**directory**, not a shell glob: `tests/**` is expanded by bash and feeds it `TestCase.php` and
+`Pest.php`, which render as junk sections.
+
+The attachment points it reads: `uses()` + `beforeEach()` → Background; `test('description')` → the
+scenario heading; bare `given(fn)` **or** a bare `givenX()` call → a Given step (the named call also
+yields a `— by …` detail from one hop into its body); `when*()` around `bus()->handle(new XCommand)` →
+the When; `expect()` / `$this->assert*` → Then clauses; `->toThrow(X::class, MESSAGE)` → the rejection
+plus its message; `->with([...])` string keys or `->with('name')` + `dataset('name', fn)` → the
+**Where** step; `test()->target::CONST` → the constant's value.
+
+What decides whether the output reads as English — none of it changes how Pest runs the test:
+
+| Do | Because |
+|---|---|
+| keep the `when*` function one hop above `bus()->handle(...)` | two hops deep the spec reads the wrapper's name, not the command |
+| keep assertions at top level — no loops/closures/`try` around them (§5.4 bans them anyway) | the extractor can't see inside; the scenario renders as unread |
+| name custom assertions as sentences — end on a copula or a preposition (`assertHospitalIssueIs`, `assertNoAllocationsFor`) | the subject promotes: "the fulfillment's hospital issue is 'withdrawn'"; otherwise it renders raw |
+| give `markTestSkipped(...)` its reason; name `->with([...])` cases with string keys | the reason renders as a not-running marker; the keys become the **Where** step |
+| put `#[TestDox('{param} …')]` on a file-level `assert*`/`when*` helper whose derived prose reads wrong | legal PHP on functions, inert to Pest — the same override channel as on PHPUnit helper methods; test headings never need it (the description is already authored prose) |
+
+A domain word that inflects wrong in *every* suite ("unholded") is a one-line dialect-config entry in the
+extractor repo — file it there once, with the word and where it renders wrong. Never work around grammar
+in the test, and never add a dialect word for one test's prose.
+
+**Two things the first landed suite taught:** give every scenario builder with two or more parameters a
+`#[TestDox('order #{number} …')]` from the start (derived prose is a parameter dump otherwise), and never
+pass a `{slot}` a top-level local (it inlines the whole builder call into the Then) — the measured slot rules
+are the style guide §10.6, the checklist §10.7. If a suite already renders badly, the second pass is
+`spec-readability-pass.md`: it fixes the tests, not the spec.

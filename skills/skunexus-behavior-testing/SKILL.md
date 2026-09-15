@@ -3,12 +3,17 @@ name: skunexus-behavior-testing
 description: >-
   Use when writing, converting, reshaping, naming, or placing any SkuNexus test — commands, plugins,
   transitions, vendor overrides, GraphQL fields, endpoints — or deciding test layer, data setup,
-  assertions, or what to mock. Do NOT use for: debugging failing tests, QA testing steps (separate
-  skill), planning or breaking down the work the tests cover (skunexus-backend-plan), writing the
-  production code the tests exercise (skunexus-backend-implement), or PR descriptions
-  (skunexus-backend-pr). Triggered by: Feature test, PHPUnit, Pest, test(), expect(), uses(),
-  beforeEach, bus->handle, Bus::fake, rebootHandlers, Given/When/Then test bodies, tests/Behavior, test
-  naming, what to mock.
+  assertions, or what to mock. Do NOT use for: driving new behavior test-first (that's
+  skunexus-tdd-testing), debugging failing tests, QA testing steps (separate skill), planning or
+  breaking down the work the tests cover (skunexus-backend-plan), writing the production code the
+  tests exercise (skunexus-backend-implement), rendering a finished suite as a Given/When/Then spec
+  (skunexus-spec-extract), or PR descriptions (skunexus-backend-pr). Triggered by: Feature test,
+  PHPUnit, Pest, test(), expect(), uses(), beforeEach, bus->handle, Bus::fake, rebootHandlers,
+  Given/When/Then test bodies, tests/Behavior, test naming, what to mock. ALSO use for the second pass
+  over a landed suite whose rendered spec reads as machine transcript — "improve spec readability", "the
+  spec-from-tests is unreadable", "the Given is missing the differentiator", "spec readability pass",
+  "phrase dump", "TestDox slot" — which audits, FIXES the tests, verifies, and hands the extractor a
+  change-request list.
 user-invocable: true
 ---
 
@@ -26,7 +31,7 @@ The enforcement question over everything below: **read the test name and body al
 ## What to Read, and When
 
 - **Detect the syntax.** Pest when `vendor/bin/pest` exists or composer.json's `test` script runs pest (client repos, the default); PHPUnit class syntax otherwise (`skunexus-be-core`). Everything here is syntax-neutral doctrine; only the shell differs. Pest runs PHPUnit classes natively, so mixed trees are normal — never convert a suite as a prerequisite to anything. Repo has no Pest yet? The one-time install — the phpunit/testbench knot, the patches workflow's `sebastian/diff` dependency, `tests/Pest.php` — is `references/pest-style-guide.md` §0.1; follow it, don't improvise the composer dance.
-- **MANDATORY: before writing, converting, or renaming any test in `tests/Feature/`, `tests/Feature/GraphQL/`, or `tests/Integrations/`, read the style guide matching the repo's syntax** — `references/pest-style-guide.md` or `references/phpunit-style-guide.md`. It is the normative convention and owns everything this file does not restate: placement and the body grammar (§3), naming (§4), the readability rules and the promise ledger (§5), plain-AAA units (§6), the copyable skeleton (§7), the scenario-first skeleton form (§8), and the vocabulary graduation ladder (§9). The Pest guide's §0 table maps every PHPUnit construct to its one Pest home. Do not reproduce any of it from memory.
+- **MANDATORY: before writing, converting, or renaming any test in `tests/Feature/`, `tests/Feature/GraphQL/`, or `tests/Integrations/`, read the style guide matching the repo's syntax** — `references/pest-style-guide.md` or `references/phpunit-style-guide.md`. It is the normative convention and owns everything this file does not restate: placement and the body grammar (§3), naming (§4), the readability rules and the promise ledger (§5), plain-AAA units (§6), the copyable skeleton (§7), the scenario-first skeleton form (§8), the vocabulary graduation ladder (§9), and writing for the extractor (§10). The Pest guide's §0 table maps every PHPUnit construct to its one Pest home. Do not reproduce any of it from memory.
 - **New to the convention?** Read `references/<syntax>-dev-guide.md` first — the 7-step recipe, the facts that surprise new authors, how to run, when to convert an old test. It is the on-ramp; the style guide wins on any conflict.
 - **Skip the guides** when writing a pure unit test (plain AAA, no ceremony) or when only running or diagnosing existing tests without editing their bodies — the infrastructure list and the troubleshooting table at the end of this file are for that.
 - **Before renaming a test or trusting someone else's suite, run the promise ledger** (style guide §5.8). A name that reads correct makes a weak body invisible in review, and the runner then publishes the promise as if it were proved.
@@ -294,6 +299,8 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 | "Test passes; I'll skip running the full suite." | Other tests share vocabulary, factories and seeders. Run the file's group at minimum. |
 | "The name reads right, so the body must be right." | A name that reads correct is exactly what hides a weak body. Run the promise ledger (style guide §5.8): each noun built, each qualifier asserted, each quantifier exercised, each clause with a Then, states positive, values not existence. |
 | "Five tests have the same body; the titles tell them apart." | The differentiator is hiding in a title or a dataset key. Surface it as a named `given*` delta taking the varying value, so each body says what makes it different. |
+| "The spec has 0 `⚠`, so it's readable." | `⚠` measures where the extractor gave up, not where the reader does. Run the grep block in `spec-readability-pass.md` §1 — long bullets, phrase dumps, blank Thens. |
+| "The plan says this TestDox will render as …" | A predicted render is a guess. Run the phar on a probe copy and quote the line. |
 
 ## NEVER Rules
 
@@ -324,9 +331,17 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 - **NEVER assert a state negatively** (`assertNotEquals(Closed::STATE, ...)`) — it passes for every wrong state, including a buggy one. Assert the expected state positively via the value object's `equals()`. This leaks most often where the *name* already fixes the state (`..._stays_pending`): the name is the assertion you owe.
 - **NEVER let a test name claim a noun, qualifier, quantifier or second clause the body doesn't assert.** "every line", "for the returned units", "a line of another RMA", "is already closed *and so* cannot be received" — if the fixture never builds it or no Then reads it, the name is a promise the suite doesn't keep, and the runner's description list publishes it as if it did. Build it and assert it, or rename the test to what is actually proved (style guide §5.8).
 - **NEVER let existence stand in for a value.** `assertArrayHasKey`, `assertNotEmpty`, `assertGreaterThan(0, ...)` as a test's only Then pass for a renamed field, a null, and a wrong-but-nonzero number alike. Assert the value the Given fixed; if the expected value is unknowable, the Given is under-specified — fix the fixture, not the assertion.
-- **NEVER put an assertion or `fail()` inside a `the*` / `a*` vocabulary helper.** Article-grammar words retrieve and create; one that can fail the test hides half the contract from the body. A helper that judges is named `assert*`, and the clause it decides is stated in the test.
+- **NEVER put an assertion or `fail()` inside a `the*` / `a*` vocabulary helper.** Article-grammar words retrieve and create; one that can fail the test hides half the contract from the body and from the extracted spec. A helper that judges is named `assert*`, and the clause it decides is stated in the test.
 - **NEVER verify side effects via raw DB reads in a behavior test** (`DB::table(...)`, raw SQL). Use the read-side production callers use. Sole exception: the independent oracle inside a *persistence* test.
 - **NEVER assert "listener registered" or "class X exists in `PROVIDERS` array"** — a tautology against the literal. Assert the observable effect via bus dispatch or endpoint POST.
+
+### The rendered spec
+
+- **NEVER hand-edit `spec-from-tests.md`** — it is regenerated; fixes go in the tests or in a change request to the tool.
+- **NEVER let a `#[TestDox]` say what the helper does not do** — verify every sentence against the body; a wrong spec is worse than an ugly one.
+- **NEVER feed a `{slot}` a top-level local** — it inlines the local's whole assignment into the Then. Pass the domain number, a literal, or a `$this->` property.
+- **NEVER assert inside a `when*` helper** — return the value and assert in the body, or the Then never renders and sibling scenarios silently differ.
+- **NEVER leave a parameterised scenario builder without a `#[TestDox]`** — its derived prose is a parameter dump on every call.
 
 ### Pest-specific
 
@@ -361,8 +376,39 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 | Flaky on parallel runs | Test mutates a shared file or DB row outside its own transaction | Use factories per test; avoid `truncate` |
 | A test fails three times in a row with the same error | Stop guessing | Stop retrying — read the full failure output, form one hypothesis at a time, and bisect the cause |
 
+## The Test Is Also the Published Spec
+
+`spec:extract` (the `skunexus-spec-extract` skill) deterministically renders any test file as Given/When/Then prose — the gwt.md a ticket attaches, the acceptance coverage check, the FE handoff quote. Its input language IS this skill's grammar: a test written per this doctrine extracts as readable English with **zero extra work**. Never contort a test for the extractor — when its output reads wrong, escalate cheapest-first, and notice the first rungs improve the test itself:
+
+1. **Fix the name/shape.** A custom assertion whose phrase ends on a copula or closes on a preposition promotes its subject (`assertHospitalIssueIs` → "the fulfillment's hospital issue is 'withdrawn'"); one that can't renders a greppable `⚠ RAW —` marker instead of fake English.
+2. **`#[TestDox('{param} …')]`** on the assertion helper or `given*`/`when*` wrapper — PHPUnit-native, inert at runtime, one line at the definition fixes every call site. Default is NO TestDox: right-reading derived prose needs no second source of truth.
+3. **A dialect config word** — only for a domain word that inflects wrong in *every* suite ("unholded") or an acronym casing; never for one test's prose.
+
+**One default changed by experience:** every scenario builder with two or more parameters carries a `#[TestDox]` from the start — derived prose for a parameterised builder dumps every argument with its parameter name (`an imported shopify order of number 936285, shopify created at settled long before the sweep`, ×127 in one suite). The measured rules for what a `{slot}` renders (a top-level local inlines its whole assignment; an empty array and a defaulted parameter render as nothing; a nested helper's own TestDox is ignored) and the sixteen-item first-pass checklist are the style guide §10.6–10.7 — read them before writing a builder or an assertion with slots.
+
+Placement gotchas that silently eat prose: a `//` note goes ABOVE `#[Test]` (between attribute and `function` it vanishes); the class docblock goes after `namespace`; assertions inside closures/loops render `⚠ NOTHING READ` — which the body grammar bans anyway (the extractor is the lint). Read a new file back with `spec-extract <file>` next to `--testdox` before committing; `grep '⚠ RAW\|⚠ NOTHING READ'` over rendered specs is the suite's prose-debt metric — and if the read-back looks like machine transcript despite 0 `⚠`, **offer** the optional second pass (next section) rather than fixing ad hoc. Full guidance: the style guide §10.
+
+**Status — the extractor reads both syntaxes.** `--mode` defaults to `pest` (`test()` → scenario, `beforeEach` → Background, bare `given()` or a bare `givenX()` call → Given, `when*` functions → passive command prose, `expect()` families → Thens, `#[TestDox]` on file-level helpers); `--mode=phpunit` reads `#[Test]` classes. A converted 40-file suite extracts at parity with its PHPUnit original, so either syntax is a first-class spec source. Two Pest-only rules that decide whether the prose reads: mark a Given **once** — `given(fn () => $this->…)` or a bare `givenX();`, never `given(fn () => givenX())` — and pass the extractor a **directory**, not a shell glob. Style guide §3 and §10.5.
+
+## The Spec-Readability Pass — second pass over a landed suite
+
+A green suite with `0 ⚠` can still render 86 unreadable bullets. **The pass is optional and the developer decides:** after the first render of a new suite, or when someone says the spec "needs a lot of improvement", run the two-minute measure block (reference §1, read-only) and **ask** with the numbers — `AskUserQuestion`: "long bullets N, phrase dumps N, blank Thens N, setting values stated: no. Run the readability pass now (≈K test files edited, suite stays green), or leave it?" Start only on a yes; "later" goes in the ticket's follow-ups. When it runs, `references/spec-readability-pass.md` is a **mandatory read first.** It is audit → **apply** → verify → iterate, not a report:
+
+1. **Baseline** — suite counts (tests *and* assertions), scenario counts, a before-copy of the render.
+2. **Measure** — the grep block: long bullets, phrase dumps, blank Thens, proper-noun verbs, repeated glosses, Then-repeats-Given, lowercase nouns/headings, why-notes rendered; then by eye: are the setting values anywhere, can sibling scenarios be told apart from their bullets.
+3. **Three roles, written down separately, then reconciled** — a cold reader (spec only, as PM/PO and FE dev), a fidelity reviewer (§5.8 promise ledger against source, verdict test-shape / vocabulary / extractor per defect), a fix planner (cheapest rung, **every render measured on a probe**). Synthesise: rank by damage, make the disagreement calls.
+4. **Apply** in order scenario trait → assertions trait → Feature test → Unit files → dialect overlay; re-read whole files, run the suite, grep every replaced name after each.
+5. **Verify with a fresh-eyes verifier who didn't write the fixes** — defect table with quoted evidence, contract drift, **every TestDox sentence true of its body**, duplicated literals equal their consts, orphans (dead returns, unswept siblings, jargon left in the domain trait), style, PM spot-read. Then a cleanup pass.
+6. **Gate** — same test count, assertion delta named, replaced names at zero, no duplicated methods, regenerated spec with the metrics in single digits.
+7. **Deliver** — the regenerated spec, a `decisions.md` entry with the debt deliberately left (title-vs-body contract items are the developer's call), and `.ai/<TICKET>/spec-extract-requests.md` for the tool — **fix the tests now, don't wait for the tool.**
+8. **Iterate** on the developer's review; the two recurring asks ("does it need N orders?", "the Given is missing the differentiator") have standard answers in the reference §9.
+
+The generalised defect catalogue (symptom → cause → fix), the disagreement calls, the NEVER list and the diagnostics table are in the reference — as is a one-paragraph hint on how the roles map to agents if you choose to split the work (the three readings are independent; apply splits by disjoint file sets; the verifier didn't write the fixes).
+
 ## Related Skills
 
+- **OPTIONAL COMPANION:** `skunexus-tdd-testing` — the process overlay for building new behavior test-first (when to write which test, in what order). Every test it drives is written per this skill.
+- **OPTIONAL COMPANION:** `skunexus-spec-extract` — renders these tests as the published GWT spec; §10 of the style guide is the authoring guidance that keeps its output readable.
 - **UPSTREAM:** invoked from the engineering workflow by `skunexus-backend-plan` (which names the test file and the propositions per task) and by `skunexus-backend-implement` (which writes and runs those tests as the tasks land).
 
-This skill writes and runs the tests and stops there: it does not plan the work (`skunexus-backend-plan`), write the production code they exercise (`skunexus-backend-implement`), or write QA testing steps (separate skill).
+This skill writes and runs the tests and stops there: it does not plan the work (`skunexus-backend-plan`), write the production code they exercise (`skunexus-backend-implement`), render them as the published spec (`skunexus-spec-extract`), or write QA testing steps (separate skill).

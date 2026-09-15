@@ -215,8 +215,9 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
    `assertArrayHasKey|assertNotEmpty|assertGreaterThan` · `fail\(` in a method not named `assert*` ·
    a name containing `every|all|each|both` in a file whose `setUp` builds one actor.
 
-   **The read-back.** `--testdox` gives you the names; the bodies you must read. Read each body's clauses
-   back against its name: the mismatch is obvious in prose and near-invisible in a diff.
+   **The read-back.** `--testdox` gives you the names; the bodies you must read. Render the file's spec
+   with `spec-extract` (§10.5) and check each clause against its name: the mismatch is obvious in prose
+   and near-invisible in a diff.
 
 9. **Sibling tests with identical bodies are a red flag.** A matrix of one proposition is a data provider
    (§5.3); five *different* propositions sharing one body means the differentiator lives only in the names.
@@ -325,6 +326,102 @@ file-private given*/when* wrappers            — never graduate (file-contract-
 ```
 
 Nothing is created speculatively at any tier — every promotion is triggered by the second consumer arriving.
+
+---
+
+## 10. The test is also the published spec — writing for spec-extract
+
+The team ships a deterministic GWT extractor (`spec:extract`, the `skunexus-spec-extract` skill): it parses a test
+file's AST and renders every `#[Test]` as Given/When/Then prose — the gwt.md a ticket attaches, the
+acceptance coverage check, the FE handoff quote. Its input language IS the grammar of §§1–9: a test written per
+this guide extracts as readable English with zero extra work — vocabulary `when*` wrappers become passive
+command prose ("the RMA is closed with reason 'never arrived'"), article builders read as their articles,
+`assertThrows` splits into the attempt and "it is rejected — …", `setUp` becomes the Background with
+bound names (`an order in pick (*the fulfillment*)`).
+
+**Rule zero: never contort a test for the extractor.** Human readability of the test wins every conflict.
+When the extracted prose reads wrong, work the ladder below cheapest-first — and notice that the first
+two rungs improve the test itself, which is the point: two birds with one stone, not a second master.
+
+### 10.1 Free rides — and the placement gotchas that silently eat them
+
+| You write | The spec shows | The gotcha |
+|---|---|---|
+| a `//` note ABOVE the `#[Test]` attribute | an italic note under the scenario heading | between the attribute and `function` it vanishes |
+| a class docblock after `namespace` | a `>` blockquote under the file heading | above `namespace` it vanishes (php-parser hands it to the namespace node) |
+| `// GIVEN an order ready to pack` on setUp's first statement | the Background headline | elsewhere it's dropped |
+| `markTestSkipped('the ACL check is missing')` | `⚠ NOT RUNNING — the ACL check is missing` | the argless call renders only a camel-split default |
+| `#[DataProvider]` with string-keyed cases | a **Where** step listing the case names | name the cases; the keys are the prose |
+
+Two structural limits, both surfaced by markers rather than silence:
+
+- **Assertions inside closures, loops, or try blocks are invisible** — the scenario renders
+  `⚠ NOTHING READ — every statement of this test fell outside the grammar`. §5.3 bans body logic anyway;
+  the extractor is the lint that makes the ban visible.
+- **Keep `when*` wrappers one hop above the dispatch.** One wrapper deep, the spec reads the command;
+  two deep, it falls back to the wrapper's own name.
+
+### 10.2 Custom assertions — shape the name so the subject promotes
+
+The extractor promotes a custom assertion's subject (the **last** variable argument — PHPUnit's
+expected-then-actual order makes it the thing under test) into the phrase whenever the name can host it:
+a phrase ending on a copula (`assertHospitalIssueIs`) or closing on a preposition with one argument
+(`assertNoAllocationsFor`) reads as "the fulfillment's hospital issue is 'withdrawn'" / "no allocations
+for the product". A name that can't host its subject renders as marked call syntax —
+`⚠ RAW — tote qty for(the cart, the item, 1)` — honest, greppable, ugly. §4 already wants assertion names
+to be the scenario's sentence, and sentences carry copulas; when the natural name genuinely can't be one
+(multi-argument relations like `assertToteQtyFor`), don't rename it into mush — that's what §10.3 is for.
+
+### 10.3 `#[TestDox]` — the one-line override, used sparingly
+
+PHPUnit's own attribute, inert everywhere PHPUnit doesn't read it — safe on private helpers and trait
+words, nothing for client suites to autoload. Three homes, in descending order of how often they're
+warranted:
+
+1. **On an assertion helper** whose derived prose is `⚠ RAW`:
+   `#[TestDox('{tote} holds {qty} of {item}')]` on `assertToteQtyFor(CoreCart $tote, …)` — `{param}`
+   slots fill from the call's arguments by parameter name; one line at the definition fixes every call
+   site in every suite.
+2. **On a `given*`/`when*` wrapper** whose derived sentence reads wrong: the template replaces the
+   derived prose verbatim (write the finished sentence — it is not passivised for you).
+3. **On a test method** — names the scenario heading. Rare: the snake_case proposition IS the contract
+   (§4) and almost always reads fine; reach for this only when the title needs punctuation or casing a
+   method name cannot carry.
+
+Default: **no TestDox.** If the derived English is right, an attribute is a second source of truth that
+can drift. Slots must name real parameters — a typo'd `{slot}` leaks into the spec verbatim.
+
+### 10.4 Dialect words — last resort, evidence required
+
+When a DOMAIN word inflects wrong in every suite ("unholded", "reshiped") or an acronym renders lowercase
+("sku urls"), the fix is one entry in the extractor's dialect config (irregular participle/gerund,
+initialism), filed once in the spec-extract repo
+(https://github.com/SkuNexus-Devs/dev-ian-spec-extract) — not a TestDox per call site. Same discipline
+as vocabulary: one word per demonstrated, recurring need; generic English/PHP words belong to the base dialect, SN domain words to the SN dialect.
+Never add a dialect word to fix one test's prose — that's TestDox's job; never TestDox around grammar —
+that's the dialect's job.
+
+### 10.5 The read-back and the debt greps
+
+Before committing a new test file, render it and read it as the reviewer will:
+
+```bash
+spec-extract tests/Feature/OrderRMA/CloseRmaTest.php
+```
+
+Then the two debt greps over the rendered spec, both of which should trend to zero suite-wide:
+`⚠ RAW` (an assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar
+cannot see — almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job.
+
+
+### 10.6 Slot rendering rules and the first-pass checklist — see the Pest guide
+
+The `#[TestDox]` slot rules are syntax-neutral: what a slot renders when fed a literal, a const, a
+default, a property, a **top-level local** (inlined whole), an empty array (nothing) or a nested helper
+(its own TestDox ignored) is measured in `pest-style-guide.md` §10.6, and the sixteen authoring rules that
+follow from a landed suite's defects are §10.7 — read both; every item applies to a `#[Test]` class with
+`private` helpers and `setUp()` in place of `beforeEach`. The second pass over a suite that already
+renders badly is `spec-readability-pass.md`.
 
 ---
 
