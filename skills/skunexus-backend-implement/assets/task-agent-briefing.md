@@ -48,9 +48,10 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
   step rationale in your report, not the code.
 - **Tests — per the Testing mode above.** In **full post-facto**, or when your task carries no `Tests:`
   trailer, the tests prohibition below stands as written. In **hybrid**: once your steps land, discharge the
-  task's `Tests:` trailer per the `skunexus-behavior-testing` skill — read the style guide matching the
-  repo's syntax (`references/pest-style-guide.md` for Pest, `references/phpunit-style-guide.md` for PHPUnit)
-  BEFORE writing any test code — then run the file/group you wrote. Never claim green without a run. A
+  task's `Tests:` trailer: invoke the `skunexus-behavior-testing` skill first (the Skill tool — it names its
+  own base directory), then read the style guide matching the repo's syntax under that directory
+  (`references/pest-style-guide.md` for Pest, `references/phpunit-style-guide.md` for PHPUnit) BEFORE writing
+  any test code — then run the file/group you wrote. Never claim green without a run. A
   trailer that is out-of-suite (HTTP-level or cross-process per the layer map) or wrong against the real code
   gets flagged in your report, not ground on.
 - **A red test is yours to act on, never to hide.** Classify it: (a) your implementation is wrong → fix it

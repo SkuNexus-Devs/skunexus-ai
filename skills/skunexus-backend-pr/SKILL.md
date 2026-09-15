@@ -108,9 +108,8 @@ in the description** (the judgment of "applies here" is yours; looking for them 
 - **Exercisable behavior** — a bug fix gets a before/after table of real inputs; an endpoint
   change gets a request/response example; a contract change states what error responses did NOT
   change. Concrete examples are what reviewers actually verify against — and when behavior tests
-  landed in the diff, the extracted Given/When/Then scenarios (`.ai/<TICKET>/spec-from-tests.md`,
-  else the runner's own description output) are their best source; a short scenario excerpt can be
-  quoted in the body.
+  landed in the diff, the runner's own description output (the test names, read as scenarios) is
+  their best source; a short scenario excerpt can be quoted in the body.
 
 If any why-gap remains after artifacts + Jira + commits, ask the developer now — targeted
 questions, then draft once.

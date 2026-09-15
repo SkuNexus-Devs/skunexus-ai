@@ -55,7 +55,6 @@ duplicate or summarize it here.
 ├── prd.md              # business intent, scope (may be absent)
 ├── decisions.md        # the WHY behind forks (may be absent)
 ├── investigation.md    # bugfix tickets: root cause + verdict (may be absent)
-├── spec-from-tests.md  # Given/When/Then rendered FROM the tests — optional Behavior source (may be absent)
 └── backend-summary.md  # THIS skill's deliverable — starts Draft, ends Approved
 ```
 
@@ -161,7 +160,7 @@ next developer.>
 
 ## Relations
 <Other tickets/features this touches or builds on — other .ai/<T>/ docs, core features it
-plugs into, sibling customizations; link `spec-from-tests.md` when the ticket has one.>
+plugs into, sibling customizations.>
 
 ## Pending
 <Open TODOs as of YYYY-MM-DD — QA pending, follow-up cleanup, open business decision. Omit the

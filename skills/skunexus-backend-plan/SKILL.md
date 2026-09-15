@@ -248,6 +248,12 @@ see the shape to react to it.
   `tests/Integrations/…` as the map says, and often an **existing** file (a plugin, transition, override or
   resolver proves itself in the upstream command's file) — the propositions **quoted from the acceptance
   the task `Satisfies`** (`Rn` from the PRD, or `An` from the inline Goal & Acceptance), not re-invented.
+  An acceptance written as a Given/When/Then sentence is quoted whole — it becomes the skeleton body the
+  test starts as — and its test title is the *then* clause with its subject, in the test grammar's
+  subject–verb–outcome shape; sentence and title say one thing in two lengths. The domain's
+  `tests/Behavior/` traits the propositions will grow into are part of the task's file set for the implement
+  skill's scheduling (step 2's test-terrain map names them), so two tasks growing the same domain's
+  vocabulary are not file-disjoint.
   A task whose only proof is out-of-suite (auth/CSRF/throttle, a live worker, a connector sandbox) gets no
   trailer; its `Sanity-check now` line says so. The
   propositions are **not** checkbox steps (status stays derived from the steps alone), and a test is **never

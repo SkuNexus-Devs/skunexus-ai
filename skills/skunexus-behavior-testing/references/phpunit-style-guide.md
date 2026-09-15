@@ -45,8 +45,17 @@ class CreatePutAwayTest extends TestCase
 ## 3. Placement rules — what goes where
 
 **`setUp` holds the shared Given, and only state.** Every test in the file must want all of it. No dispatch
-of the command under test, no assertions, ever. If only half the tests share a piece of setup, that piece
-moves into those tests — or the file wants to be two files.
+of the command under test, no assertions, ever. One `// GIVEN …` headline on its first statement says what
+the world is and carries the settings the scenarios lean on — `// GIVEN a sweep with a 60-minute grace window
+and a 60-day age-out` — because "older than the age-out" is unfalsifiable to a reader who was never told the
+age-out; the correspondence principle (§5.1) covers constants too. If only half the tests share a piece of
+setup, that piece moves into those tests — or the file wants to be two files.
+
+**Harness calls in the shared Given wear a vocabulary name.** `Carbon::setTestNow(...)`, `Queue::fake()` and
+`$this->rebootHandlers([...])` are configuration, not sentences; `$this->theClockIsFixedAt($noon)` and
+`$this->queuedJobsAreRecordedNotRun()` say what the world is. The boundary fake stays visible — only the
+wording is domain — and a one-off fake inside a body still rides the inline marker
+(`$this->given(fn () => Queue::fake())`, below).
 
 **Given deltas open the test body, marked `given`.** A variation on the shared world is stated first, and
 the *role marker is non-negotiable while the packaging is free* — two equivalent forms:
@@ -81,14 +90,15 @@ in the body match. The inline marker is 3 lines on the base TestCase (`given(Clo
 carries no string label (nothing to drift) and no value threading (state stays in properties).
 
 With deltas marked, **the body grammar is total: every line in a test body starts with `given`, `when`, or
-`assert`.** That is mechanically checkable (a lint rule / the Phase 2 meta-test), and it makes the §5.0
-documentation extraction a name-splitter: *Given the cart is not a receiving cart, when create put away,
-then rejected* — derived from names that cannot drift. (Anything else that must happen in a body — a
+`assert`.** That is mechanically checkable, and it makes the file read as its own spec: *Given the cart is not a
+receiving cart, when create put away, then rejected* — derived from names that cannot drift. (Anything else that must happen in a body — a
 boundary fake like `Queue::fake()`, for instance — is arrange, and rides inside the inline marker:
 `$this->given(fn () => Queue::fake());`.)
 
 **The When lives in the test body, always** — one line, calling a private method named `when` + the domain
-verb (see §4).
+verb (see §4). That method is a dispatch wrapper and nothing else: it returns the result and never asserts —
+a Then decided inside the When is a clause the test body no longer shows (the same leak as a `the*` helper
+that can fail, §5.8).
 Never in `setUp` (the body loses its verb, arrange-failures and contract-failures blur, and the file goes
 rigid — no guard or variant test can exist once `setUp` has already acted). **One When per test.** Two
 dispatches means one of them is really a Given (move it into a builder) — unless the sequence *is* the
@@ -118,7 +128,16 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
   (the exception class is asserted in the body, not encoded in the name).
 - **Builders:** indefinite article = creates (`aWarehouse()`, `anActiveProduct()`); definite article =
   retrieves what the seed guarantees (`theAdminUser()`); verb phrase = a Given-action
-  (`receiveIntoCart(...)`).
+  (`receiveIntoCart(...)`). A builder with two or more parameters carries a one-line docblock stating what
+  it makes — domain noun first, true of the body (`/** An order already imported from the shop, with the
+  given number and created-at. */`): the call site shows arguments, not meaning, and a summary that promises
+  what the builder doesn't do is worse than none.
+- **Helper names open with the domain subject, never a vendor or proper noun** —
+  `theCandidateLookupsAreRejected()`, not `shopifyRejectsTheCandidateLookups()`. Subject-first names read as
+  sentences about the domain; vendor-first ones read as namespaces. Docblocks follow the same rule.
+- **Thresholds and offsets are named readers derived from the consts** — `pastTheAgeOut()`,
+  `justInsideTheGraceWindow()` — never arithmetic at the call site (`daysBefore(70)`). The name says which
+  side of the rule the scenario sits on; the number lives once, beside the const it derives from.
 - **The When helper: `when` + the imperative domain verb** (`whenCreatePutAway()`). This completes the
   morphological grammar — Given is marked by articles, Then by `assert`, and without the prefix the When is
   the one unmarked verb, indistinguishable at the call site from a Given-action (`receiveIntoCart` arranges,
@@ -130,12 +149,22 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
   Prefixes mark the *body*; position marks `setUp` — vocabulary builders themselves stay unprefixed
   (article grammar) and do the actual work inside either form.
 - **Assertions:** `assert` + a domain proposition (`assertItemDestinedFor(...)`), failing with a domain
-  sentence, never a bare `assertEquals` mismatch dump.
+  sentence, never a bare `assertEquals` mismatch dump. Shape the name as the sentence's predicate and pass
+  the subject last, PHPUnit's own expected-then-actual order: end on a copula
+  (`assertHospitalIssueIs('withdrawn', $fulfillment)`) or a preposition (`assertNoAllocationsFor($product)`),
+  and the call reads aloud as a sentence about its subject. The empty outcome gets its own word
+  (`assertNoCandidatesDispatched()`, not `assertCount(0, …)`) and a count lives in the name
+  (`assertRepulledOnceFor()`, `assertRepulledTwiceFor()`) — a zero or an open comparator at the call site is
+  the §5.8 leak in its most common form.
 - **Traits carry a `Trait` suffix, file name matching** — `ReceivingScenarioTrait`, `PutAwayAssertionsTrait`,
   `DomainAssertionsTrait` in `tests/Behavior/`. Team convention; rename any un-suffixed trait you touch.
 - **Actors get distinguishable names.** `$coffee`/`$tea`, `$locationA`/`$locationB` — never `$product1`/`$product2`.
   Type-identical pairs are where silent transposition hides; distinct names make a swapped assertion
-  visibly wrong.
+  visibly wrong. When a Then must say *which* — two stores, two cursors — the actors are properties set in
+  the shared Given (`$this->store`, `$this->otherStore`), not locals assigned at the top of the test: the
+  body names them and the Given owns them. And helpers take the domain number, never the transport id —
+  `assertRepulledFor(936290)`, not `assertRepulledFor($gid)`; build the gid inside the helper. A body speaks
+  in order numbers a reader can place, not in ids nobody can.
 
 ## 5. Readability rules
 
@@ -145,13 +174,14 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
    assertion is a time bomb — pin every field an assertion depends on.
 2. **Named arguments for literals.** `qty: 10`, `in: $warehouse`, `count: 3` — call sites label themselves.
 3. **No logic in test bodies.** No `if` (a branching test tests two things or none), no `foreach` over
-   assertions (a loop hides which iteration failed — the original `CreatePutAwayTest:131-139` loop is the
-   counterexample; `SampleTest` unrolls it into two visible lines). Matrices go in a string-keyed
+   assertions (a loop hides which iteration failed — unroll it into visible lines). Matrices go in a string-keyed
    `#[DataProvider]`; iteration may live *inside* a domain assertion, which reports the failing element.
 4. **Budgets as smoke alarms.** Test body ≤ ~12 lines, `setUp` ≤ ~10 vocabulary lines. Exceeding them
    doesn't mean "split mechanically" — it means a vocabulary word is missing or the file covers two surfaces.
 5. **Comments only for what code can't say:** domain gaps (`// DOMAIN GAP: no command sets a cart's
-   department`), non-obvious constraints. Never restate the method name in a docblock.
+   department`), non-obvious constraints. A *why* note about a scenario sits directly above its `#[Test]`
+   line — never inside the body, where it reads as a step, and never between the attribute and `function`,
+   where it is easy to miss. Never restate the method name in a docblock.
 6. **File reads as the spec, in spec order.** Happy-path clauses first, then guards and edge cases. Before
    committing, run `--testdox` on the file: if a sentence reads wrong, the name is wrong.
 7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the GWT sentences of a
@@ -167,7 +197,7 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
    invisible in review, and `--testdox` then publishes the promise as if it were proved. Read the name
    as a sentence and make every word earn an assertion — each noun exists in the fixture, each
    qualifier is asserted, each quantifier is exercised, each clause has a Then. The eight modes below
-   were all found by rendering a landed suite's spec and reading its clauses back against its names.
+   were all found by reading a landed suite's names back against their bodies, clause by clause.
 
    | The name promises… | …the body proves | Cure |
    |---|---|---|
@@ -185,9 +215,14 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
    `assertArrayHasKey|assertNotEmpty|assertGreaterThan` · `fail\(` in a method not named `assert*` ·
    a name containing `every|all|each|both` in a file whose `setUp` builds one actor.
 
-   **The read-back.** `--testdox` gives you the names; the bodies you must read. Render the file's spec
-   with `spec-extract` (§10.5) and check each clause against its name: the mismatch is obvious in prose
-   and near-invisible in a diff.
+   **The read-back.** `--testdox` gives you the names; the bodies you must read. Read each body's clauses
+   back against its name: the mismatch is obvious in prose and near-invisible in a diff.
+
+9. **Sibling tests with identical bodies are a red flag.** A matrix of one proposition is a data provider
+   (§5.3); five *different* propositions sharing one body means the differentiator lives only in the names.
+   Surface it: a named `given*` delta taking the varying value (`givenTheShopReturned('shirt')`,
+   `givenThePullWouldImport('shirt')`), with `setUp` naming the empty starting state — each body then says
+   what makes it different.
 
 ## 6. Where plain AAA (no ceremony) is correct
 
@@ -235,7 +270,7 @@ class <Command>Test extends TestCase
         $this-><assertDomainProposition>(...);    // THEN — one clause, read-side
     }
 
-    /** WHEN — the contract's trigger, stated once. */
+    /** WHEN — the contract's trigger, stated once. Dispatch only — the body asserts. */
     private function when<DomainVerb>(): <DomainResult>
     {
         return $this->bus()->handle(new <Command>(...))->getValue();
@@ -269,7 +304,9 @@ implemented. The skeleton is runnable (`--testdox` renders the scenario list bef
 reviewable (the spec is commit 1 of the PR), and **self-deleting** — implementing a test replaces the
 sentence with the three role-marked lines that say the same thing, so drift is impossible. Batching *titles*
 up front is writing the spec, not horizontal slicing — implementation still proceeds one vertical slice at a
-time (red → green per scenario). Scenarios that pre-exist in a PRD or plan flow into skeleton names; they
+time (red → green per scenario). Scenarios that pre-exist in a PRD or plan flow into the skeleton whole: a
+Given/When/Then acceptance sentence becomes the `markTestIncomplete` sentence, and the name is its *then*
+clause with its subject, in the §4 shape — the same proposition in two lengths, never two propositions. They
 don't get duplicated into a second document next to the test.
 
 ## 9. Who shares what — the vocabulary graduation ladder
@@ -288,102 +325,6 @@ file-private given*/when* wrappers            — never graduate (file-contract-
 ```
 
 Nothing is created speculatively at any tier — every promotion is triggered by the second consumer arriving.
-
----
-
-## 10. The test is also the published spec — writing for spec-extract
-
-The team ships a deterministic GWT extractor (`spec:extract`, the `skunexus-spec-extract` skill): it parses a test
-file's AST and renders every `#[Test]` as Given/When/Then prose — the gwt.md a ticket attaches, the
-acceptance coverage check, the FE handoff quote. Its input language IS the grammar of §§1–9: a test written per
-this guide extracts as readable English with zero extra work — vocabulary `when*` wrappers become passive
-command prose ("the RMA is closed with reason 'never arrived'"), article builders read as their articles,
-`assertThrows` splits into the attempt and "it is rejected — …", `setUp` becomes the Background with
-bound names (`an order in pick (*the fulfillment*)`).
-
-**Rule zero: never contort a test for the extractor.** Human readability of the test wins every conflict.
-When the extracted prose reads wrong, work the ladder below cheapest-first — and notice that the first
-two rungs improve the test itself, which is the point: two birds with one stone, not a second master.
-
-### 10.1 Free rides — and the placement gotchas that silently eat them
-
-| You write | The spec shows | The gotcha |
-|---|---|---|
-| a `//` note ABOVE the `#[Test]` attribute | an italic note under the scenario heading | between the attribute and `function` it vanishes |
-| a class docblock after `namespace` | a `>` blockquote under the file heading | above `namespace` it vanishes (php-parser hands it to the namespace node) |
-| `// GIVEN an order ready to pack` on setUp's first statement | the Background headline | elsewhere it's dropped |
-| `markTestSkipped('the ACL check is missing')` | `⚠ NOT RUNNING — the ACL check is missing` | the argless call renders only a camel-split default |
-| `#[DataProvider]` with string-keyed cases | a **Where** step listing the case names | name the cases; the keys are the prose |
-
-Two structural limits, both surfaced by markers rather than silence:
-
-- **Assertions inside closures, loops, or try blocks are invisible** — the scenario renders
-  `⚠ NOTHING READ — every statement of this test fell outside the grammar`. §5.3 bans body logic anyway;
-  the extractor is the lint that makes the ban visible.
-- **Keep `when*` wrappers one hop above the dispatch.** One wrapper deep, the spec reads the command;
-  two deep, it falls back to the wrapper's own name.
-
-### 10.2 Custom assertions — shape the name so the subject promotes
-
-The extractor promotes a custom assertion's subject (the **last** variable argument — PHPUnit's
-expected-then-actual order makes it the thing under test) into the phrase whenever the name can host it:
-a phrase ending on a copula (`assertHospitalIssueIs`) or closing on a preposition with one argument
-(`assertNoAllocationsFor`) reads as "the fulfillment's hospital issue is 'withdrawn'" / "no allocations
-for the product". A name that can't host its subject renders as marked call syntax —
-`⚠ RAW — tote qty for(the cart, the item, 1)` — honest, greppable, ugly. §4 already wants assertion names
-to be the scenario's sentence, and sentences carry copulas; when the natural name genuinely can't be one
-(multi-argument relations like `assertToteQtyFor`), don't rename it into mush — that's what §10.3 is for.
-
-### 10.3 `#[TestDox]` — the one-line override, used sparingly
-
-PHPUnit's own attribute, inert everywhere PHPUnit doesn't read it — safe on private helpers and trait
-words, nothing for client suites to autoload. Three homes, in descending order of how often they're
-warranted:
-
-1. **On an assertion helper** whose derived prose is `⚠ RAW`:
-   `#[TestDox('{tote} holds {qty} of {item}')]` on `assertToteQtyFor(CoreCart $tote, …)` — `{param}`
-   slots fill from the call's arguments by parameter name; one line at the definition fixes every call
-   site in every suite.
-2. **On a `given*`/`when*` wrapper** whose derived sentence reads wrong: the template replaces the
-   derived prose verbatim (write the finished sentence — it is not passivised for you).
-3. **On a test method** — names the scenario heading. Rare: the snake_case proposition IS the contract
-   (§4) and almost always reads fine; reach for this only when the title needs punctuation or casing a
-   method name cannot carry.
-
-Default: **no TestDox.** If the derived English is right, an attribute is a second source of truth that
-can drift. Slots must name real parameters — a typo'd `{slot}` leaks into the spec verbatim.
-
-### 10.4 Dialect words — last resort, evidence required
-
-When a DOMAIN word inflects wrong in every suite ("unholded", "reshiped") or an acronym renders lowercase
-("sku urls"), the fix is one entry in the extractor's dialect config (irregular participle/gerund,
-initialism), filed once in the spec-extract repo
-(https://github.com/SkuNexus-Devs/dev-ian-spec-extract) — not a TestDox per call site. Same discipline
-as vocabulary: one word per demonstrated, recurring need; generic English/PHP words belong to the base dialect, SN domain words to the SN dialect.
-Never add a dialect word to fix one test's prose — that's TestDox's job; never TestDox around grammar —
-that's the dialect's job.
-
-### 10.5 The read-back and the debt greps
-
-Before committing a new test file, render it and read it as the reviewer will:
-
-```bash
-spec-extract tests/Feature/OrderRMA/CloseRmaTest.php
-```
-
-Then the two debt greps over the rendered spec, both of which should trend to zero suite-wide:
-`⚠ RAW` (an assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar
-cannot see — almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job.
-
-
-### 10.6 Slot rendering rules and the first-pass checklist — see the Pest guide
-
-The `#[TestDox]` slot rules are syntax-neutral: what a slot renders when fed a literal, a const, a
-default, a property, a **top-level local** (inlined whole), an empty array (nothing) or a nested helper
-(its own TestDox ignored) is measured in `pest-style-guide.md` §10.6, and the sixteen authoring rules that
-follow from a landed suite's defects are §10.7 — read both; every item applies to a `#[Test]` class with
-`private` helpers and `setUp()` in place of `beforeEach`. The second pass over a suite that already
-renders badly is `spec-readability-pass.md`.
 
 ---
 

@@ -21,8 +21,7 @@ Two test styles appear in this guide:
 
 - **GWT (Given/When/Then)** — the behavior-test style: *given* a world state, *when* one domain action
   runs, *then* the outcome is asserted through the read side. §3's grammar enforces it — every body line
-  starts with `given`, `when`, or `assert` — so the test reads back as its own spec (`--testdox`,
-  spec-extract).
+  starts with `given`, `when`, or `assert` — so the test reads back as its own spec (`--testdox`).
 - **AAA (Arrange–Act–Assert)** — the classic unit-test layout: build the inputs, call the code, assert
   the output. Three plain blocks, no vocabulary, no `given()` markers — for pure units, input → output
   already is the contract.
@@ -72,7 +71,7 @@ Worked example to copy from: the annotated anatomy in `phpunit-style-guide.md` �
    ```
 
 4. **State the When once, as a private `when<DomainVerb>()` method** dispatching through `$this->bus()`.
-   One When per test, visible in every body.
+   Dispatch only — it returns the result and never asserts. One When per test, visible in every body.
 
 5. **Assert through the read-side, in domain language.** `assertPutAwayLocationHolds($warehouse, $coffee,
    qty: 10)` — never a bare `assertEquals` mismatch dump, never a spy on dispatched sub-commands. Positive
@@ -139,6 +138,9 @@ command sets a cart's department), the raw write lives in exactly one vocabulary
    scenario ("Expected 10 of coffee…"), and swapped assertions are visibly wrong.
 6. **Spec order**: happy paths first, then guards. Run `--testdox` on the file before committing — if a
    sentence reads wrong, the name is wrong.
+7. **The shared Given reads as a world.** Its `// GIVEN` headline carries the settings the scenarios lean
+   on, and harness calls there wear a vocabulary name (`theClockIsFixedAt($noon)`, not
+   `Carbon::setTestNow($noon)`).
 
 ## 6. Five facts that surprise every new test author here
 
@@ -178,49 +180,3 @@ what broke:
 | A test never breaks | Never touch it. |
 
 One-line repairs stay one-line repairs. The conversion pays for itself only when the repair bill arrives.
-
-## 9. Your tests are the spec — read them back with spec-extract
-
-`spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
-the artifact QA reads, the FE handoff quotes, the acceptance coverage check. It reads exactly the grammar
-of §3: **if you followed this guide, the spec is already good.** Run it next to `--testdox` before you
-commit:
-
-```bash
-spec-extract tests/Feature/OrderRMA/CloseRmaTest.php
-```
-
-(spec-extract is developed in its own repo —
-[SkuNexus-Devs/dev-ian-spec-extract](https://github.com/SkuNexus-Devs/dev-ian-spec-extract); the
-`skunexus-spec-extract` skill ships a self-contained phar built from it, with TestDox support, dialects, and the
-`⚠` markers below.)
-
-What decides whether the output reads as English — none of it changes how PHPUnit runs the test:
-
-| Do | Because |
-|---|---|
-| put a `//` note ABOVE `#[Test]`, never between the attribute and `function` | below the attribute it vanishes from the spec |
-| put the class docblock after `namespace` | above it, php-parser hands it to the namespace and the file summary is lost |
-| keep assertions at top level — no loops/closures/`try` around them (§5.3 bans them anyway) | the extractor can't see inside; the scenario renders `⚠ NOTHING READ` |
-| name custom assertions as sentences — end on a copula or a preposition (`assertHospitalIssueIs`, `assertNoAllocationsFor`) | the subject promotes: "the fulfillment's hospital issue is 'withdrawn'"; otherwise `⚠ RAW — hospital issue(…)` |
-| keep `when*` one hop above `bus()->handle(...)` | two hops deep the spec reads the wrapper's name, not the command |
-| give `markTestSkipped(...)` its reason; name `#[DataProvider]` cases with string keys | the reason renders as `⚠ NOT RUNNING — <reason>`; the keys become the **Where** step |
-
-**When derived English fails, `#[TestDox]` is the one-line cure** — PHPUnit's own attribute, inert on
-non-test methods, so it is safe on assertion helpers and trait words:
-
-```php
-#[TestDox('{tote} holds {qty} of {item}')]
-private function assertToteQtyFor(CoreCart $tote, FulfillmentItemInterface $item, int $qty): void
-```
-
-`{param}` slots fill from the call by parameter name; the `⚠ RAW` marker disappears at every call site.
-Also honored on `given*`/`when*` wrappers (replaces the derived sentence verbatim) and on test methods
-(names the scenario heading — rare: your snake_case proposition is the contract and almost always reads
-fine). **Default is no TestDox** — right-reading derived prose needs no second source of truth to drift.
-
-**Debt metric:** `grep -c '⚠ RAW\|⚠ NOTHING READ'` over a rendered spec should trend to zero. A domain
-word that inflects wrong in *every* suite ("unholded") is a one-line dialect-config entry in the
-[spec-extract repo](https://github.com/SkuNexus-Devs/dev-ian-spec-extract) — file it there once, with the
-word and where it renders wrong. Never TestDox around grammar, and never add a dialect word for one
-test's prose.
