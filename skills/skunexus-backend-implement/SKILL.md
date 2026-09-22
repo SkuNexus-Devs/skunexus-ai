@@ -76,6 +76,7 @@ These are the soul of the skill. The mechanics below serve them.
   | The feedback turns out to be… | It lands in… |
   |---|---|
   | A requirement change | `prd.md` — patch the `Rn`, one-line changelog note under the status (or edit the plan's inline Goal & Acceptance) |
+  | …and that `Rn`/`An` is cited by a `Tests:` trailer | The tests too — every trailer citing the ID, bare or landed, is re-discharged against the new wording in the same change (name re-read from the contract, assertions re-checked, the landed line rewritten). A test still carrying the old sentence is a lie the suite publishes on every run |
   | A technical re-decision with a real fork | `decisions.md` — a dated **superseding** entry, provenance-tagged (e.g. "post-review change, 2026-07-20"); never edit the old entry |
   | Code should do something different from what a step says | The plan — amend the step / dated amendment note (tense rule above) |
   | A plain code fix within what the step already says | Code only — no artifact edit |
@@ -93,6 +94,17 @@ These are the soul of the skill. The mechanics below serve them.
   executing checks, **surface the task's `Sanity-check now` list to the developer** as the checks *they*
   should run, plus any code-level confidence and known gaps you want them to watch. The honest handoff is
   "here's what I built and how you can confirm it," never a green claim you didn't earn.
+  **The one exception is the in-suite behavior tests — they are not "the environment."** They run on SQLite
+  in memory, so you write them, run them, and report the real output: `vendor/bin/pest <file>` in Pest repos,
+  `php artisan test --compact --filter=<name>` (or `vendor/bin/paratest` for the suite) in PHPUnit repos —
+  per `skunexus-behavior-testing`, **through the repo's PHP runner**: many client repos run PHP only inside
+  Docker, where every host-style command fails, so resolve the runner once before the first test command
+  (`CLAUDE.md` first, then the compose file or a failing `php -v` — that skill's Quick Reference has the
+  recipe) and prefix every `php` / `composer` / `vendor/bin/*` call with it for the rest of the run. That
+  exception is what closes the verify loop: a red test is a bug you
+  caught yourself, so you fix it and keep going instead of handing the developer a guess and waiting. Nothing
+  else moves: `Sanity-check now` items are still restated for the developer and never executed, and a passing
+  test group is evidence for exactly what it asserted, never for anything you only checked statically.
 
 - **Ceremony must be earned (proportionality).** A trivial, well-described change gets implemented directly
   with **no artifacts at all** — downstream skills already fall back gracefully (`prd.md` → the plan's Goal &
@@ -142,6 +154,54 @@ At mode start, confirm the branch and the commit convention once: default is **c
 repo's existing style (`<TICKET>: <summary>` — include the task id, e.g. `LO-58: T3 create-RMA command +
 endpoint`). Per-task commits are what make the final review navigable and any task revertible.
 
+Confirm the **testing mode** in the same exchange — but only when the plan actually carries `Tests:` trailers.
+**A plan with no `Tests:` trailers skips the dial entirely: don't raise it, don't write tests, run exactly as
+today.** When trailers exist:
+
+- **hybrid** (default) — each task's trailer is discharged post facto as part of that task. Default because
+  it closes the verify loop at the smallest unit: the task that broke something is still the task in hand.
+- **full post-facto** — tasks run untouched; one test pass after the last one.
+
+The dial is **per run, not per developer or repo**: asked for each plan, re-confirmed on a resume from disk,
+and changeable at any task boundary — nothing in the plan records the mode, so switching costs nothing;
+trailers not yet discharged simply follow the new mode, and `**Tests (landed):**` ones stay landed.
+
+Two things happen once, at mode start, whenever trailers exist (both modes):
+
+- **Resolve the PHP runner — and say it.** A container prefix (`docker compose exec <service> …`, `sail …`)
+  or host PHP, per `skunexus-behavior-testing`'s Quick Reference — `CLAUDE.md` first. State what you
+  resolved in the same exchange as branch, commit convention and mode, so the developer corrects it like any
+  other checkpoint; the confirmed value is what every test command in this run, and every briefing, carries.
+- **Baseline the suite.** Run the whole suite once *before the first task* and record what is already red
+  as one line under the plan's status header — `> Test baseline (<date>, <command>): clean` or
+  `…: 3 red — <test names>` (a list too long for one line goes to `.ai/<TICKET>/test-baseline.md`, the line
+  pointing at it). It is what separates "I broke this" from "this was already broken" for every red in the
+  run; without it neither you nor an agent can tell. Clean is the normal outcome. Re-baseline only when the
+  tree moves underneath (a rebase the developer tells you about).
+
+Mode semantics:
+
+- **Discharging a trailer (all modes)** means: load `skunexus-behavior-testing` (including its mandatory
+  style-guide read) *before* writing test code; read the **current** wording of each requirement the trailer
+  cites in the contract (`prd.md`, `investigation.md`, or the plan's Goal & Acceptance) — the test name is
+  that sentence in the grammar's subject–verb–outcome shape (a Given/When/Then sentence is the body's skeleton
+  and its *then* clause is the name); write the tests; run the file/group; put the real output in the
+  hand-off; then rewrite the trailer in the plan **with what actually landed**:
+  `**Tests (landed):** <path> — R4 "<test name>", R5 "<test name>"`. A relabel alone would let the plan claim
+  proof no test asserts; the real names are what the wrap-up coverage check reads.
+- **hybrid:** after a task's steps land, discharge that task's trailer as part of the task.
+- **full post-facto:** tasks run exactly as today; after the last task, one pass discharges every trailer,
+  grouped by test file, in its own commit(s) (`<TICKET>: behavior tests`), results reported at final review.
+- **Escape hatch (all modes):** a trailer that proves out-of-suite (the layer map puts it at HTTP level or
+  cross-process) or simply wrong against the real code is flagged with one line of why — in the hand-off
+  **and** in the plan, as `**Tests (flagged):** <path> — R6: <why>`, so a resume from disk still sees it.
+  Never grind on a test that doesn't make sense; never silently drop one.
+- **Baseline reds (all modes):** a red that is in the baseline is not this run's — never fixed, never
+  touched, reported as `baseline`. A red that is *not* in the baseline is yours until classified otherwise.
+- **Existing tests (all modes):** new tests follow `skunexus-behavior-testing`'s grammar even inside a file
+  that already holds older-shaped tests; those are left alone unless the change broke them (dev guide §8 —
+  repair, reshape or convert only what costs something; modernising is never a side effect).
+
 #### Mode 1 — task-by-task
 
 Loop until the developer stops or the plan is done:
@@ -153,12 +213,15 @@ Loop until the developer stops or the plan is done:
    that's how a run soft-blocks itself.
 2. **Implement in this thread.** Re-read the task entry; read the dependency code; work the checkbox list in
    order, checking each box as its step lands. Deviations follow the tense rule. Scope discipline: the
-   entry's `Out of scope` line is binding — resist fixing adjacent code you pass.
-3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints.
-   Instead, restate the task's `Sanity-check now` items as the checks the developer should run, and note any
-   code-level confidence or gaps.
-4. **Hand off for review.** Summarize in chat: files touched, steps deviated (and why), the `Sanity-check now`
-   items for the developer to run, any decision candidates. Then the developer reviews the diff in their editor. Process feedback through
+   entry's `Out of scope` line is binding — resist fixing adjacent code you pass. In **hybrid**, the task's
+   `Tests:` trailer is part of the task: once the steps land, discharge it (the definition above — real test
+   names into the landed line) before handing off.
+3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints
+   — the in-suite tests of step 2 are not that. Restate the task's `Sanity-check now` items as the checks the
+   developer should run, and note any code-level confidence or gaps.
+4. **Hand off for review.** Summarize in chat: files touched, steps deviated (and why), the real output of
+   the test run (hybrid) alongside the `Sanity-check now` items for the developer to run, any decision
+   candidates. Then the developer reviews the diff in their editor. Process feedback through
    the triage table; if a fix moves a seam, ripple-sweep the pending tasks now, not later. Loop until they
    approve the task.
 5. **Close out.** Commit (if agreed), confirm the task's boxes/status are truthful, append any earned
@@ -170,13 +233,35 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
 
 1. **Preflight.** Re-read the whole plan. Surface anything that gates an autonomous run: an Open Question
    that blocks a task (deliberately-deferred ones usually don't), a `started` task with untrustworthy boxes,
-   a dirty working tree. Confirm branch + commit-per-task with the developer; this is their last checkpoint
-   until the final review.
+   a dirty working tree, a missing test baseline when trailers exist (the mode-start steps above: runner
+   resolved, suite baselined into the plan header). Confirm branch + commit-per-task with the developer; this
+   is their last checkpoint until the final review. Confirm **agent isolation** in the same breath — two
+   valid shapes:
+   - **shared tree** (default for small plans) — every agent edits the one checkout; the file-disjoint rule
+     below is what keeps them apart, and a neighbour's half-written file can still fatal another agent's
+     test run (reported as `environment`, settled by your re-run).
+   - **worktree per agent** — spawn with `isolation: worktree` (Claude Code creates a git worktree under
+     `.claude/worktrees/`; PhpStorm sees it as its own root and branch). No shared tree, so no neighbour
+     fatals, no file-set prediction needed, and the agent's own test run is trustworthy. Cost: `vendor/`
+     is not in a fresh worktree — `composer install` (warm cache, well under a minute) per agent, never a
+     symlink (PHP resolves `__DIR__` through it and autoloads the *main* tree); through the resolved runner
+     prefix, which also means the worktree must sit inside the path the container mounts
+     (`.claude/worktrees/` under the repo does). Prefer it when tasks
+     touch shared registration points (providers, `routes/api.php`, config), when the plan is large enough
+     that serialization would cost more than the installs, or whenever in-agent test results must be
+     trusted as-is.
 2. **Schedule continuously — dependency-ready AND file-disjoint.** Don't run rigid waves; launch a task the
    moment (a) its `depends_on` are all finished and (b) its predicted file set is disjoint from every
    in-flight task's. Predict file sets from the exact paths named in the task's steps, **plus the shared
    registration points this codebase funnels everything through** — provider classes, `routes/api.php`,
-   `config/skunexus.php`, `config/app.php`. Two DAG-independent tasks that both "register the handler in
+   `config/skunexus.php`, `config/app.php` — **plus, in hybrid, the test file the `Tests:` trailer names**.
+   The domain's `tests/Behavior/` traits are deliberately **not** in the set: most tickets live in one
+   domain, so claiming `{Domain}ScenarioTrait` per task would serialize the whole run. Instead, **agents in a
+   parallel hybrid run never edit those traits** — they use the existing vocabulary freely and write any new
+   word local to their own test file (a private `given*`/`assert*` method in PHPUnit; an inline `given(fn)`
+   delta or the namespaced file-level `givenX()` fallback in Pest — style guide §3, ladder §9), reporting it as a
+   **vocabulary candidate**. You graduate the candidates into the traits yourself, serially, after the last
+   task (step 7) — one writer, no interleaving, and the run's own tests prove the move. Two DAG-independent tasks that both "register the handler in
    the commands provider" WILL collide; that's overlap, so they serialize. When unsure whether two tasks
    overlap, serialize — lost parallelism is cheap, interleaved edits to one file are not.
 3. **Assign models.** Default to the session model. Drop an agent to `sonnet` when the task entry is
@@ -187,19 +272,42 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    downgrade.
 4. **Brief and spawn.** Fill `assets/task-agent-briefing.md` per task — verbatim task entry, contract
    pointers, the dependency code to read, the prohibitions (no `.ai/` writes, no commits, no scope creep) —
-   and spawn as a `general-purpose` agent. Launch independent tasks in parallel.
+   and spawn as a `general-purpose` agent. Launch independent tasks in parallel. State the testing mode, the
+   resolved PHP runner and the test baseline in the briefing: in **hybrid** the agent discharges its own
+   task's `Tests:` trailer (traits untouched, new words local — the rule in step 2); in **full post-facto**
+   (or with no trailer) the briefing's no-tests prohibition stands.
 5. **On each return, review before you record.** Read the agent's report against the actual diff of its
    predicted files; spot-check the seams other tasks will consume (statically — don't run migrations/tinker/
-   endpoints; environment verification is the developer's). Only then, as the single writer: check the boxes,
+   endpoints; environment verification is the developer's). In hybrid, re-run the returned task's test
+   file/group yourself rather than trusting the report — this serialized run on a settled tree is the
+   authoritative one and the agent's own run is advisory, because parallel agents share one working tree
+   and a neighbour's half-written provider can fatal an unrelated run (the DB never interferes: `:memory:`
+   SQLite is per process, which is what `--parallel` relies on every day). A task returned red routes by
+   its class: `implementation` still red after the agent's three rounds → step 6; `test wrong` → the flag
+   goes into the plan as `**Tests (flagged):**`; `contract` → step 6's contract-flag path; `environment` →
+   your re-run settles it; `baseline` → nothing, it was red before the run started (confirm against the
+   plan's baseline line, not the agent's word). With **worktree isolation**, bring the task home first —
+   `git -C <worktree> add -A && git -C <worktree> diff --cached | git apply --3way` onto the ticket branch,
+   then remove the worktree — so the agent still never commits and you still commit once per task. With
+   traits untouched and file sets disjoint the apply is clean; `--3way` is for the shared registration
+   points the prediction covers but cannot guarantee — a conflict there is yours to resolve before the
+   re-run, never the next agent's to trip over. Only then, as the single writer: check the boxes,
    flip the status, record amendments, append earned decisions, and commit. Then launch whatever just became eligible.
 6. **Handle trouble without guessing.** A shallow or failed report → re-run the gaps on a stronger model or
    implement them in-thread; never patch blind over work you don't trust. An agent's contract flag (a
    requirement looks wrong or missing) → pause that task's dependent subtree only, keep independent tasks
    running, and put the question to the developer — the contract is never yours to guess.
-7. **Final review.** Present the run report: per task one line (what landed, deviations), the per-task
-   `Sanity-check now` items for the developer to run, artifact updates, the commit list. Hand off — the developer reviews the whole branch in their
-   editor, commit by commit. Triage their feedback; delegate mechanical fixes to cheap agents, keep
-   judgment fixes in-thread. Approval ends the run.
+7. **Final review.** In **full post-facto**, the test pass runs first — after the last task, before this
+   review: orchestrator-run, or one test-authoring agent per domain when the surface is large (one writer
+   per domain, so the graduation ladder applies as written). In **hybrid**, graduate the returned
+   **vocabulary candidates** first — one serial pass per domain, yours or one cheap agent's, moving each
+   local word into `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` per style guide §9 and re-running the
+   groups that used it; a commit of its own (`<TICKET>: test vocabulary`). Then the **Wrap-up** checks below —
+   the full-suite run against the baseline and the trailer/coverage audit — and only then present the run
+   report: per task one line (what landed, deviations), the full-suite result, the per-task `Sanity-check
+   now` items for the developer to run, artifact updates, the commit list. Hand off — the developer reviews
+   the whole branch in their editor, commit by commit. Triage their feedback; delegate mechanical fixes to
+   cheap agents, keep judgment fixes in-thread. Approval ends the run.
 
 ### Door B — no plan: direct implementation
 
@@ -212,7 +320,13 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    its root cause and proposed fix are the settled diagnosis (verify against the code you touch rather than
    re-hunting the bug), and its `A1…An` bullets are what the diff must satisfy. Implement in-thread, hand off for diff review (the developer
    runs any environment verification), fix on feedback. If a genuine decision surfaces — a real fork whose rationale the code won't reveal — offer
-   to record it in `.ai/<TICKET>/decisions.md`; otherwise leave no trace but the diff.
+   to record it in `.ai/<TICKET>/decisions.md`; otherwise leave no trace but the diff. Trivial changes stay
+   test-free by default. Offer a test — one line: the file and the behavior a `Tests:` trailer would have
+   cited (an `An` from the investigation, else the sentence itself) — when the change is behavior-bearing per
+   `skunexus-behavior-testing`'s quick decision table (a
+   new command, plugin, transition, override, GraphQL field, endpoint, resolver) or is a confirmed-bug fix
+   off an approved `investigation.md` (a repro test, written after the fix). Write it only if the
+   developer says yes; then run it, through the repo's PHP runner, and report the real output.
 3. **Escalate visibly when "trivial" stops being true.** Triggers: the change wants several independent
    tasks; a migration or shared seam that multiple edits build on; product-level ambiguity you'd have to
    guess; materially more surfaces than the prompt implied. Stop, summarize what you've learned (mapped
@@ -234,7 +348,10 @@ request; never require one.
    developer. An item that contradicts a recorded decision gets flagged with the recorded rationale; the
    developer chooses: change course (→ dated **superseding** entry, provenance-tagged with where the change
    came from) or uphold (→ dated **addendum** on the entry, "re-raised \<date\>, upheld" — so the *next*
-   round doesn't repeat it either; this is the versioning, no other mechanism needed).
+   round doesn't repeat it either; this is the versioning, no other mechanism needed). A change to *behavior*
+   carries its tests: the map names the test files citing the moved requirement (the plan's trailers are the
+   index), they are updated in the same change (`skunexus-behavior-testing` — the name is the contract), and
+   the touched groups are green before hand-off.
 3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule;
    requirement-level changes patch `prd.md` with a changelog line.
 4. **Report per item** — fixed / upheld with rationale / needs a developer call — then hand off for diff
@@ -242,7 +359,21 @@ request; never require one.
 
 ### Wrap-up
 
+Before the final hand-off, when the plan carried `Tests:` trailers (both modes — in mode 1 this is the
+hand-off of the last task, in mode 2 it precedes the run report):
+
+- **One full-suite run**, compared against the baseline. Until now only the touched file or group has ever
+  run, so a change that broke another domain is still invisible. Every red not in the baseline is this run's
+  — fix it (or classify and flag it) before handing off; a baseline red that turned green is worth a line.
+  Report the real output.
+- **No bare trailer left.** Every `**Tests:**` line now reads `(landed)` with its real test names or
+  `(flagged)` with its reason. A bare one is an undischarged promise.
+- **Coverage still holds** — the plan skill's self-review question, re-asked against what landed: every
+  `Rn`/`An` is cited by a landed trailer or recorded as out-of-suite in a `Sanity-check now` line. A
+  requirement that lost its test to a flag is reported to the developer by ID, never left implied.
+
 When the last task is approved: every `Status` reads `finished` and no box lies; deviations are amended,
-earned decisions appended, the PRD patched only where requirements actually moved. Say what comes next in
-the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing steps are their own
-downstream skills) and stop — don't write the PR description here.
+earned decisions appended, the PRD patched only where requirements actually moved.
+
+Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
+steps are their own downstream skills) and stop — don't write the PR description here.

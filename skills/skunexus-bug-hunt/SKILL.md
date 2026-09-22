@@ -206,7 +206,10 @@ For a **confirmed bug**, close the loop in the document: §4 names one recommend
 where" altitude (real forks only — see the operating principle), plus an honest complexity read with the
 recommended route — trivial → `skunexus-backend-implement` directly, complex → `skunexus-backend-plan`
 first. Recommend; **the developer decides**. §5 states the expected behavior after the fix as testable
-`A1…An` bullets — this is the acceptance contract downstream skills trace to.
+`A1…An` bullets — this is the acceptance contract downstream skills trace to. Write each as a falsifiable
+proposition that can become a behavior-test name verbatim (naming rules live in
+`skunexus-behavior-testing`), and name where a regression test would live when it's obvious — noted here,
+never written here: this skill still only diagnoses and proposes.
 
 ### Step 5 — Review gate, then handoff
 
@@ -218,8 +221,8 @@ Then state the handoff and **stop** — do not implement, plan, or start a PRD y
 
 | Approved verdict | Handoff |
 |---|---|
-| Confirmed bug, trivial fix | `skunexus-backend-implement` (direct road) — the approved investigation is the described change |
-| Confirmed bug, complex fix | `skunexus-backend-plan` — tasks trace to the investigation's `A1…An` |
+| Confirmed bug, trivial fix | `skunexus-backend-implement` (direct road) — the approved investigation is the described change; it offers a repro test after the fix, written on the developer's yes |
+| Confirmed bug, complex fix | `skunexus-backend-plan` — tasks trace to the investigation's `A1…An`, and the plan's `Tests:` trailers cite them |
 | Feature change request | `skunexus-jira-prd` (the standard feature flow) — the investigation is upfront context |
 | Works as designed | Nothing to build; if the developer wants the behavior changed anyway, that's a change request → `skunexus-jira-prd` |
 | Cannot confirm statically | The developer runs the listed checks; results reopen Step 3 (approval here just confirms the checks are the right ones) |

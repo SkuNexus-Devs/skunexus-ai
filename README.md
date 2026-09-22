@@ -22,6 +22,8 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    | **Atlassian MCP** (Jira) | `skunexus-jira-prd`, `skunexus-bug-hunt` | Fetching and distilling tickets |
    | **Context7 MCP** + the `skunexus-docs-c7` skill | nearly every skill | Building the platform mental model (command bus, plugins, state machines) before touching code. ⚠️ `skunexus-docs-c7` is **not in this repo yet** — get it from a teammate until it's added. |
    | **`gh` CLI**, authenticated | `skunexus-backend-pr` | Pushing the branch and opening the draft PR |
+   | **Pest** (client repos) | `skunexus-behavior-testing` | Decides the authoring syntax: Pest where installed, PHPUnit otherwise (core). One-time install: `references/pest-style-guide.md` §0.1 |
+   | **A PHP runner** — host PHP or Docker (`docker compose exec <app>`, `sail`) | `skunexus-backend-implement`, `skunexus-behavior-testing` | Running the tests Claude writes. Detected per repo — name it in the repo's `CLAUDE.md` and every test command gets the right prefix |
 
 3. **Run Claude Code in the repo you're working on** (e.g. `skunexus-client-*`), not in this one. All workflow artifacts land in `.ai/<TICKET>/` inside that working repo.
 
@@ -43,6 +45,7 @@ flowchart TD
     IMPL --> PR["skunexus-backend-pr<br/>→ pr.md → draft PR on GitHub"]
     IMPL --> FE["skunexus-fe-handoff<br/>→ fe-handoff.md"]
     IMPL --> SUM["skunexus-backend-summary<br/>→ backend-summary.md"]
+    BT["skunexus-behavior-testing"] -. how every test is written .-> IMPL
 ```
 
 Two entry points, one build spine, three wrap-up documents. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
@@ -60,6 +63,7 @@ Two entry points, one build spine, three wrap-up documents. You don't always sta
 | Code is approved, needs a PR | `skunexus-backend-pr` — *"draft the PR"* |
 | Frontend team needs the API contract | `skunexus-fe-handoff` — *"prepare the FE handoff"* |
 | Ticket's work should be documented for the team | `skunexus-backend-summary` — *"write the backend summary"* |
+| Writing, converting, naming or placing a test | `skunexus-behavior-testing` — *"write a test for this command"*, *"where does this test go"* |
 
 ---
 
@@ -71,7 +75,7 @@ These conventions hold across the whole pipeline — internalizing them once is 
 - **Every deliverable is a gate.** Documents start as `Status: Draft` and flip to `Approved` **only when you explicitly say so**. Silence is not approval; approving the code is not approving the PR text. Nothing proceeds downstream, and nothing reaches GitHub, without your explicit go-ahead.
 - **You review documents in your editor, not in chat.** When a draft is ready, the skill points you at the file (e.g. `.ai/PHG-418/backend-plan.md`) and waits. Read it there, come back with issues or approval — chat walkthroughs of a document you can open are deliberately avoided.
 - **Everything resumes from disk.** The `.ai/<TICKET>/` files are the complete state. You can close your laptop, clear context, or open a fresh conversation days later and say *"continue the plan for PHG-418"* — the skill re-reads the folder, recaps where things stand in one line, and picks up.
-- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it".
+- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it". **The one exception is the test suite** — behavior tests run on in-memory SQLite, which isn't your environment, so Claude writes them, runs them — through your repo's PHP runner, host or Docker — and shows you the real output, against a baseline of what was already red before the run and with one full-suite run before hand-off. That exception is the point: it closes the verify loop. A test Claude can run is the one check it can perform on itself, so a regression gets caught and fixed inside the run instead of parked at your review — which is what makes an orchestrated wave of tasks worth trusting. Everything else on that list is still yours.
 - **Ceremony is proportional.** A one-line change gets no PRD, no plan file, no decisions log. Skills escalate visibly when a "trivial" change turns out not to be — and *you* decide whether to escalate or continue.
 - **Each skill stops at its boundary.** The PRD skill won't start designing; the plan skill won't start coding; the PR skill won't write testing steps. When a skill finishes, it names the next step and stops — you invoke it when ready.
 
@@ -137,7 +141,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 **What happens** — three doors, chosen by what exists:
 
-- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`.
+- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code) or *full post-facto* (one test pass at the end). A plan with no test trailers skips the question entirely.
 - **Door B — no plan.** For a trivial, well-described change: implemented directly, no artifacts, the diff is the record. If it stops being trivial mid-way, the skill stops, summarizes what it learned, and recommends escalating to planning — your call.
 - **Door C — changes on implemented work.** Your conclusions, QA findings, or relayed PR-review comments get triaged item-by-item to the right altitude: code fix, plan amendment, PRD patch, or a `decisions.md` supersede. Items contradicting a recorded decision are flagged with the original rationale so settled forks don't get re-litigated by accident.
 
@@ -179,6 +183,18 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 ---
 
+### 8. `skunexus-behavior-testing` — behavior → test
+
+**When:** any test is being written, converted, renamed or placed. *"Write a test for this command"*, *"where does this test go"*, *"is this test asserting the right thing"*. You rarely invoke it by name — the plan skill names *what* each task must prove, the implement skill decides *when* the tests get written, and both load this skill automatically.
+
+**What happens:** the doctrine says tests verify behavior through SN's public interfaces — the command bus and HTTP/GraphQL endpoints — never handler internals. It decides the layer (Unit / Feature / GraphQL / Integrations), the data setup, what may be mocked (system boundaries only), and the body grammar: every line starts with `given`, `when`, or an assertion, one act per test, the name a falsifiable proposition. Pest is the default syntax in client repos, PHPUnit in core — detected per repo.
+
+**You get:** tests whose names state the contract and whose bodies prove exactly it — plus the `tests/Behavior/` vocabulary (scenario builders, domain assertions) grown one word at a time, never speculatively.
+
+**It will not** plan work, implement production code, or write QA testing steps.
+
+---
+
 ## Worked examples
 
 **A feature ticket, end to end**
@@ -189,7 +205,9 @@ claude: (jira-prd) fetches the ticket, interviews you, drafts prd.md → you app
 you:    plan the backend
 claude: (backend-plan) maps the code, drafts the task DAG → you review the manifest, then the file → approve
 you:    orchestrate it
-claude: (backend-implement) subagents build the tasks, commits per task → you review the branch → approve
+claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid or post-facto?
+        subagents build the tasks, each behavior-bearing one landing its tests green, commits per
+        task → you review the branch → approve
 you:    draft the PR
 claude: (backend-pr) drafts pr.md → you approve → draft PR opened
 you:    prepare the FE handoff
@@ -224,9 +242,9 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 - **You own the environment.** Expect every implementation and investigation to end with a checklist of things only you can run. That's not laziness — it's the honesty rule that keeps "done" meaning done.
 - **Don't fear the ceremony — it scales down.** Say *"skip the ceremony"* or *"just plan this, no PRD"* and the skills right-size. They'll tell you when a change has outgrown the shortcut, and continuing anyway is a legitimate answer.
 - **`decisions.md` being absent is normal.** It's created only for genuine forks whose rationale the code can't reveal. Two real entries get read; twenty trivial ones bury them.
-- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions). Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples and the full style guides. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
 
 ## Not in this repo (yet)
 
 - **`skunexus-docs-c7`** — the platform-docs mental-model skill almost every skill here leans on. Currently distributed by hand; candidate for inclusion.
-- **A testing-steps skill** — `skunexus-backend-pr` and `skunexus-fe-handoff` both reference it as a separate downstream step; it doesn't exist yet.
+- **A QA testing-steps skill** — manual test instructions written for human testers, referenced as a separate downstream step by `skunexus-backend-pr` and `skunexus-fe-handoff`; it doesn't exist yet. Not to be confused with `skunexus-behavior-testing` above, which writes the *automated* behavior tests that ship in the diff.

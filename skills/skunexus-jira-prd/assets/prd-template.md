@@ -28,7 +28,10 @@
 
 ## 6. Acceptance Criteria
 <!-- BDD-flavored, readable bullets (not strict Gherkin). Each ties back to a requirement — cite the Rn.
-     Cover the main behaviors AND the important edge/error paths surfaced during the interview. -->
+     Cover the main behaviors AND the important edge/error paths surfaced during the interview.
+     These bullets flow downstream into test names: the backend plan cites them by ID in its per-task
+     `Tests:` trailers and the implement skill names each test from the bullet's current wording — so keep
+     each one falsifiable and tied to its Rn; this file stays the only copy of the sentence. -->
 - Given …, when …, then …  (R1)
 
 ## 7. Open Questions
