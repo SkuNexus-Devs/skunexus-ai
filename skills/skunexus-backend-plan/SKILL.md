@@ -242,23 +242,22 @@ see the shape to react to it.
   changes behavior per `skunexus-behavior-testing`'s quick decision table (new command, plugin on an existing
   command, state transition, vendor handler override, factory/interface override, GraphQL field/type, REST
   endpoint, field resolver); a pure migration, config-only, refactor or docs task doesn't and gets no trailer.
-  Every qualifying task carries one line — `**Tests:** <test file path> — "<falsifiable proposition>", "<guard
-  proposition>"` — the path placed per that skill's layer map — the subject is a command, an endpoint or a pure algorithm,
-  so `tests/Feature/<Domain>/<Command>Test.php`, `tests/Feature/GraphQL/…`, `tests/Unit/…` or
-  `tests/Integrations/…` as the map says, and often an **existing** file (a plugin, transition, override or
-  resolver proves itself in the upstream command's file) — the propositions **quoted from the acceptance
-  the task `Satisfies`** (`Rn` from the PRD, or `An` from the inline Goal & Acceptance), not re-invented.
-  An acceptance written as a Given/When/Then sentence is quoted whole — it becomes the skeleton body the
-  test starts as — and its test title is the *then* clause with its subject, in the test grammar's
-  subject–verb–outcome shape; sentence and title say one thing in two lengths. The domain's
-  `tests/Behavior/` traits the propositions will grow into are part of the task's file set for the implement
-  skill's scheduling (step 2's test-terrain map names them), so two tasks growing the same domain's
-  vocabulary are not file-disjoint.
-  A task whose only proof is out-of-suite (auth/CSRF/throttle, a live worker, a connector sandbox) gets no
-  trailer; its `Sanity-check now` line says so. The
-  propositions are **not** checkbox steps (status stays derived from the steps alone), and a test is **never
-  its own task** in the DAG — a red test task could never be `finished`. *When* the trailer is discharged is
-  `skunexus-backend-implement`'s business (its testing mode decides), not the plan's.
+  Every qualifying task carries one line — `**Tests:** <test file path> — R4, R5` — the path placed per that
+  skill's layer map (the subject is a command, an endpoint or a pure algorithm, so
+  `tests/Feature/<Domain>/<Command>Test.php`, `tests/Feature/GraphQL/…`, `tests/Unit/…` or
+  `tests/Integrations/…` as the map says, and often an **existing** file: a plugin, transition, override or
+  resolver proves itself in the upstream command's file), and the requirement IDs **cited from the acceptance
+  the task `Satisfies`** (`Rn` from the PRD, `An` from `investigation.md` or the inline Goal & Acceptance).
+  The trailer **cites, never copies**: the requirement's wording stays in the contract, which remains the one
+  source of truth, and the implementor reads the ID's *current* text when it writes the test — the test name
+  is that sentence in the test grammar's subject–verb–outcome shape, so a requirement that changes changes
+  its tests through the ID, with no stale copy in the plan to drift. An ID whose proof is out-of-suite
+  (auth/CSRF/throttle, a live worker, a connector sandbox) stays out of the trailer and is recorded in the
+  task's `Sanity-check now` line as `out-of-suite: R6 — <why>`; a task with no in-suite proof at all gets no
+  trailer, only that line. The trailer is **not** a checkbox step (status stays derived from the steps
+  alone), and a test is **never its own task** in the DAG — a red test task could never be `finished`. *When*
+  the trailer is discharged is `skunexus-backend-implement`'s business (its testing mode decides), not the
+  plan's.
 - **Wire the DAG.** Each task's `depends_on`; then derive the **execution waves** (wave 1 = no deps; wave N =
   depends only on earlier waves) so parallelism is obvious to a human and an implementor.
 - **Declare the Frontend-facing surface — the intended seam, not the handoff.** Name the public surface this
@@ -276,8 +275,9 @@ to one (or is it justified scaffolding)? is the graph acyclic? could an agent ru
 dependencies' real code, without reading another task's entry? is every step one atomic, verb-first action
 naming its concrete file/class inline — no prose walls, no "see above", no placeholder ("add validation",
 "handle errors") without the specific failure and exception named? does every qualifying task carry a
-`Tests:` trailer naming a real test file plus its propositions? is every `Rn`/`An` covered by at least one
-proposition across those trailers? Fix gaps now.
+`Tests:` trailer naming a real test file plus the requirement IDs it proves? is every `Rn`/`An` either cited
+by at least one `Tests:` trailer or explicitly recorded as out-of-suite in a `Sanity-check now` line — never
+silently uncovered? Fix gaps now.
 
 **Seed `decisions.md` only if planning produced a genuine decision** — apply the bar in "The decisions log"
 below. If nothing clears it, don't create the file.

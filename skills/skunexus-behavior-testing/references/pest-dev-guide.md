@@ -223,6 +223,10 @@ None of these changed under Pest.
 
 ## 7. Running
 
+> Every command in this section is written host-style. In a repo that runs PHP only inside Docker, each one
+> takes the runner prefix from the skill's Quick Reference ("Where PHP runs" — the repo's `CLAUDE.md` names
+> it; e.g. `docker compose exec app vendor/bin/pest`). Resolve it before the first command.
+
 ```bash
 # everything (composer test now runs vendor/bin/pest)
 composer test

@@ -244,6 +244,7 @@ Two rules that look like a conflict and aren't:
 
 ## Test Infrastructure Quick Reference
 
+- **Where PHP runs — resolve it before the first command.** Every command below is written host-style, and in a repo that runs PHP only inside Docker every one of them fails on the host. Check the repo's `CLAUDE.md` first (it usually names the runner); otherwise a `docker-compose.yml` / `compose.yaml` with a PHP service, or `php -v` failing on the host, means the prefix is `docker compose exec <service>` (or `sail`, `ddev exec` — whatever the repo uses). Resolve it once, then prefix every `php`, `composer` and `vendor/bin/*` call for the rest of the session. Syntax detection by file (`vendor/bin/pest` exists) still works from the host when `vendor/` sits in the mounted tree; when it doesn't, read composer.json's `test` script instead.
 - **Running the suite** — Pest repos: `composer test` = `vendor/bin/pest` (installing Pest hijacks `vendor/bin/phpunit`), `vendor/bin/pest --parallel` for the full suite; Pest's default output prints the description list — the `--testdox` equivalent, free. PHPUnit repos (core): `vendor/bin/paratest` for the full suite, `php artisan test --compact --filter=<name>` for one test, `--testdox` on a file renders its spec.
 - **Every test method gets a brand-new database** (`:memory:` SQLite rebuilt per test). Cross-test setup is structurally impossible; state can never leak into another test.
 - **Real migrations never run in tests.** A new migration is invisible until `php artisan dump:schema-for-testing --env=testing` — and the staleness guard is a 10-minute wall clock, so stale schema silently passes inside that window.
@@ -363,6 +364,6 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 
 ## Related Skills
 
-- **UPSTREAM:** invoked from the engineering workflow by `skunexus-backend-plan` (which names the test file and the propositions per task) and by `skunexus-backend-implement` (which writes and runs those tests as the tasks land).
+- **UPSTREAM:** invoked from the engineering workflow by `skunexus-backend-plan` (which names the test file and cites the requirement IDs per task) and by `skunexus-backend-implement` (which writes and runs those tests as the tasks land).
 
 This skill writes and runs the tests and stops there: it does not plan the work (`skunexus-backend-plan`), write the production code they exercise (`skunexus-backend-implement`), or write QA testing steps (separate skill).

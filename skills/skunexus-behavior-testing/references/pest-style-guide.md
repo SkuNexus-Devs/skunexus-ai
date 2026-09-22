@@ -59,6 +59,10 @@ Pest's default output already prints the description list — no `--testdox` nee
 
 ### 0.1 Installing Pest on a client repo that doesn't have it (one-time)
 
+> Every command in this section is written host-style. In a repo that runs PHP only inside Docker, each one
+> takes the runner prefix from the skill's Quick Reference ("Where PHP runs" — the repo's `CLAUDE.md` names
+> it; e.g. `docker compose exec app composer require …`). Resolve it before the first command.
+
 The knot: client repos pin `phpunit/phpunit` in `require-dev` (usually alongside
 `orchestra/testbench`, which requires it and blocks its removal), and the patches workflow
 (`symplify/vendor-patches` → `patches/bin/restore-oldfiles` in `post-cmd-common`) uses `sebastian/diff`

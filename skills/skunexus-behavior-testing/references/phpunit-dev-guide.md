@@ -156,6 +156,10 @@ command sets a cart's department), the raw write lives in exactly one vocabulary
 
 ## 7. Running
 
+> Every command in this section is written host-style. In a repo that runs PHP only inside Docker, each one
+> takes the runner prefix from the skill's Quick Reference ("Where PHP runs" — the repo's `CLAUDE.md` names
+> it; e.g. `docker compose exec app vendor/bin/paratest`). Resolve it before the first command.
+
 ```bash
 # the new suite alone (fast: full behavior coverage of two commands in ~3 s)
 vendor/bin/phpunit --testsuite Behavior

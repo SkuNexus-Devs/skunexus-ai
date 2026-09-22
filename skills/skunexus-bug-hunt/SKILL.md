@@ -221,8 +221,8 @@ Then state the handoff and **stop** — do not implement, plan, or start a PRD y
 
 | Approved verdict | Handoff |
 |---|---|
-| Confirmed bug, trivial fix | `skunexus-backend-implement` (direct road) — the approved investigation is the described change; the developer can ask for a repro test, which runs the fix test-first |
-| Confirmed bug, complex fix | `skunexus-backend-plan` — tasks trace to the investigation's `A1…An`; a requested repro test runs the fix test-first in the implement skill |
+| Confirmed bug, trivial fix | `skunexus-backend-implement` (direct road) — the approved investigation is the described change; it offers a repro test after the fix, written on the developer's yes |
+| Confirmed bug, complex fix | `skunexus-backend-plan` — tasks trace to the investigation's `A1…An`, and the plan's `Tests:` trailers cite them |
 | Feature change request | `skunexus-jira-prd` (the standard feature flow) — the investigation is upfront context |
 | Works as designed | Nothing to build; if the developer wants the behavior changed anyway, that's a change request → `skunexus-jira-prd` |
 | Cannot confirm statically | The developer runs the listed checks; results reopen Step 3 (approval here just confirms the checks are the right ones) |
