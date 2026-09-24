@@ -180,17 +180,18 @@ the *code*, is not approval of the PR.
 On approval (approval to post covers the push):
 
 1. Push the branch if it isn't on the remote: `git push -u origin <branch>`.
-2. **Extract the body unwrapped** with `md-paragraphs.py`, which sits in this skill's own directory
-   (the base directory you were given when this skill loaded). `--body` does both halves — drops the
-   metadata block and joins every wrapped paragraph into one line, leaving headings, table rows, list
-   items, quotes and fenced blocks alone:
-   `python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body > <scratchpad>/pr-body.md`.
+2. **Pipe the body unwrapped straight into `gh`** with `md-paragraphs.py`, which sits in this skill's
+   own directory (the base directory you were given when this skill loaded). `--body` does both
+   halves — drops the metadata block and joins every wrapped paragraph into one line, leaving headings,
+   table rows, list items, quotes and fenced blocks alone — and `--body-file -` makes `gh` read it from
+   stdin, so no intermediate file is written and there is nothing to clean up:
+   - new PR: `python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body | gh pr create --draft --base <base> --title "<title>" --body-file -`
+   - existing PR: `python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body | gh pr edit <number> --title "<title>" --body-file -`
+     — editing never changes the PR's draft/ready state, and neither do you (`gh pr ready` is the
+     developer's call).
+
    Do it even when the draft looks unwrapped; a body posted with wrapped prose renders a `<br>` at every
    newline and has to be reposted. Never unwrap `pr.md` in place — that is the developer's reading copy.
-   Then:
-   - new PR: `gh pr create --draft --base <base> --title "<title>" --body-file <file>`
-   - existing PR: `gh pr edit <number> --title "<title>" --body-file <file>` — editing never
-     changes the PR's draft/ready state, and neither do you (`gh pr ready` is the developer's call).
 3. Set nothing else — no assignees, reviewers, or labels; those stay manual.
 4. Write the PR URL into the file's `pr:` field and flip `status:` to `posted`, so the file
    remains the local record of what went out.

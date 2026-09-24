@@ -20,8 +20,7 @@ Usage:
   md-paragraphs.py <file.md> --wrap 110 --write  # ... written back in place
 
 Typical use with the PR skill:
-  md-paragraphs.py .ai/PHG-446/pr.md --body > /tmp/pr-body.md
-  gh pr create --draft --base dev --title "<title>" --body-file /tmp/pr-body.md
+  md-paragraphs.py .ai/PHG-446/pr.md --body | gh pr create --draft --base dev --title "<title>" --body-file -
 """
 
 import argparse
@@ -146,7 +145,7 @@ def main() -> None:
     if args.body and args.wrap:
         sys.exit('--body and --wrap are mutually exclusive: a posted body is never wrapped.')
     if args.body and args.write:
-        sys.exit('--body writes to stdout only; redirect it to the file you pass to --body-file.')
+        sys.exit('--body writes to stdout only; pipe it into `gh pr create/edit --body-file -`.')
 
     path = Path(args.file)
     result = reflow(path.read_text(), args.wrap)

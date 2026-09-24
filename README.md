@@ -236,8 +236,7 @@ GitHub renders markdown in two modes: in a `.md` file in a repository a single n
 
 ```bash
 # what goes to GitHub: metadata block dropped, paragraphs joined into single lines
-python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body > /tmp/pr-body.md
-gh pr create --draft --base dev --title "<title>" --body-file /tmp/pr-body.md
+python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body | gh pr create --draft --base dev --title "<title>" --body-file -
 
 # the other direction, when a draft arrived with one-line paragraphs
 python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --wrap 110 --write
