@@ -107,7 +107,9 @@ in the description** (the judgment of "applies here" is yours; looking for them 
   large tables, or order-dependent.
 - **Exercisable behavior** — a bug fix gets a before/after table of real inputs; an endpoint
   change gets a request/response example; a contract change states what error responses did NOT
-  change. Concrete examples are what reviewers actually verify against.
+  change. Concrete examples are what reviewers actually verify against — and when behavior tests
+  landed in the diff, the runner's own description output (the test names, read as scenarios) is
+  their best source; a short scenario excerpt can be quoted in the body.
 
 If any why-gap remains after artifacts + Jira + commits, ask the developer now — targeted
 questions, then draft once.
@@ -160,9 +162,10 @@ three lines. No padding either way.
 - Honest scoping notes — what this deliberately is *not* — sourced from `decisions.md`/`prd.md`.
 - Reviewer orientation when the branch is noisy (dev merged in): it's fine to point at the
   commits that matter.
-- **Never include**: FE handoff notes (`## For FE` — separate skill), testing steps (separate
-  skill), deployment/release runbooks. Env/config *callouts* stay (reviewers must know); deploy
-  *instructions* don't.
+- **Never include**: FE handoff notes (`## For FE` — separate skill), testing steps (QA prose for
+  human testers — separate skill; the behavior tests that landed in the diff are a different thing
+  and are legitimately described), deployment/release runbooks. Env/config *callouts* stay
+  (reviewers must know); deploy *instructions* don't.
 
 ### Step 3 — The review gate
 
