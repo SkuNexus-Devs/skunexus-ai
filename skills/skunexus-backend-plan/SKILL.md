@@ -268,9 +268,11 @@ see the shape to react to it.
   the inline Goal & Acceptance (those are bullets already). Cite bullets, not the bare `Rn`: a requirement
   with a happy path, an edge and an error bullet is three propositions, and citing `R4` would let one
   happy-path test mark all three proved. (A lite PRD requirement with no bullet under it is cited as `Rn`
-  itself. A PRD written before bullet IDs existed: letter its §6 bullets in place, `Rn.a`, `Rn.b`…, with one
-  changelog line under its status — "bullet IDs added, wording unchanged" — a numbering pass, not a
-  requirement change, and the only edit planning makes to an Approved PRD.) The trailer **cites, never copies**: the wording stays in the contract, which remains the one
+  itself. A PRD written before bullet IDs existed needs its §6 bullets lettered, `Rn.a`, `Rn.b`… — only numbering,
+  but still an edit to the source of truth, so it goes like any other PRD patch: show the developer the
+  proposed lettering, and apply it in place with one changelog line under its status — "bullet IDs added,
+  wording unchanged" — only on their yes. An old bullet that cites two requirements is a question, not a
+  guess: ask which `Rn` it belongs under, or propose splitting it.) The trailer **cites, never copies**: the wording stays in the contract, which remains the one
   source of truth, and the implementor reads the bullet's *current* text when it writes the test — the test
   name restates that bullet in the test grammar's subject–verb–outcome shape, so a bullet that changes
   changes its tests through the ID, with no stale copy in the plan to drift. A bullet whose proof is

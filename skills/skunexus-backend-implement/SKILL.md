@@ -275,9 +275,12 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
      tasks, prefer worktrees.
    - **worktree per agent** — spawn with `isolation: worktree` (Claude Code creates a git worktree under
      `.claude/worktrees/`; PhpStorm sees it as its own root and branch). No shared tree, so no neighbour
-     fatals, no file-set prediction needed, and the agent's own test run is trustworthy. Cost: `vendor/`
-     is not in a fresh worktree — `composer install` (warm cache, well under a minute) per agent, never a
-     symlink (PHP resolves `__DIR__` through it and autoloads the *main* tree). Every command goes through
+     fatals, no file-set prediction needed, and the agent's own test run is trustworthy. Cost: a fresh
+     worktree has only tracked files. Copy the main checkout's git-ignored files into it (`.env` above all —
+     `APP_KEY` lives there and no `phpunit.xml` sets it — plus whatever else the app needs locally:
+     `git -C <main> ls-files --others --ignored --exclude-standard`), except `vendor/`, which gets its own
+     `composer install` (warm cache, well under a minute) per agent, never a copy or symlink (PHP resolves
+     `__DIR__` through it and autoloads the *main* tree). Every command goes through
      the resolved runner **re-pointed at the worktree** — with Docker, `docker compose -f <main repo compose
      file> exec -w <container path of the worktree> <service> …`; the bare prefix runs in the main checkout
      and would install into, and test, the wrong tree while reporting green. The worktree must sit inside
@@ -428,7 +431,8 @@ last task, or the test pass, in mode 2 it precedes the run report):
 With **no tests** chosen for the run, none of this applies: the hand-off lists the bare trailers as untested,
 by bullet ID, and stops there.
 
-When the last task is approved: every `Status` reads `finished` and no box lies; deviations are amended,
+When the last task is approved: every `Status` reads `finished` and no box lies — the one exception is a
+`T0 (tests only)` left `not_started` by a **no tests** run, reported as such in the hand-off; deviations are amended,
 earned decisions appended, the PRD patched only where requirements actually moved.
 
 Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing

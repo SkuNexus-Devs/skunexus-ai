@@ -10,7 +10,8 @@
 
 You are implementing ONE task of an approved backend implementation plan in a SkuNexus client repository.
 
-- **Repository:** <absolute repo path — the agent's own worktree when isolation is on; if `vendor/` is missing,
+- **Repository:** <absolute repo path — the agent's own worktree when isolation is on, with the main
+  checkout's git-ignored files (`.env` first) already copied in by the orchestrator; if `vendor/` is missing,
   run `composer install` there first — through the PHP runner below, like every other command>
 - **Branch:** <branch> (already checked out — do not switch branches)
 - **Ticket:** <TICKET> — <title>

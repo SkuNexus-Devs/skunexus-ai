@@ -158,7 +158,7 @@ Always prefer the second — that's the whole §5 bet.
 
 **One file = one behavior surface** — one command, one endpoint, or one pure algorithm. The file name is the
 subject (`CloseRmaTest.php`); the `test()` descriptions are its promises; Pest's own output of the file is
-its spec.
+the readable index of what it proves.
 
 ```
 CloseRmaTest.php
