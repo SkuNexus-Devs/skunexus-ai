@@ -14,9 +14,11 @@ You are implementing ONE task of an approved backend implementation plan in a Sk
   run `composer install` there first — through the PHP runner below, like every other command>
 - **Branch:** <branch> (already checked out — do not switch branches)
 - **Ticket:** <TICKET> — <title>
-- **Testing mode:** <hybrid | full post-facto>
+- **Testing mode:** <hybrid | full post-facto | no tests>
 - **PHP runner:** <exact prefix every `php` / `composer` / `vendor/bin/*` command takes — e.g. `docker compose
-  exec app`, `sail`, or "host PHP" — resolved by the orchestrator; never run a host-style command without it>
+  exec app`, `sail`, or "host PHP" — resolved by the orchestrator; with worktree isolation, the
+  worktree-pointed prefix (`docker compose -f <main compose file> exec -w <worktree path in container> …`);
+  never run a host-style command without it>
 - **Test baseline:** <"clean", or the tests already red before this run — copied from the plan's
   `> Test baseline` line. A red on this list is not yours>
 
@@ -28,7 +30,8 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
 ## Context (read-only)
 
 - **Contract:** <`.ai/<TICKET>/prd.md`, or "inline — the plan's Goal & Acceptance, quoted here: …">. Your
-  task satisfies: <quote the exact Rn/An requirement text>.
+  task satisfies: <Rn / An IDs>; its trailer cites <Rn.x / An IDs>. Read their current wording in the
+  contract file — don't work from a pasted copy (inline door: the quoted Goal & Acceptance above).
 - **Binding decisions:** <paste the relevant `decisions.md` entries (or "none") — these record forks already
   settled with the developer; do not re-open them>.
 - **Dependency code to read first:** <per depends_on task: the key files/classes it produced, from its
@@ -55,21 +58,26 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
   task's `Tests:` trailer: invoke the `skunexus-behavior-testing` skill first (the Skill tool — it names its
   own base directory), then read the style guide matching the repo's syntax under that directory
   (`references/pest-style-guide.md` for Pest, `references/phpunit-style-guide.md` for PHPUnit) BEFORE writing
-  any test code. The trailer cites requirement IDs, not text: read each cited `Rn`/`An`'s **current** wording
-  in the contract above and name the test from that sentence (subject–verb–outcome; a Given/When/Then
-  sentence is the body's skeleton and its *then* clause is the name). Then run the file/group you wrote,
-  through the PHP runner above. Never claim green without a run. A
-  trailer that is out-of-suite (HTTP-level or cross-process per the layer map) or wrong against the real code
-  gets flagged in your report, not ground on.
+  any test code. The trailer cites acceptance-bullet IDs, not text: read each cited bullet's (`Rn.x` / `An`)
+  **current** wording in the contract above and write at least one test per bullet, its name restating that
+  bullet (subject–verb–outcome; a Given/When/Then bullet is the body's skeleton and its *then* clause is the
+  name). The bullet leads and the test follows — never name a test from what the code turned out to do. Then
+  run the file/group you wrote, through the PHP runner above. Never claim green without a run. A bullet
+  whose proof is out-of-suite (HTTP-level or cross-process per the layer map) gets flagged in your report,
+  not ground on.
+- **Schema dump.** If one of your steps added a migration, the test schema is stale until
+  `php artisan dump:schema-for-testing --env=testing` runs — run it, through the PHP runner, before any test.
 - **Shared test vocabulary is read-only for you.** Use the words already in `tests/Behavior/` freely, but
   never edit `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` / `DomainAssertionsTrait` — other agents are
   writing tests in this domain right now. A new word your test needs stays local to your test file (PHPUnit:
   a private `given*`/`assert*` method; Pest: an inline `given(fn)` delta or the namespaced file-level
-  `givenX()` fallback — style guide §3, ladder §9) and goes in your report as a **vocabulary candidate** naming the trait
+  `givenX()` fallback — style guide §3, ladder §8) and goes in your report as a **vocabulary candidate** naming the trait
   it belongs in. The orchestrator graduates it after the run.
 - **A red test is yours to act on, never to hide.** Classify it: (a) your implementation is wrong → fix it
-  within your task's files and re-run, at most three red→fix rounds; (b) the test is wrong against the real
-  code → flag it (the escape hatch above); (c) the requirement it cites looks wrong → a Contract flag, and
+  within your task's files and re-run, at most three red→fix rounds; (b) the test is
+  **mechanically** wrong — wrong layer, wrong fixture, wrong entry point → rewrite the test, and flag it only
+  if you can't. A test that fails because the code behaves differently from the bullet is never (b): it is
+  (a) or (c); (c) the requirement it cites looks wrong → a Contract flag, and
   stop on that trailer; (d) the failure is a fatal/parse/autoload error in a file outside your task's file
   set → a neighbouring agent is mid-edit, not your red: wait a moment, re-run once, then report it as
   `environment`; (e) the test is on the **Test baseline** above → it was red before you started: not yours,
@@ -93,7 +101,7 @@ Return exactly these sections, in order:
 2. **Files** — every file created or edited (full paths).
 3. **Test results** (hybrid only) — the exact command you ran (runner prefix included), the test names you
    wrote per cited requirement ID, pass/fail counts, any failure output verbatim with its class
-   (`implementation` / `test wrong` / `contract` / `environment` / `baseline`) and the fix rounds spent, any
+   (`implementation` / `test mechanics` / `contract` / `environment` / `baseline`) and the fix rounds spent, any
    trailer you flagged instead of writing, and your **vocabulary candidates** (local helper → the trait it
    belongs in), or "none".
 4. **Sanity checks for the developer** — restate the task's `Sanity-check now` items (the developer runs

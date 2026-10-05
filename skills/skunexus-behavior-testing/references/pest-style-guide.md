@@ -1,6 +1,6 @@
 # SN Test Style Guide — Given/When/Then (Pest syntax)
 
-Pest is the default test syntax for **client repos**; PHPUnit class syntax stays the default in
+Pest is the target test syntax for **client repos**; PHPUnit class syntax stays the default in
 `skunexus-be-core`. The doctrine is identical to `phpunit-style-guide.md` — same grammar, same naming, same
 promise ledger — only the syntax shell differs; this file is self-contained and normative, so a Pest author
 needs nothing else. The practical on-ramp — a 7-step recipe, the surprises, how to run — is
@@ -19,7 +19,7 @@ not undiscovered.
 | Scenario builders + domain assertions | `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` traits | **the same traits, attached per file with `uses({Domain}ScenarioTrait::class);`** |
 | Shared Given (state only) | `setUp()` | `beforeEach(function () { … })` |
 | Given deltas | `$this->given(fn () => …)` / private `given*` method | **bare `given(fn () => $this->…)`** — one 3-line global in `tests/Pest.php`; a `given*`-**named** file-level function is already marked and is called **bare**, never wrapped (§3) |
-| Compound file-local builders (`anApprovedWriteOffRma`) | private method | **graduate to `{Domain}ScenarioTrait`** — PHP has no file-private named function (§9) |
+| Compound file-local builders (`anApprovedWriteOffRma`) | private method | **graduate to `{Domain}ScenarioTrait`** — PHP has no file-private named function (§8) |
 | The When | private `when<Verb>()` method | **one namespaced file-level `function when<Verb>()`**, body `test()->bus()->handle(…)` |
 | Constants | `private const` | file-level `const X = '…'` (namespaced); shared across files → constant on the scenario trait, read `self::X` from a closure and **`test()->target::X`** from a file-level function (§2) |
 | Typed fixture properties | `private Order $order` | shared actors → **typed properties on the scenario trait** (`public` if a `when*` global reads them via `test()`, else `protected`); residual per-file state stays dynamic, assigned in `beforeEach` |
@@ -52,9 +52,9 @@ Pest 5 API). `tests/Pest.php` binds the base class folder-wide
 the subject, so the falsifiable proposition no longer exists on one line and the promise-ledger greps (§5.8)
 stop seeing whole sentences. A group-scoped `beforeEach` re-blurs the shared Given the visible-`given()` rule
 just fixed — arrange-failures and contract-failures merge again, for a subset of the file. And composed
-headings (*closing a split order › closes when the last fulfillment completes*) don't travel: scenarios get
-quoted standalone into PRD diffs, QA notes and FE handoffs, where a flat proposition survives whole and a
-heading needs its context reassembled. A file that wants two groups wants two files (§8).
+headings (*closing a split order › closes when the last fulfillment completes*) don't travel: test names get
+quoted standalone into QA notes, review threads and FE handoffs, where a flat proposition survives whole and
+a heading needs its context reassembled. A file that wants two groups wants two files.
 Pest's default output already prints the description list — no `--testdox` needed.
 
 ### 0.1 Installing Pest on a client repo that doesn't have it (one-time)
@@ -286,7 +286,7 @@ in the test must be the same words — which is also why such a helper is never 
 the name, and the name was the sentence.
 
 With deltas marked, **the body grammar is total: every line in a test body starts with `given`, `when`,
-`expect`, or `assert`.** That is mechanically checkable, and it makes the file read as its own spec:
+`expect`, or `assert`.** That is mechanically checkable, and it makes the file read as the proof of its contract:
 *Given every line is accepted, when close, then the RMA is closed*.
 
 **The When lives in the test body, always** — one line, calling the file's namespaced `when` + domain-verb
@@ -396,11 +396,11 @@ from the PHPUnit snake_case name: replace `_` with a space, drop nothing else).
    department`), non-obvious constraints. A *why* note about a scenario sits directly above its `test()`
    call — never inside the body, where it reads as a step. Never restate the description in a comment above
    the test.
-6. **File reads as the spec, in spec order.** Happy-path clauses first, then guards and edge cases. Before
+6. **File reads in contract order.** Happy-path clauses first, then guards and edge cases. Before
    committing, run the file (`vendor/bin/pest path/to/File.php`) — the default output *is* the description
    list; if a sentence reads wrong, the description is wrong.
-7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the GWT sentences of a §8
-   skeleton). Line them up word by word: every prose clause must own a code word (a missing assertion hides
+7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the Given/When/Then
+   acceptance bullet the test proves). Line them up word by word: every prose clause must own a code word (a missing assertion hides
    here), assertions mirror prose word order (`assertPutAwayLocationHolds`, not
    `assertStockInPutAwayLocation`), builder parameters speak prose not structure (`label: 'a'`, never
    `['location' => 'a']`), actors are named in the data so failures speak the scenario
@@ -497,33 +497,7 @@ function when<DomainVerb>(...): <DomainResult>
 
 ---
 
-## 8. Scenario-first, without extra files — the skeleton form
-
-Writing the scenarios in English *before* the test code is the discipline; a standing `.scenarios.md` per
-test file is not — it would be a parallel English artifact that can drift, the same disease as labeled DSLs.
-The exercise's native home is **the test file itself, committed first as a skeleton**:
-
-```php
-test('split order closes when its last fulfillment completes', function () {
-    $this->markTestIncomplete(
-        'Given the order is split across shipment and pickup,'
-        . ' and the shipment has already completed;'
-        . ' when the pickup completes; then the order is closed.'
-    );
-});
-```
-
-`markTestIncomplete` works unchanged inside a Pest closure. Descriptions are the scenario titles (already
-propositions, §4); each body carries its GWT sentence until implemented. The skeleton is runnable (the
-runner prints the scenario list before any code exists), reviewable (the spec is commit 1 of the PR), and
-**self-deleting** — implementing a test replaces the sentence with the three role-marked lines that say the
-same thing, so drift is impossible. Batching *titles* up front is writing the spec, not horizontal slicing —
-implementation still proceeds one vertical slice at a time (red → green per scenario). Scenarios that
-pre-exist in a PRD or plan flow into the skeleton whole: a Given/When/Then acceptance sentence becomes the
-`markTestIncomplete` sentence, and the description is its *then* clause with its subject, in the §4 shape — the
-same proposition in two lengths, never two propositions. They don't get duplicated into a second document.
-
-## 9. Who shares what — the vocabulary graduation ladder (Pest amendment)
+## 8. Who shares what — the vocabulary graduation ladder (Pest amendment)
 
 Scenario and assertion traits are **per domain, shared by every test file in that domain** — `tests/Behavior/`
 is flat, and `OrderRmaScenarioTrait` serves all nine RMA files. A test file whose world spans domains composes

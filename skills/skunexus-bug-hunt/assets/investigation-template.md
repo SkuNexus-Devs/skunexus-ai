@@ -40,8 +40,7 @@
 <!-- CONFIRMED BUG ONLY — omit for other verdicts. Testable acceptance bullets: the contract downstream
      skills trace to (the planning skill's tasks cite these IDs; the PR skill sources its before/after
      from here). Cover the fixed path AND the behavior that must NOT change.
-     Each is a falsifiable proposition that can become a behavior-test name verbatim (naming rules:
-     skunexus-behavior-testing); name where a regression test would live when it's obvious. -->
+     Each is a falsifiable proposition; name where a regression test would live when it's obvious. -->
 - **A1** …
 - **A2** …
 

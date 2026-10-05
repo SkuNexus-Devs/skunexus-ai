@@ -28,7 +28,7 @@ prefer the second — that's the whole §5 bet.
 ## 2. Anatomy of a test file
 
 **One file = one behavior surface** — one command, one endpoint, or one pure algorithm. The file name is the
-subject (`CreatePutAwayTest`); the test names are its promises; `--testdox` output of the file is its spec.
+subject (`CreatePutAwayTest`); the test names are its promises; `--testdox` output of the file is the readable index of what it proves.
 
 ```
 class CreatePutAwayTest extends TestCase
@@ -90,7 +90,7 @@ in the body match. The inline marker is 3 lines on the base TestCase (`given(Clo
 carries no string label (nothing to drift) and no value threading (state stays in properties).
 
 With deltas marked, **the body grammar is total: every line in a test body starts with `given`, `when`, or
-`assert`.** That is mechanically checkable, and it makes the file read as its own spec: *Given the cart is not a
+`assert`.** That is mechanically checkable, and it makes the file read as the proof of its contract: *Given the cart is not a
 receiving cart, when create put away, then rejected* — derived from names that cannot drift. (Anything else that must happen in a body — a
 boundary fake like `Queue::fake()`, for instance — is arrange, and rides inside the inline marker:
 `$this->given(fn () => Queue::fake());`.)
@@ -182,10 +182,10 @@ they carry no proposition. Present tense, subject–verb–outcome, `#[Test]` + 
    department`), non-obvious constraints. A *why* note about a scenario sits directly above its `#[Test]`
    line — never inside the body, where it reads as a step, and never between the attribute and `function`,
    where it is easy to miss. Never restate the method name in a docblock.
-6. **File reads as the spec, in spec order.** Happy-path clauses first, then guards and edge cases. Before
+6. **File reads in contract order.** Happy-path clauses first, then guards and edge cases. Before
    committing, run `--testdox` on the file: if a sentence reads wrong, the name is wrong.
-7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the GWT sentences of a
-   §8 skeleton). Line them up word by word: every prose clause must own a code word (a missing
+7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the Given/When/Then
+   acceptance bullet the test proves). Line them up word by word: every prose clause must own a code word (a missing
    assertion hides here), assertions mirror prose word order (`assertPutAwayLocationHolds`, not
    `assertStockInPutAwayLocation`), builder parameters speak prose not structure (`label: 'a'`, never
    `['location' => 'a']`), actors are named in the data so failures speak the scenario
@@ -280,36 +280,7 @@ class <Command>Test extends TestCase
 
 ---
 
-## 8. Scenario-first, without extra files — the skeleton form
-
-Writing the scenarios in English *before* the test code is the discipline; a standing `.scenarios.md` per
-test file is not — it would be a parallel English artifact that can drift, the same disease as labeled DSLs
-(standalone `.scenarios.md` files are demo material, not a required deliverable). The exercise's native
-home is **the test file itself, committed first as a skeleton**:
-
-```php
-#[Test]
-public function split_order_closes_when_its_last_fulfillment_completes(): void
-{
-    $this->markTestIncomplete(
-        'Given the order is split across shipment and pickup,'
-        . ' and the shipment has already completed;'
-        . ' when the pickup completes; then the order is closed.'
-    );
-}
-```
-
-Names are the scenario titles (already propositions, §4); each body carries its GWT sentence until
-implemented. The skeleton is runnable (`--testdox` renders the scenario list before any code exists),
-reviewable (the spec is commit 1 of the PR), and **self-deleting** — implementing a test replaces the
-sentence with the three role-marked lines that say the same thing, so drift is impossible. Batching *titles*
-up front is writing the spec, not horizontal slicing — implementation still proceeds one vertical slice at a
-time (red → green per scenario). Scenarios that pre-exist in a PRD or plan flow into the skeleton whole: a
-Given/When/Then acceptance sentence becomes the `markTestIncomplete` sentence, and the name is its *then*
-clause with its subject, in the §4 shape — the same proposition in two lengths, never two propositions. They
-don't get duplicated into a second document next to the test.
-
-## 9. Who shares what — the vocabulary graduation ladder
+## 8. Who shares what — the vocabulary graduation ladder
 
 Scenario and assertion traits are **per domain, shared by every test file in that domain** — `tests/Behavior/`
 is flat, and `ReceivingScenarioTrait` serves `CreatePutAwayTest`, `CancelPutAwayTest`, and every future receiving

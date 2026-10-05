@@ -1,6 +1,6 @@
 # Writing a SkuNexus test — developer guide (Pest syntax)
 
-**Pest is the default test syntax in client repos.** `skunexus-be-core` stays on PHPUnit class syntax —
+**Pest is the target test syntax for client repos.** `skunexus-be-core` stays on PHPUnit class syntax —
 its version of this guide is `phpunit-dev-guide.md`, alongside this file. This doc says *what you type*;
 the full convention with rationale — and the normative word on every rule here — is
 `pest-style-guide.md`, alongside this file.
@@ -33,24 +33,14 @@ chains (`it('…')->get('/')->…`) are acceptable there and nowhere else.
 
 Worked example to copy from: the annotated anatomy in `pest-style-guide.md` §2 and its copyable skeleton (§7).
 
-1. **Write the scenarios in English first, as a committed skeleton.** The description is the scenario
-   title; the body holds the Given/When/Then sentence until implemented. Runnable, reviewable,
-   self-deleting.
-
-   ```php
-   test('a pending rma cannot be force closed', function () {
-       $this->markTestIncomplete(
-           'Given an approved RMA with unreceived units;'
-           . ' when it is force closed without approval;'
-           . ' then it is rejected and the state does not move.'
-       );
-   });
-   ```
+1. **Start from the proposition, not the code.** Each test proves one acceptance bullet — `prd.md` §6,
+   `investigation.md`'s `A1…An`, or the plan's Goal & Acceptance — and its name restates that bullet (a
+   Given/When/Then bullet's *then* clause, with its subject). No `.ai/<TICKET>/` to read? Say the
+   proposition to the developer and get a yes first; a name taken from what the code does records its bugs.
 
 2. **Name every test as a falsifiable proposition** — lowercase, spaced, subject–verb–outcome:
    `test('force closing an approved rma closes it', …)`. Banned words: *works, correctly, properly,
-   successfully, should*. In Pest the description **is** the spec sentence — already authored prose; the
-   name has to carry it.
+   successfully, should*. In Pest the description **is** the sentence — it restates the bullet; the name has to carry it.
 
 3. **Header + shared Given.** Keep the `namespace` (one per file — it makes the file's `const` and `when*`
    function namespaced, so cross-file collisions are structurally impossible). `uses()` attaches the
@@ -144,7 +134,7 @@ Endpoint tests keep `$this->postJson(...)` / `$response->assertStatus(422)` — 
 there, no wrapper needed.
 
 **The body grammar is total: every line in a test body starts with `given`, `when`, `expect`, or
-`$this->assert`.** That is mechanically lintable, and it makes the runner's own output read as the spec.
+`$this->assert`.** That is mechanically lintable, and it makes the runner's own output read as the proof of its contract.
 
 ## 4. The vocabulary — where words live
 
@@ -201,7 +191,7 @@ None of these changed under Pest.
 
 1. **Every test gets a brand-new database.** Cross-test setup is impossible, ever.
 2. **Real migrations never run in tests.** After adding a migration run
-   `php artisan dump:schema-for-testing --env=testing` — the staleness window is a 10-minute wall clock.
+   `php artisan dump:schema-for-testing --env=testing` — the staleness window is `INVALIDATE_SCHEMA_DUMP_AFTER` (the 60 s default in client repos).
 3. **Testbench env hooks are inert.** We override `createApplication()`, so `defineEnvironment()`,
    `getPackageProviders()` and `#[WithConfig]` silently no-op. Use `bootstrappingCallbacks` instead.
 4. **`Model::factory()->createDomain()` does not persist.** It returns a domain entity; you persist via

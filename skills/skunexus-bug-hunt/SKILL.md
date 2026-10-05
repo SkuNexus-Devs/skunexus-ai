@@ -207,8 +207,7 @@ where" altitude (real forks only — see the operating principle), plus an hones
 recommended route — trivial → `skunexus-backend-implement` directly, complex → `skunexus-backend-plan`
 first. Recommend; **the developer decides**. §5 states the expected behavior after the fix as testable
 `A1…An` bullets — this is the acceptance contract downstream skills trace to. Write each as a falsifiable
-proposition that can become a behavior-test name verbatim (naming rules live in
-`skunexus-behavior-testing`), and name where a regression test would live when it's obvious — noted here,
+proposition, and name where a regression test would live when it's obvious — noted here,
 never written here: this skill still only diagnoses and proposes.
 
 ### Step 5 — Review gate, then handoff

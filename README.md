@@ -141,7 +141,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 **What happens** — three doors, chosen by what exists:
 
-- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. You also pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code) or *full post-facto* (one test pass at the end). A plan with no test trailers skips the question entirely.
+- **Door A — a plan exists.** You pick the mode: **task-by-task** (implemented in-conversation, you review each task's diff before the next starts — best when you want to steer) or **orchestrate** (subagents implement everything in parallel where the DAG and file-sets allow — in one shared checkout, or each in its own git worktree via Claude Code's `isolation: worktree`, which PhpStorm opens as its own root; you review the whole branch once at the end — best when the plan is settled). Default commit convention: one commit per task, `<TICKET>: <summary>`. Whether a plan gets tests at all is decided at planning time and recorded in its header (`> Tests: behavior` or `> Tests: none — <why>`). With `behavior`, you pick **when tests are written**: *hybrid* (the default — each behavior-bearing task's tests land and run right after its code), *full post-facto* (one test pass at the end, reviewed as its own step) or *no tests* for this run. A `none` plan skips the question entirely.
 - **Door B — no plan.** For a trivial, well-described change: implemented directly, no artifacts, the diff is the record. If it stops being trivial mid-way, the skill stops, summarizes what it learned, and recommends escalating to planning — your call.
 - **Door C — changes on implemented work.** Your conclusions, QA findings, or relayed PR-review comments get triaged item-by-item to the right altitude: code fix, plan amendment, PRD patch, or a `decisions.md` supersede. Items contradicting a recorded decision are flagged with the original rationale so settled forks don't get re-litigated by accident.
 
@@ -187,7 +187,7 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 **When:** any test is being written, converted, renamed or placed. *"Write a test for this command"*, *"where does this test go"*, *"is this test asserting the right thing"*. You rarely invoke it by name — the plan skill names *what* each task must prove, the implement skill decides *when* the tests get written, and both load this skill automatically.
 
-**What happens:** the doctrine says tests verify behavior through SN's public interfaces — the command bus and HTTP/GraphQL endpoints — never handler internals. It decides the layer (Unit / Feature / GraphQL / Integrations), the data setup, what may be mocked (system boundaries only), and the body grammar: every line starts with `given`, `when`, or an assertion, one act per test, the name a falsifiable proposition. Pest is the default syntax in client repos, PHPUnit in core — detected per repo.
+**What happens:** the doctrine says tests verify behavior through SN's public interfaces — the command bus and HTTP/GraphQL endpoints — never handler internals. It decides the layer (Unit / Feature / GraphQL / Integrations), the data setup, what may be mocked (system boundaries only), and the body grammar: every line starts with `given`, `when`, or an assertion, one act per test, the name a falsifiable proposition. Pest where installed, PHPUnit otherwise — detected per repo.
 
 **You get:** tests whose names state the contract and whose bodies prove exactly it — plus the `tests/Behavior/` vocabulary (scenario builders, domain assertions) grown one word at a time, never speculatively.
 
@@ -205,9 +205,9 @@ claude: (jira-prd) fetches the ticket, interviews you, drafts prd.md → you app
 you:    plan the backend
 claude: (backend-plan) maps the code, drafts the task DAG → you review the manifest, then the file → approve
 you:    orchestrate it
-claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid or post-facto?
-        subagents build the tasks, each behavior-bearing one landing its tests green, commits per
-        task → you review the branch → approve
+claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid, post-facto, or none?
+        (only when the plan says `Tests: behavior`) subagents build the tasks, commits per task
+        → you review the branch → approve
 you:    draft the PR
 claude: (backend-pr) drafts pr.md → you approve → draft PR opened
 you:    prepare the FE handoff
