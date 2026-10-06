@@ -32,6 +32,8 @@ $S 'tests/Unit/Domain/*/*Test.php' tests/Feature      # globs and several paths 
 $S --help
 ```
 
+**Docker-only PHP:** the phar must be inside the container's mount. Copy it into the repo's untracked `.ai/` first and run it through the resolved runner: `cp "$S" .ai/spec-extract.phar && <runner> php .ai/spec-extract.phar tests/Feature/… --output=.ai/<TICKET>/spec-from-tests.md` (paths are repo-relative, so they resolve the same in the container; the container's PHP must be 8.2+).
+
 **The ticket artifact.** `.ai/<TICKET>/spec-from-tests.md` is a standing workflow artifact — regenerated at `skunexus-backend-implement` wrap-up and read by `skunexus-backend-pr`, `skunexus-backend-summary` and `skunexus-fe-handoff`.
 It is a render, never hand-edited: prose that reads wrong is fixed in the test names and helpers, then the file is re-run.
 It is also **not a second spec**: the PRD is the spec, the tests are its proof, and this file only makes the proof readable — a gap between the two is resolved in the PRD (patch + changelog, on the developer's yes) or in the tests, never here. Coverage is counted per acceptance bullet (`Rn.x` / `An`), as in the implement wrap-up.
@@ -41,6 +43,7 @@ It is also **not a second spec**: the PRD is the spec, the tests are its proof, 
 | Argument | Effect |
 |---|---|
 | `<paths...>` | Files, directories (walked recursively for `*Test.php`), or globs. Globs are expanded by the tool, so quote them to keep the shell out of it — they are PHP `glob()`, one level per `*`, no `**`; pass a directory when you want recursion. Each path's matches are sorted; the order of the paths is kept. A path that matches nothing warns and is skipped |
+| `--mode=NAME` | `pest` (default) reads **both** syntaxes; `phpunit` reads only `#[Test]` class methods — a Pest file then renders 0 scenarios. Leave it unset |
 | `--output=FILE` | Write the spec to `FILE` instead of stdout |
 | `--dialect=NAME` | Vocabulary bundle to read by: `skunexus` (default) or `gwt` (the plain base, no SkuNexus initialisms) |
 | `--config=FILE` | Overlay file merged over the dialect. Repeatable, applied left to right, last wins |
@@ -53,10 +56,10 @@ Which project a test belongs to is decided per file: the nearest ancestor direct
 
 ## Both syntaxes — `--mode`
 
-The extractor reads **both** authoring syntaxes, so either is a first-class spec source:
+The extractor reads **both** authoring syntaxes, and the default reads both, so leave `--mode` unset:
 
-- `--mode=pest` (**the default**) reads classless files: `test()` descriptions → scenario headings, `beforeEach` → Background, a marked `given` → Given steps, file-level `when*` functions → passive command prose, `expect()` families → Thens.
-- `--mode=phpunit` reads `#[Test]` class methods.
+- the default (`--mode=pest`) reads classless files **and** `#[Test]` classes — `test()` descriptions → scenario headings, `beforeEach` → Background, a marked `given` → Given steps, file-level `when*` functions → passive command prose, `expect()` families → Thens.
+- `--mode=phpunit` reads only `#[Test]` class methods; a Pest file then renders 0 scenarios with exit 0. Leave it unset.
 
 A mixed repo is normal — Pest runs PHPUnit classes natively, and a converted suite extracts at parity with its PHPUnit original. Two Pest-only rules decide whether the prose reads: mark a Given **once** (`given(fn () => $this->…)` or a bare `givenX();`, never both nested), and pass a **directory** rather than a shell glob. Details in `skunexus-behavior-testing`'s style guide §3 and §10.5.
 
@@ -126,19 +129,19 @@ Keys: `initialisms`, `navigators`, `qualifiers`, `http_verbs`, `gerunds`, `parti
 
 ## Source, and changing it
 
-The phar is built from https://github.com/SkuNexus-Devs/dev-ian-spec-extract — a Laravel app that exists to develop this tool. Plan changes there, not against the phar.
+Built from: <!-- MERGE-REVISIT(5): fill in `<sha> (<date>)` once the extractor is committed, pushed and rebuilt --> TBD. The phar is built from https://github.com/SkuNexus-Devs/dev-ian-spec-extract — a Laravel app that exists to develop this tool. Plan changes there, not against the phar.
 
 - `app/Spec/*` — all the work: `Parse/TestFileParser` (structure), `SpecComposer` (the markdown), `CommandProse` / `AssertionProse` / `ExpressionRenderer` / `EnglishGrammar` / `VocabularyIndex` (the prose), `Cli` (one run, framework-free)
 - `app/Console/Commands/SpecExtractCommand.php` — thin adapter, so `php artisan spec:extract` and the phar share `Cli`
 - `config/spec/gwt.php`, `config/spec/skunexus.php` — the dialects
-- `tests/` — 334 tests; `tests/Fixtures/corpus` + `tests/Fixtures/expected` are 15 byte-exact goldens from real BB/LO suites. Any prose change shows up there first, and a deliberate change means re-blessing the golden
+- `tests/` — the suite, goldens included; `tests/Fixtures/corpus` + `tests/Fixtures/expected` are byte-exact goldens from real client suites. Any prose change shows up there first, and a deliberate change means re-blessing the golden
 - `.ai/spec-extract/` — why it is shaped this way: `design.md` (the class map, the config/dialect scheme, §6.1b on the `#[TestDox]` escape hatch), `decisions.md` (D1 per-file roots, D2 frozen-oracle goldens, D3 no guessed prose — `⚠ RAW` instead), `findings.md` (the stage-3 backlog). Read these before proposing a prose change; most "bugs" are pinned decisions
 - `bin/build-phar.php` — the packer: `app/Spec`, `config/spec`, php-parser, `Illuminate\Support\Str` and doctrine/inflector, with a class map read out of the packed files. It refuses to finish if the packed phar cannot pass its own `--selftest`, and keeps the phar it replaced in `bin/previous/spec-extract.phar.N`
 
 ```bash
 git clone git@github.com:SkuNexus-Devs/dev-ian-spec-extract.git && cd dev-ian-spec-extract
 composer install
-composer test                                        # 334 tests, goldens included
+composer test                                        # the suite, goldens included
 composer phar                                        # rebuild bin/spec-extract.phar
 cp bin/spec-extract.phar <this skill's folder>/scripts/   # refresh this skill
 ```
@@ -149,4 +152,4 @@ cp bin/spec-extract.phar <this skill's folder>/scripts/   # refresh this skill
 
 This skill renders existing tests as a spec and stops there: it does not write them (`skunexus-behavior-testing`), drive them test-first (`skunexus-tdd-testing`), run them (`composer test`), or turn the spec into a PR description (`skunexus-backend-pr`) or QA testing steps (separate skill).
 
-- **`skunexus-behavior-testing`** — `references/spec-readability-pass.md` is the second pass over a suite whose render is faithful but unreadable (audit → fix the tests → verify); its §10.6 is the measured table of what a `#[TestDox]` `{slot}` renders, and `.ai/<TICKET>/spec-extract-requests.md` is the change-request list a pass hands this tool.
+- **`skunexus-behavior-testing`** — `references/spec-readability-pass.md` is the second pass over a suite whose render is faithful but unreadable (audit → fix the tests → verify); `pest-style-guide.md` §10.6 is the measured table of what a `#[TestDox]` `{slot}` renders, and `.ai/<TICKET>/spec-extract-requests.md` is the change-request list a pass hands this tool.

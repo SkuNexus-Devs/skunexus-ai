@@ -47,10 +47,10 @@ flowchart TD
     IMPL --> FE["skunexus-fe-handoff<br/>→ fe-handoff.md"]
     IMPL --> SUM["skunexus-backend-summary<br/>→ backend-summary.md"]
     BT["skunexus-behavior-testing<br/>(+ skunexus-tdd-testing<br/>when driving test-first)"] -. how every test is written .-> IMPL
-    IMPL -- "at wrap-up" --> SPEC["skunexus-spec-extract<br/>→ spec-from-tests.md"]
+    IMPL -. "on request" .-> SPEC["skunexus-spec-extract<br/>→ spec-from-tests.md"]
 ```
 
-Two entry points, one build spine, three wrap-up documents plus the spec rendered from the tests. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
+Two entry points, one build spine, three wrap-up documents plus, on request, the tests rendered as Given/When/Then. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
 
 ### Which skill do I start with?
 
@@ -97,7 +97,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 | `pr.md`, `pr2.md`… | backend-pr | The PR title + body, exactly as posted (one file per PR round) |
 | `fe-handoff.md` | fe-handoff | Self-contained API contract for the FE team |
 | `backend-summary.md` | backend-summary | Current-state feature doc of what the ticket implemented |
-| `spec-from-tests.md` | backend-implement, via `skunexus-spec-extract` | The ticket's behavior tests rendered as a Given/When/Then spec — **never hand-edited**; fix the tests and re-run |
+| `spec-from-tests.md` | backend-implement, via `skunexus-spec-extract` | Optional — the ticket's behavior tests rendered as Given/When/Then prose — **never hand-edited**; fix the tests and re-run |
 
 ---
 
@@ -198,7 +198,7 @@ Three companion skills the build spine leans on. You rarely invoke them by name 
 
 **What happens:** the doctrine says tests verify behavior through SN's public interfaces — the command bus and HTTP/GraphQL endpoints — never handler internals. It decides the layer (Unit / Feature / GraphQL / Integrations), the data setup, what may be mocked (system boundaries only), and the body grammar: every line starts with `given`, `when`, or an assertion, one act per test, the name a falsifiable proposition. Pest where installed, PHPUnit otherwise — detected per repo.
 
-**You get:** tests whose names state the contract and whose bodies prove exactly it — plus the `tests/Behavior/` vocabulary (scenario builders, domain assertions) grown one word at a time, never speculatively.
+**You get:** tests whose names restate the contract and whose bodies prove exactly it — plus the `tests/Behavior/` vocabulary (scenario builders, domain assertions) grown one word at a time, never speculatively.
 
 **It will not** plan work, implement production code, or write QA testing steps.
 
@@ -206,15 +206,15 @@ Three companion skills the build spine leans on. You rarely invoke them by name 
 
 **When:** you want new behavior driven test-first. *"Drive it test-first"*, *"TDD this"*. Optional — the default is tests after the code. You pick it once — as the **full TDD** testing mode when `skunexus-backend-implement` asks — not per task; ad hoc, the phrasing triggers it.
 
-**What happens:** the scenarios become a runnable skeleton of `markTestIncomplete` Given/When/Then sentences (that's the spec, and it's reviewable). Then one vertical slice at a time: watch it fail for the stated reason, write the minimum to pass, refactor only on green. The first slice is a tracer bullet that proves the wiring — provider order, dispatchability, DI — so later failures point at behavior, not plumbing.
+**What happens:** the cited acceptance bullets become a runnable skeleton — one `markTestIncomplete` per bullet, titled with the proposition, citing the bullet ID (the proof list, reviewable before any code). Then one vertical slice at a time: watch it fail for the stated reason, write the minimum to pass, refactor only on green. The first slice is a tracer bullet that proves the wiring — provider order, dispatchability, DI — so later failures point at behavior, not plumbing.
 
 **You get:** implementation whose every step was pinned by a test you watched fail first.
 
 **It will not** change the plan document or decide how a test is written (that's `skunexus-behavior-testing`).
 
-### 10. `skunexus-spec-extract` — tests → Given/When/Then spec
+### 10. `skunexus-spec-extract` — tests → Given/When/Then render
 
-**When:** you want to read back what a suite actually asserts. *"The GWT spec of these tests"*, *"does this match the PRD"*. Runs automatically at implementation wrap-up.
+**When:** you want to read back what a suite actually asserts. *"The GWT spec of these tests"*, *"does this match the PRD"*. Optional — offered at implementation wrap-up.
 
 **What happens:** a self-contained phar (PHP 8.2+, no `vendor/`, no booted app) parses the test files and renders each scenario as prose from the test vocabulary. Deterministic — no LLM anywhere, so the same tests always produce the same document.
 
@@ -236,7 +236,7 @@ claude: (backend-plan) maps the code, drafts the task DAG → you review the man
 you:    orchestrate it
 claude: (backend-implement) asks: task-by-task or orchestrate? tests hybrid, post-facto, TDD, or none?
         (only when the plan says `Tests: behavior`) subagents build the tasks, commits per task
-        → spec-from-tests.md regenerated (when tests landed) → you review the branch → approve
+        → spec-from-tests.md rendered (on request) → you review the branch → approve
 you:    draft the PR
 claude: (backend-pr) drafts pr.md → you approve → draft PR opened
 you:    prepare the FE handoff

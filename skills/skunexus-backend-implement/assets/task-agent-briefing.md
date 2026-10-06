@@ -59,8 +59,8 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
   (it loads `skunexus-behavior-testing`) and drive your steps through its loop — first the skeleton, one
   placeholder per bullet your trailer cites (IDs, never the bullet text), then red → green one slice at a
   time; a step's order may bend to the slice order, and every deviation from the listed order goes in your
-  report. Everything below for hybrid — reading the bullets, the vocabulary rule, the red classes, the
-  report — applies unchanged. <!-- MERGE-REVISIT(4) --> In **hybrid**: once your steps land, discharge the
+  report. The skill says "commit" — here that means "write": you never commit. Everything below for hybrid —
+  reading the bullets, the vocabulary rule, the red classes, the report — applies unchanged. In **hybrid**: once your steps land, discharge the
   task's `Tests:` trailer: invoke the `skunexus-behavior-testing` skill first (the Skill tool — it names its
   own base directory), then read the style guide matching the repo's syntax under that directory
   (`references/pest-style-guide.md` for Pest, `references/phpunit-style-guide.md` for PHPUnit) BEFORE writing
@@ -88,7 +88,7 @@ step, and the Out of scope / Sanity-check now / Tests trailers>
   set → a neighbouring agent is mid-edit, not your red: wait a moment, re-run once, then report it as
   `environment`; (e) the test is on the **Test baseline** above → it was red before you started: not yours,
   don't fix it, don't touch it, report it as `baseline`. Never make a test pass by weakening it — no deleted
-  assertion, no `markTestSkipped`, no loosened expectation — and never touch another task's file to get
+  assertion, no `markTestSkipped`, no `markTestIncomplete` left behind, no loosened expectation — and never touch another task's file to get
   green. Still red after that → return
   with the failure output verbatim and its class; the orchestrator re-runs on a settled tree and decides.
 - New tests are written in the doctrine's grammar even when the file they join holds older-shaped tests.
@@ -108,7 +108,8 @@ Return exactly these sections, in order:
 3. **Test results** (hybrid / full TDD only) — the exact command you ran (runner prefix included), the test names you
    wrote per cited requirement ID, pass/fail counts, any failure output verbatim with its class
    (`implementation` / `test mechanics` / `contract` / `environment` / `baseline`) and the fix rounds spent, any
-   trailer you flagged instead of writing, and your **vocabulary candidates** (local helper → the trait it
+   trailer you flagged instead of writing, in full TDD per cited bullet the first red's one-line failure
+   reason (wiring missing / behavior missing / bug reproduces) then green, and your **vocabulary candidates** (local helper → the trait it
    belongs in), or "none".
 4. **Sanity checks for the developer** — restate the task's `Sanity-check now` items (the developer runs
    them). Add any static/code-level confidence and known gaps. Do not run them or claim they passed.

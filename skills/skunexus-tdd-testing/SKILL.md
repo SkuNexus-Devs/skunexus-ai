@@ -36,7 +36,7 @@ Every test this loop drives is **written per `skunexus-behavior-testing`** — g
 
 ### Step 0 — Proposition skeleton (in the test file)
 
-Before any test code, commit one runnable placeholder per acceptance bullet the task cites — never a standing `.md` beside the test (the form is the style guide's §8):
+Before any test code, write one runnable placeholder per acceptance bullet the task cites (`Rn.x`, `An`, or a bullet-less `Rn`) — never a standing `.md` beside the test (the form is the style guide's §8):
 
 ```php
 test('split order closes when its last fulfillment completes', function () {
@@ -48,16 +48,19 @@ test('split order closes when its last fulfillment completes', function () {
 
 - Test descriptions (Pest) / method names (PHPUnit) restate the cited bullets as falsifiable propositions (naming rules: `skunexus-behavior-testing`). The body **cites the bullet ID, never copies its text** — the sentence stays in the contract.
 - **No contract file** (a standalone "TDD this"): state each proposition as a Given/When/Then sentence and get the developer's yes before committing the skeleton — that sentence *is* the agreed behavior, so it goes in the placeholder.
-- The runner renders the proposition list before any code exists (Pest prints descriptions by default; `--testdox` in PHPUnit); the skeleton is the first commit of the loop, reviewable as the proof list.
+- The runner renders the proposition list before any code exists (Pest prints descriptions by default; `--testdox` in PHPUnit); the skeleton is the first thing the loop writes, reviewable as the proof list (it lands in the task's commit under the run's commit convention).
 - The skeleton is **self-deleting**: implementing a test replaces the placeholder with the role-marked body that proves the bullet, so nothing is left to drift.
 - **Batching titles up front is not horizontal slicing.** Bodies and implementations still go one slice at a time.
+- **Resuming from disk:** the test file is the state — each `markTestIncomplete` is an unstarted slice, a real body that fails is the slice in hand. Re-run the file first. More than one failing body means the loop was broken: finish one to green before touching the next. These reds are this run's (the baseline predates the task), never `baseline`.
+- **A placeholder is not a proof.** An incomplete test exits 0; one left behind at wrap-up is an unproven bullet.
 
 ### RED — implement the next skeleton body, watch it fail
 
-Replace one `markTestIncomplete` with a real body. Two valid red states:
+Replace one `markTestIncomplete` with a real body. Three valid red states:
 
 1. **Wiring missing** — the Command class does not exist, or the provider entry is absent. Wiring counts as part of "implementation"; "code doesn't exist" is a valid red, not a broken test.
 2. **Behavior missing** — everything dispatches, but the observable outcome does not happen yet.
+3. **Behavior wrong** — the bug route: the cited `An` reproduces (the fix's red).
 
 Expect first REDs to also surface **plan-vs-codebase mismatches** — wrong interface, wrong method name, wrong constructor shape. Corrections made to the test's assumptions before any implementation exists are the loop paying for itself.
 
@@ -134,6 +137,6 @@ One tracer proves: provider order is correct, the command is dispatchable, no mi
 ## Related Skills
 
 - **REQUIRED:** `skunexus-behavior-testing` — every test this loop drives is written per that skill: body grammar, naming, vocabulary system, layer placement, data setup, assertions, mocking rules, test infrastructure.
-- **UPSTREAM:** runs on request inside `skunexus-backend-implement`, when the developer asks to drive a task test-first; the acceptance bullets the plan's `Tests:` trailer cites become the skeleton titles — cited by ID, never copied or re-invented here. The loop never edits the plan; `skunexus-backend-implement` rewrites the trailer as landed once it closes.
+- **UPSTREAM:** runs inside `skunexus-backend-implement` when the developer picks **full TDD** as the run's testing mode; the acceptance bullets the plan's `Tests:` trailer cites become the skeleton titles — cited by ID, never copied or re-invented here. The loop never edits the plan; `skunexus-backend-implement` rewrites the trailer as landed once it closes.
 
 This skill owns the *order* of testing work and stops there: it does not decide how a test is written (`skunexus-behavior-testing`), break requirements into tasks (`skunexus-backend-plan`), execute planned work that is not test-first (`skunexus-backend-implement`), or write QA testing steps (separate skill).

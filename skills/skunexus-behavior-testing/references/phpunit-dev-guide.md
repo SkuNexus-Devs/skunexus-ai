@@ -178,12 +178,13 @@ One-line repairs stay one-line repairs. The conversion pays for itself only when
 ## 9. Reading your tests back — spec-extract
 
 `spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
-the artifact QA reads, the FE handoff quotes, the acceptance coverage check. It reads exactly the grammar
+the ticket's `spec-from-tests.md` (when asked for) — a readable account of what the tests prove, which the PR, summary and FE handoff may consult. It reads exactly the grammar
 of §3: **if you followed this guide, the spec is already good.** Run it next to `--testdox` before you
 commit:
 
 ```bash
-spec-extract tests/Feature/OrderRMA/CloseRmaTest.php
+# $S = the spec-extract phar; run through the repo's PHP runner (Docker: see skunexus-spec-extract)
+php $S tests/Feature/OrderRMA/CloseRmaTest.php
 ```
 
 (spec-extract is developed in its own repo —
@@ -212,7 +213,7 @@ private function assertToteQtyFor(CoreCart $tote, FulfillmentItemInterface $item
 
 `{param}` slots fill from the call by parameter name; the `⚠ RAW` marker disappears at every call site.
 Also honored on `given*`/`when*` wrappers (replaces the derived sentence verbatim) and on test methods
-(names the scenario heading — rare: your snake_case proposition is the contract and almost always reads
+(names the scenario heading — rare: your snake_case proposition restates the bullet and almost always reads
 fine). **Default is no TestDox** — right-reading derived prose needs no second source of truth to drift.
 
 **Debt metric:** `grep -c '⚠ RAW\|⚠ NOTHING READ'` over a rendered spec should trend to zero. A domain

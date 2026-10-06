@@ -206,8 +206,8 @@ Mode semantics:
   grouped by test file, in its own commit(s) (`<TICKET>: behavior tests`), results reported at final review.
 - **full TDD:** the cited acceptance bullets become the skeleton titles — each title restates its bullet,
   per `skunexus-tdd-testing`, which owns the red → green loop per vertical slice. That skill never edits
-  the plan; when the loop closes, you rewrite the trailer as `**Tests (landed):**` with the real names,
-  exactly as for any other mode. <!-- MERGE-REVISIT(1) -->
+  the plan; when the task's last cited placeholder is green — per task, the same hand-off point as hybrid —
+  you rewrite the trailer as `**Tests (landed):**` with the real names.
 - **When the test and the code disagree, the contract decides (all modes).** A test named from the bullet
   that fails against the code is one of two things: the implementation is wrong (fix it) or the bullet is
   wrong (a contract flag — the developer decides, never you). "The test is wrong" is only ever
@@ -231,7 +231,7 @@ Mode semantics:
 - **Existing tests (all modes):** new tests follow `skunexus-behavior-testing`'s grammar even inside a file
   that already holds older-shaped tests; those are left alone unless the change broke them (dev guide §8 —
   repair, reshape or convert only what costs something; modernising is never a side effect). A touched file
-  is rendered whole at wrap-up, so `⚠` markers on its pre-existing scenarios are that file's debt, not the
+  is rendered whole when a render is asked for, so `⚠` markers on its pre-existing scenarios are that file's debt, not the
   ticket's.
 
 #### Mode 1 — task-by-task
@@ -249,7 +249,7 @@ Loop until the developer stops or the plan is done:
    `Tests:` trailer is part of the task: once the steps land (schema dump first if one was a migration),
    discharge it (the definition above — real test names into the landed line) before handing off. In **full TDD**, the
    trailer leads instead: skeleton first, then the steps land slice by slice through `skunexus-tdd-testing`'s
-   red → green loop, and the landed line is written when the loop closes.
+   red → green loop, and the landed line is written when the task's last cited placeholder is green.
 3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints
    — the in-suite tests of step 2 are not that. Restate the task's `Sanity-check now` items as the checks the
    developer should run, and note any code-level confidence or gaps.
@@ -386,7 +386,9 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    behavior, so spell it out in full and treat the developer's yes as approval of that behavior, not only of
    writing a test. On a yes, before touching code: resolve the PHP runner (`CLAUDE.md` first) and say it,
    and run the touched test file/group once — the before-picture that tells your red from an old one. Then
-   write the test after the change, run it through the runner, and report the real output.
+   write the test after the change — unless the developer asked to drive it test-first: then
+   `skunexus-tdd-testing`'s no-contract route (the approved proposition goes in the placeholder) — run it
+   through the runner, and report the real output.
 3. **Escalate visibly when "trivial" stops being true.** Triggers: the change wants several independent
    tasks; a migration or shared seam that multiple edits build on; product-level ambiguity you'd have to
    guess; materially more surfaces than the prompt implied. Stop, summarize what you've learned (mapped
@@ -415,7 +417,8 @@ request; never require one.
    from the moved requirement), and the touched groups are green before hand-off. When tests are in play,
    resolve and state the PHP runner first and run those groups once *before* the change, so a red after it
    is known to be yours.
-3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule;
+3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule; if
+   `.ai/<TICKET>/spec-from-tests.md` exists, re-render it once the tests are green;
    requirement-level changes patch `prd.md` with a changelog line.
 4. **Report per item** — fixed / upheld with rationale / needs a developer call — then hand off for diff
    review and commit.
@@ -437,6 +440,9 @@ last task, or the test pass, in mode 2 it precedes the run report):
   landed: every acceptance bullet (`Rn.x` or `An`, or a bullet-less `Rn`) is named by a landed test or recorded as out-of-suite in a
   `Sanity-check now` line. A bullet that lost its test is reported to the developer by ID, never left
   implied.
+- **No placeholder left.** `git grep -n markTestIncomplete -- $(git diff --name-only --diff-filter=d
+  <base>...HEAD -- '*Test.php')` is empty. An incomplete test exits 0, so no run catches it: a hit is a bare
+  trailer for the bullet it cites, whatever the trailer line says.
 
 With **no tests** chosen for the run, none of this applies: the hand-off lists the bare trailers as untested,
 by bullet ID, and stops there.
@@ -445,18 +451,20 @@ When the last task is approved: every `Status` reads `finished` and no box lies 
 `T0 (tests only)` left `not_started` by a **no tests** run, reported as such in the hand-off; deviations are amended,
 earned decisions appended, the PRD patched only where requirements actually moved.
 
-When the run wrote tests, regenerate `.ai/<TICKET>/spec-from-tests.md` with the `skunexus-spec-extract`
-skill — a standing artifact, always regenerated, never hand-edited. Its input is **every test file the branch
-added or changed** (`git diff --name-only <base>...HEAD -- '*Test.php'`), each rendered whole: a ticket that
-adds one test here and two there gets all three files' current contract, never a diff of test lines. It reads
-both syntaxes (`--mode` defaults to `pest`); a run that renders 0 scenarios means the tests fell outside the
-grammar, which is a signal to fix them — never a reason to hand-write the file. Say so in chat.
+One check the trailer audit can't make by itself: **a test this branch added that no `Tests (landed)` line
+names** (compare the test names the branch adds — `git diff <base>...HEAD -- '*Test.php'` — against the
+landed trailers). That is behavior nobody asked for: either the contract gains the bullet (a PRD patch with a
+changelog line, on the developer's yes, as Door C does) or the test goes. Pre-existing tests in a touched
+file are not in scope.
 
-Then read that spec against the acceptance bullets for the one direction the trailer audit above can't see:
-**scenarios that map to no bullet**. That is behavior nobody asked for — either the contract gains the
-bullet (a PRD patch with a changelog line, on the developer's yes, as Door C does) or the test goes. Never a
-test that quietly outruns its contract. (The other direction — a bullet with no test — is the per-bullet
-coverage check above; the spec is its evidence, not a second, looser rule.) <!-- MERGE-REVISIT(2) -->
+**The rendered spec is optional.** When the run wrote tests, offer it in one line (never in Door B); on a
+yes, render `.ai/<TICKET>/spec-from-tests.md` with the `skunexus-spec-extract` skill, through the resolved
+runner — a render of the proof, never hand-edited, regenerated whenever it exists and the tests move. Its
+input is **every test file the branch added or changed**
+(`git diff --name-only --diff-filter=d <base>...HEAD -- '*Test.php'`), each rendered whole: a ticket that
+adds one test here and two there gets all three files' current tests, never a diff of test lines. A run that
+renders 0 scenarios means the tests fell outside the grammar — a signal to fix them, never a reason to
+hand-write the file. Say so in chat.
 
 Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
 steps are their own downstream skills) and stop — don't write the PR description here.

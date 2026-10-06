@@ -517,7 +517,7 @@ function when<DomainVerb>(...): <DomainResult>
 
 Writing the propositions down *before* the test code is the discipline of full TDD (`skunexus-tdd-testing`);
 a standing `.scenarios.md` per test file is not — it would be a parallel English artifact that can drift, the
-same disease as labeled DSLs. The exercise's native home is **the test file itself, committed first as a
+same disease as labeled DSLs. The exercise's native home is **the test file itself, written first as a
 skeleton**:
 
 ```php
@@ -535,7 +535,6 @@ sentence the developer approved, since that sentence *is* the agreed behavior. T
 **self-deleting** — implementing a test replaces the placeholder with the three role-marked lines that prove
 the bullet, so nothing is left to drift. Batching *titles* up front is not horizontal slicing —
 implementation still proceeds one vertical slice at a time (red → green per scenario).
-<!-- MERGE-REVISIT(3) -->
 
 `markTestIncomplete` works unchanged inside a Pest closure.
 
@@ -570,12 +569,12 @@ Nothing is created speculatively at any tier — every promotion is triggered by
 
 ---
 
-## 10. The test is also the published spec — writing for spec-extract
+## 10. Reading the tests back — writing for spec-extract
 
 **Status: the Pest grammar has shipped.** The extractor reads both syntaxes — `--mode` defaults to `pest`,
 `--mode=phpunit` for a class-syntax tree. A 40-file Pest suite extracts at full parity with its PHPUnit
 original: same scenario count, same Background, same steps, the difference down to the one test that was
-deliberately renamed. So a converted suite is a first-class spec source, and nothing below is speculative
+deliberately renamed. So a converted suite renders equally well, and nothing below is speculative
 shaping.
 
 What the Pest grammar will read, and therefore what to write:
@@ -645,7 +644,7 @@ long before the sweep`, 127 times in one suite), and the docblock gloss renders 
 `#[TestDox('order #{number} already imported, created {shopifyCreatedAt}')]` at the definition fixes all
 of them and retires the gloss (the attribute outranks the docblock). Slots must name real parameters — a
 typo'd `{slot}` leaks into the spec verbatim — and every sentence must be **true of the body**: a TestDox
-that claims a link the fake does not have is a wrong spec, which is worse than an ugly one.
+that claims a link the fake does not have is a false sentence, which is worse than an ugly one.
 
 ### 10.4 Dialect words — last resort, evidence required
 
@@ -662,9 +661,9 @@ grammar — that's the dialect's job.
 Before committing a new test file, render it and read it as the reviewer will:
 
 ```bash
-spec-extract tests/Feature/PestOrderRMA/CloseRmaTest.php   # one file, spec to stdout
-spec-extract tests --output=.ai/<TICKET>/spec-from-tests.md # the suite: pass the DIRECTORY
-spec-extract tests-orig --mode=phpunit                     # a class-syntax tree needs the flag
+# $S = the spec-extract phar; run through the repo's PHP runner (Docker: see skunexus-spec-extract)
+php $S tests/Feature/PestOrderRMA/CloseRmaTest.php   # one file, spec to stdout
+php $S tests --output=.ai/<TICKET>/spec-from-tests.md # the suite: pass the DIRECTORY
 ```
 
 **Pass a directory, not a shell glob.** `tests/**` is expanded by bash before the tool sees it, and a
@@ -676,7 +675,7 @@ so the tool expands it (`'tests/Feature/Hospital/*/*Test.php'` — PHP `glob()`,
 
 Then the two debt greps over the rendered spec, both of which should trend to zero suite-wide: `⚠ RAW` (an
 assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar cannot see —
-almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job. Read the §5.8
+almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job — except a skeleton placeholder citing a bullet ID (`⚠ NOT RUNNING — R4.a`): at wrap-up that is an unproven bullet. Read the §5.8
 ledger by eye alongside it — the promise audit is the part no tool does.
 
 ### 10.6 What a `{slot}` renders — measured, not documented
@@ -704,6 +703,10 @@ rung fixes a line; the ones marked ↑ are extractor limitations to file upstrea
 | a helper whose name **starts with a proper noun** (`shopifyRejects…`) | read as the subject and passivised — `rejects … are shopifyed` ↑ → subject-first name (`theCandidateLookupsAreRejected`) |
 
 ### 10.7 Authoring rules that keep the render readable — the first-pass checklist
+
+When the suite is rendered (`spec-from-tests.md`, or a readability pass), these apply; otherwise they cost
+nothing to ignore. The proper-noun and phrase-dump examples come from one reference suite — substitute your
+builders' parameter names.
 
 Each of these was a defect class in a landed suite; writing to them costs nothing and saves the second pass
 (`spec-readability-pass.md`).

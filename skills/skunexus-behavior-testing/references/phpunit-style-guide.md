@@ -285,7 +285,7 @@ class <Command>Test extends TestCase
 
 Writing the propositions down *before* the test code is the discipline of full TDD (`skunexus-tdd-testing`);
 a standing `.scenarios.md` per test file is not — it would be a parallel English artifact that can drift, the
-same disease as labeled DSLs. The exercise's native home is **the test file itself, committed first as a
+same disease as labeled DSLs. The exercise's native home is **the test file itself, written first as a
 skeleton**:
 
 ```php
@@ -305,7 +305,6 @@ sentence the developer approved, since that sentence *is* the agreed behavior. T
 **self-deleting** — implementing a test replaces the placeholder with the three role-marked lines that prove
 the bullet, so nothing is left to drift. Batching *titles* up front is not horizontal slicing —
 implementation still proceeds one vertical slice at a time (red → green per scenario).
-<!-- MERGE-REVISIT(3) -->
 
 ## 9. Who shares what — the vocabulary graduation ladder
 
@@ -326,11 +325,11 @@ Nothing is created speculatively at any tier — every promotion is triggered by
 
 ---
 
-## 10. The test is also the published spec — writing for spec-extract
+## 10. Reading the tests back — writing for spec-extract
 
 The team ships a deterministic GWT extractor (`spec:extract`, the `skunexus-spec-extract` skill): it parses a test
-file's AST and renders every `#[Test]` as Given/When/Then prose — the gwt.md a ticket attaches, the
-acceptance coverage check, the FE handoff quote. Its input language IS the grammar of §§1–9: a test written per
+file's AST and renders every `#[Test]` as Given/When/Then prose — the ticket's `spec-from-tests.md`
+(when asked for) — a readable account of what the tests prove, which the PR, summary and FE handoff may consult. Its input language IS the grammar of §§1–9: a test written per
 this guide extracts as readable English with zero extra work — vocabulary `when*` wrappers become passive
 command prose ("the RMA is closed with reason 'never arrived'"), article builders read as their articles,
 `assertThrows` splits into the attempt and "it is rejected — …", `setUp` becomes the Background with
@@ -381,11 +380,11 @@ warranted:
    site in every suite.
 2. **On a `given*`/`when*` wrapper** whose derived sentence reads wrong: the template replaces the
    derived prose verbatim (write the finished sentence — it is not passivised for you).
-3. **On a test method** — names the scenario heading. Rare: the snake_case proposition IS the contract
+3. **On a test method** — names the scenario heading. Rare: the snake_case proposition restates the bullet (§4)
    (§4) and almost always reads fine; reach for this only when the title needs punctuation or casing a
    method name cannot carry.
 
-Default: **no TestDox.** If the derived English is right, an attribute is a second source of truth that
+Default: **no TestDox** — except a parameterised scenario builder in a rendered suite (§10.6–10.7). If the derived English is right, an attribute is a second source of truth that
 can drift. Slots must name real parameters — a typo'd `{slot}` leaks into the spec verbatim.
 
 ### 10.4 Dialect words — last resort, evidence required
@@ -403,12 +402,13 @@ that's the dialect's job.
 Before committing a new test file, render it and read it as the reviewer will:
 
 ```bash
-spec-extract tests/Feature/OrderRMA/CloseRmaTest.php
+# $S = the spec-extract phar; run through the repo's PHP runner (Docker: see skunexus-spec-extract)
+php $S tests/Feature/OrderRMA/CloseRmaTest.php
 ```
 
 Then the two debt greps over the rendered spec, both of which should trend to zero suite-wide:
 `⚠ RAW` (an assertion wanting a copula-shaped name or a TestDox) and `⚠ NOTHING READ` (a body the grammar
-cannot see — almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job.
+cannot see — almost always logic in the body). `⚠ NOT RUNNING` is not debt; it's a skip doing its job — except a skeleton placeholder citing a bullet ID (`⚠ NOT RUNNING — R4.a`): at wrap-up that is an unproven bullet.
 
 
 ### 10.6 Slot rendering rules and the first-pass checklist — see the Pest guide

@@ -20,8 +20,8 @@ already pass §7.
 ```bash
 T=$CLAUDE_JOB_DIR/tmp   # or any scratch dir; never /tmp on a shared box
 S=~/.claude/skills/skunexus-spec-extract/scripts/spec-extract.phar
-vendor/bin/pest tests/Feature/<Suite>Test.php tests/Unit/<Area> > $T/pest-0.txt 2>&1   # note "N passed (M assertions)"
-php $S [--config=.ai/<TICKET>/spec-dialect.php] tests/Feature tests/Unit/<Area> --output=.ai/<TICKET>/spec-from-tests.md
+<runner> vendor/bin/pest tests/Feature/<Suite>Test.php tests/Unit/<Area> > $T/pest-0.txt 2>&1   # note "N passed (M assertions)"
+<runner> php $S [--config=.ai/<TICKET>/spec-dialect.php] tests/Feature tests/Unit/<Area> --output=.ai/<TICKET>/spec-from-tests.md
 cp .ai/<TICKET>/spec-from-tests.md $T/spec-before.md
 ```
 
@@ -36,14 +36,14 @@ Run over the rendered spec. Zero `⚠` is necessary, nowhere near sufficient —
 unreadable bullets.
 
 ```bash
-S=.ai/<TICKET>/spec-from-tests.md
-grep -c '⚠' $S                                              # extractor gave up (RAW / NOTHING READ)
+SPEC=.ai/<TICKET>/spec-from-tests.md
+grep -c '⚠' $SPEC                                              # extractor gave up (RAW / NOTHING READ)
 grep '^- ' $S | awk 'length>120' | wc -l                     # long bullets — the headline number
-grep -c 'of number\|of days\|of minutes' $S                  # phrase dump: every arg with its param name
-grep -cE 'exactly $| is $| at $'                             # blank Thens (empty array rendered as nothing)
-grep -c 'ed at .* is .*ed at' $S; grep -ci 'shopifyed' $S    # a proper-noun helper prefix conjugated as a verb
+grep -c 'of number\|of days\|of minutes' $SPEC               # phrase dump (example params from the reference suite — use your builders')
+grep -cE 'exactly $| is $| at $' $SPEC                       # blank Thens (empty array rendered as nothing)
+grep -c 'ed at .* is .*ed at' $SPEC; grep -ci '<propernoun>ed' $SPEC # a proper-noun helper prefix conjugated as a verb
 grep -oE '\([^)]{60,}\)' $S | sort | uniq -c | sort -rn | head  # the same gloss repeated per sibling Given
-grep -E '^\*\*(Then|And)\*\* an? .* of number' $S | wc -l     # a Then whose subject is its own Given, verbatim
+grep -E '^- \*\*(Then|And)\*\* an? .* of number' $SPEC | wc -l # a Then whose subject is its own Given, verbatim
 grep -o '\b<domainword>\b' $S | wc -l                        # lowercase proper noun (initialism missing)
 grep -c '^### [a-z]' $S                                      # lowercase headings
 grep -c '^> ' $S                                             # rendered why-notes (should be > 0 if the tests have them)
@@ -102,7 +102,7 @@ rather than from memory of what you meant to change — regenerates the spec and
    collapsed fixture values (two offsets folded onto one reader — were either asserted?).
 3. **Every `#[TestDox]` sentence is TRUE of its helper's body.** The reference run's first apply shipped
    *"a repull by IDs answered with the orders staged in Shopify"* on a fake that never reads the staged
-   store. A wrong spec is worse than an ugly one; this check is the pass's most important line.
+   store. A false sentence is worse than an ugly one; this check is the pass's most important line.
 4. **Duplicated literals equal their source** — settings written into a Background TestDox vs the consts
    (and vs `config/` defaults).
 5. **Orphans a green suite can't see** — return types no call site reads after a number-not-id change;
@@ -126,7 +126,7 @@ Then a **cleanup pass** on its findings (same rules as §3), and the gate.
 
 | Question | Call | Why |
 |---|---|---|
-| Pure-unit files in the human spec: drop or shape? | **Shape** — a `when*` per file, arrangement in `given*` file functions | their titles were the clearest rule statement in the file and QA wants them; §6's "plain AAA" exemption stops earning its keep once the spec is a deliverable |
+| Pure-unit files in the human spec: drop or shape? | **Leave plain AAA** (style guide §6) | unless the developer asks for the unit files in the render; then shape per file — a render never rewrites doctrine |
 | Two fixture offsets both inside a window (30 min, 10 min) → one named reader? | **Collapse** | neither value asserted; one reader named for meaning beats two literals — but run the suite, don't take "unchanged" on faith |
 | Fixture with 6 orders for "gapless history"? | **Cut to the minimum the proposition needs** (two adjacent numbers) | a literal count with no source is banned anyway; the suite's natural shape (3–4 Givens) shows the outliers |
 | Dataset (`->with([...])`) to unify sibling scenarios? | **Only for a true data matrix** (same When, one varying value, Then differs by a value) | it renders a *Where* with case names, not Givens; siblings that differ in *which Then fires* stay separate propositions |
@@ -176,17 +176,16 @@ Generalised from the 18 rows. **T** test shape · **V** vocabulary/TestDox · **
 ## 8. Deliverables
 
 1. `.ai/<TICKET>/spec-from-tests.md` regenerated — never hand-edited.
-2. `.ai/<TICKET>/spec-dialect.php` if an initialism/dialect overlay was needed, and the regen command that
-   uses it recorded in `decisions.md`.
-3. A `decisions.md` entry: what the vocabulary now does by rule, what was deliberately left (the
-   title-vs-body promises — "past the ceiling", "like a pocket" — are **contract** decisions for the
-   developer, not prose fixes; list them, don't silently apply them).
-4. `.ai/<TICKET>/spec-extract-requests.md` — the change requests to the tool, one per limitation:
-   one table, columns `# · symptom · repro (probe shape) · renders · expected · workaround used`, header
-   naming the phar version/date and the upstream repo (`SkuNexus-Devs/dev-ian-spec-extract`); a closing
-   "nice-to-haves" line for slot forms the pass wished for. **Fix the tests now; don't wait for the tool** —
-   every request must carry the rung-1/2 workaround already applied.
-5. The audit + outcome (`spec-audit.md`) so the next reader sees before/after numbers.
+2. `.ai/<TICKET>/spec-extract-requests.md` — the change requests to the tool, one per limitation:
+   one table, columns `# · symptom · repro (probe shape) · renders · expected · workaround used`; header
+   naming the phar build (the "Built from" line in `skunexus-spec-extract`), the upstream repo
+   (`SkuNexus-Devs/dev-ian-spec-extract`) and the regen command (with any `spec-dialect.php` overlay); a
+   closing "nice-to-haves" line for slot forms the pass wished for. **Fix the tests now; don't wait for the
+   tool** — every request must carry the rung-1/2 workaround already applied.
+
+Title-vs-body promises ("past the ceiling", "like a pocket") are contract flags: raise each by bullet ID to
+the developer (fix the test, or patch the PRD with a changelog line) — never a `decisions.md` entry, never
+silently applied.
 
 ## 9. Iterate — the review round
 
@@ -204,7 +203,7 @@ The developer reads the regenerated spec and points at a scenario. Two patterns 
 
 - **NEVER hand-edit the rendered spec** — it is regenerated; fixes go in the tests or upstream.
 - **NEVER let a `#[TestDox]` say what the helper does not do.** Verify every sentence against the body in
-  the verify step; a wrong spec is worse than an ugly one.
+  the verify step; a false sentence is worse than an ugly one.
 - **NEVER feed a `{slot}` a top-level local** — pass the domain number, a literal, or a `$this->` property.
 - **NEVER assert inside a `when*` helper** — return the value, assert in the body, or the Then is invisible.
 - **NEVER have two writers on one file at once** — if work is split, split it by disjoint file sets, and
