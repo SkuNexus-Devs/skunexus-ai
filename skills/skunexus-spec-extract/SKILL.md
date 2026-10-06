@@ -3,7 +3,7 @@ name: skunexus-spec-extract
 description: >-
   Use when you need the Given/When/Then behavior spec of a SkuNexus test suite — reading back what a
   test file actually asserts, producing .ai/<TICKET>/spec-from-tests.md for a ticket, running the
-  acceptance coverage check (which PRD Rn has no scenario), or reviewing a PR through its tests.
+  acceptance coverage check (which acceptance bullet has no scenario, which scenario has no bullet), or reviewing a PR through its tests.
   Deterministic AST-based extractor (no LLM): renders each test as Given/When/Then prose from the
   tests/Behavior vocabulary. Do NOT use for:
   writing tests (skunexus-behavior-testing), driving new behavior test-first (skunexus-tdd-testing),
@@ -34,7 +34,7 @@ $S --help
 
 **The ticket artifact.** `.ai/<TICKET>/spec-from-tests.md` is a standing workflow artifact — regenerated at `skunexus-backend-implement` wrap-up and read by `skunexus-backend-pr`, `skunexus-backend-summary` and `skunexus-fe-handoff`.
 It is a render, never hand-edited: prose that reads wrong is fixed in the test names and helpers, then the file is re-run.
-It is also **not a second spec**: the PRD is the spec, the tests are its proof, and this file only makes the proof readable — a gap between the two is resolved in the PRD (patch + changelog) or in the tests, never here.
+It is also **not a second spec**: the PRD is the spec, the tests are its proof, and this file only makes the proof readable — a gap between the two is resolved in the PRD (patch + changelog, on the developer's yes) or in the tests, never here. Coverage is counted per acceptance bullet (`Rn.x` / `An`), as in the implement wrap-up.
 
 ## Arguments
 

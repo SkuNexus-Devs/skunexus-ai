@@ -21,7 +21,7 @@ Two test styles appear in this guide:
 
 - **GWT (Given/When/Then)** — the behavior-test style: *given* a world state, *when* one domain action
   runs, *then* the outcome is asserted through the read side. §3's grammar enforces it — every body line
-  starts with `given`, `when`, or `assert` — so the test reads back as its own spec (`--testdox`,
+  starts with `given`, `when`, or `assert` — so the test reads back as the proof of its contract (`--testdox`,
   spec-extract).
 - **AAA (Arrange–Act–Assert)** — the classic unit-test layout: build the inputs, call the code, assert
   the output. Three plain blocks, no vocabulary, no `given()` markers — for pure units, input → output
@@ -41,21 +41,10 @@ apparatus earns its keep where the world is wide.
 
 Worked example to copy from: the annotated anatomy in `phpunit-style-guide.md` §2 and its copyable skeleton (§7).
 
-1. **Write the scenarios in English first, as a committed skeleton.** Test names are the scenario titles;
-   bodies hold the Given/When/Then sentence in `markTestIncomplete()` until implemented
-   (style guide §8). The skeleton is runnable, reviewable, and self-deleting.
-
-   ```php
-   #[Test]
-   public function put_away_is_rejected_when_the_product_was_never_received(): void
-   {
-       $this->markTestIncomplete(
-           'Given a receiving cart with received coffee and tea,'
-           . ' when a put-away asks for a product that was never received;'
-           . ' then it is rejected and nothing is written.'
-       );
-   }
-   ```
+1. **Start from the proposition, not the code.** Each test proves one acceptance bullet — `prd.md` §6,
+   `investigation.md`'s `A1…An`, or the plan's Goal & Acceptance — and its name restates that bullet (a
+   Given/When/Then bullet's *then* clause, with its subject). No `.ai/<TICKET>/` to read? Say the
+   proposition to the developer and get a yes first; a name taken from what the code does records its bugs.
 
 2. **Name every test as a falsifiable proposition.** `#[Test]` + snake_case, subject–verb–outcome:
    `put_away_moves_the_received_stock_into_the_put_away_location`. Banned words: *works, correctly,
@@ -96,7 +85,7 @@ Worked example to copy from: the annotated anatomy in `phpunit-style-guide.md` �
    ```
 
 **The body grammar is total: every line in a test body starts with `given`, `when`, or `assert`.**
-That is mechanically lintable, and it makes `--testdox` output read as the spec.
+That is mechanically lintable, and it makes `--testdox` output read as the proof of its contract.
 
 ## 4. The vocabulary — where words live
 
@@ -147,7 +136,7 @@ command sets a cart's department), the raw write lives in exactly one vocabulary
 
 1. **Every test method gets a brand-new database.** Cross-test setup is impossible, ever.
 2. **Real migrations never run in tests.** After adding a migration run
-   `php artisan dump:schema-for-testing --env=testing` — the staleness window is a 10-minute wall clock.
+   `php artisan dump:schema-for-testing --env=testing` — the staleness window is `INVALIDATE_SCHEMA_DUMP_AFTER` (600 s in core).
 3. **Testbench env hooks are inert.** We override `createApplication()`, so `defineEnvironment()`,
    `getPackageProviders()` and `#[WithConfig]` silently no-op. Use `bootstrappingCallbacks` instead.
 4. **`Model::factory()->createDomain()` does not persist.** It returns a domain entity; you persist via the
@@ -156,6 +145,10 @@ command sets a cart's department), the raw write lives in exactly one vocabulary
    coverage needs the ijhttp layer, not this suite.
 
 ## 7. Running
+
+> Every command in this section is written host-style. In a repo that runs PHP only inside Docker, each one
+> takes the runner prefix from the skill's Quick Reference ("Where PHP runs" — the repo's `CLAUDE.md` names
+> it; e.g. `docker compose exec app vendor/bin/paratest`). Resolve it before the first command.
 
 ```bash
 # the new suite alone (fast: full behavior coverage of two commands in ~3 s)
@@ -182,7 +175,7 @@ what broke:
 
 One-line repairs stay one-line repairs. The conversion pays for itself only when the repair bill arrives.
 
-## 9. Your tests are the spec — read them back with spec-extract
+## 9. Reading your tests back — spec-extract
 
 `spec-extract` renders a test file as Given/When/Then markdown (deterministic AST extraction, no LLM) —
 the artifact QA reads, the FE handoff quotes, the acceptance coverage check. It reads exactly the grammar

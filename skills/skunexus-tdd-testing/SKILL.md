@@ -14,7 +14,7 @@ user-invocable: true
 
 # TDD in SN
 
-**Core principle:** The unit of TDD in SN is the **command** (or endpoint), not the file — and scenarios come before code. The spec is a batch of plain-English scenario titles; implementation proceeds one vertical slice at a time.
+**Core principle:** The unit of TDD in SN is the **command** (or endpoint), not the file — and propositions come before code. The contract (`prd.md` §6 → `investigation.md` → the plan's Goal & Acceptance) leads; the skeleton is its acceptance bullets restated as test titles; implementation proceeds one vertical slice at a time.
 
 **Announce at start:** "I'm using the skunexus-tdd-testing skill to drive `<behavior>` test-first."
 
@@ -30,31 +30,27 @@ NO IMPLEMENTATION WITHOUT A WATCHED RED — NO NEXT BODY UNTIL THIS ONE IS GREEN
 
 A test whose failing run was never watched proves nothing about the implementation that follows; a second body written before green describes imagined behavior.
 
-Every test this loop drives is **written per `skunexus-behavior-testing`** — grammar, naming, vocabulary, placement, data setup, assertions, and mocking rules all live there. Load it before writing the first test body. This skill owns only the *order*: what gets tested, when. That includes the syntax: Pest by default (client repos), PHPUnit class syntax in core — that skill's mapping table decides.
+Every test this loop drives is **written per `skunexus-behavior-testing`** — grammar, naming, vocabulary, placement, data setup, assertions, and mocking rules all live there. Load it before writing the first test body. This skill owns only the *order*: what gets tested, when. That includes the syntax: Pest where the repo has it, PHPUnit class syntax otherwise — that skill's detection rule decides.
 
 ## The Loop
 
-### Step 0 — Scenario skeleton (the spec, in English, in the test file)
+### Step 0 — Proposition skeleton (in the test file)
 
-Before any test code, state each behavior as a plain-English Given/When/Then sentence, committed as a runnable skeleton — never as a standing `.md` beside the test:
+Before any test code, commit one runnable placeholder per acceptance bullet the task cites — never a standing `.md` beside the test (the form is the style guide's §8):
 
 ```php
 test('split order closes when its last fulfillment completes', function () {
-    $this->markTestIncomplete(
-        'Given the order is split across shipment and pickup,'
-        . ' and the shipment has already completed;'
-        . ' when the pickup completes; then the order is closed.'
-    );
+    $this->markTestIncomplete('R4.a');   // no contract file: the approved Given/When/Then sentence instead
 });
 ```
 
-(PHPUnit — core: the same sentence in a `#[Test]` snake_case method's `markTestIncomplete`.)
+(PHPUnit — core: the same in a `#[Test]` snake_case method.)
 
-- Test descriptions (Pest) / method names (PHPUnit) are the scenario titles — falsifiable propositions (naming rules: `skunexus-behavior-testing`).
-- The runner renders the scenario list before any code exists (Pest prints descriptions by default; `--testdox` in PHPUnit); the skeleton is commit 1 of the PR, reviewable as the spec.
-- The skeleton is **self-deleting**: implementing a test replaces the sentence with the role-marked body that says the same thing, so prose and code cannot drift.
-- **Scenarios that already exist in a plan or PRD flow into skeleton titles** — they are not duplicated into a second document.
-- **Batching titles up front is writing the spec, not horizontal slicing.** Bodies and implementations still go one slice at a time.
+- Test descriptions (Pest) / method names (PHPUnit) restate the cited bullets as falsifiable propositions (naming rules: `skunexus-behavior-testing`). The body **cites the bullet ID, never copies its text** — the sentence stays in the contract.
+- **No contract file** (a standalone "TDD this"): state each proposition as a Given/When/Then sentence and get the developer's yes before committing the skeleton — that sentence *is* the agreed behavior, so it goes in the placeholder.
+- The runner renders the proposition list before any code exists (Pest prints descriptions by default; `--testdox` in PHPUnit); the skeleton is the first commit of the loop, reviewable as the proof list.
+- The skeleton is **self-deleting**: implementing a test replaces the placeholder with the role-marked body that proves the bullet, so nothing is left to drift.
+- **Batching titles up front is not horizontal slicing.** Bodies and implementations still go one slice at a time.
 
 ### RED — implement the next skeleton body, watch it fail
 
@@ -107,7 +103,7 @@ One tracer proves: provider order is correct, the command is dispatchable, no mi
 
 ## Before Each RED — Ask First
 
-1. **Can the scenario be stated as one Given/When/Then sentence?** If not, the behavior is not understood yet — no code until it can be. That sentence becomes the skeleton body and the test name.
+1. **Can the scenario be stated as one Given/When/Then sentence?** If not, the behavior is not understood yet — no code until it can be. With a contract that sentence is the cited bullet (and a bullet that can't be stated this way is a contract question); without one it is the developer-approved placeholder.
 2. **What is the *one* observable outcome?** State change, queued follow-up, response shape — name one. A second sentence of outcome is a second test.
 3. **Is wiring allowed to be the red?** For a new command/field/plugin, "Command class missing" and "provider entry missing" are both valid reds — don't conflate "code doesn't exist" with "test is wrong."
 4. **Is the slice vertical?** One command (or endpoint), all its wiring, end-to-end — not one layer across many commands.
@@ -116,10 +112,10 @@ One tracer proves: provider order is correct, the command is dispatchable, no mi
 
 | Thought | Course correction |
 |---------|-------------------|
-| "I'll batch-write 8 command test bodies, implement after." | Horizontal slice. Batch the skeleton *titles* (that's the spec), then one body → one implementation → repeat. |
+| "I'll batch-write 8 command test bodies, implement after." | Horizontal slice. Batch the skeleton *titles*, then one body → one implementation → repeat. |
 | "I'll skip the test for wiring — I can see it works." | Provider-order and missing-listener bugs are the dominant SN failure mode; the tracer catches them, visual inspection doesn't. |
 | "While it's green I'll add the next behavior too." | GREEN is minimum-to-pass. The next behavior is the next slice's red. |
-| "I'll keep the spec in a `.md` next to the test file." | The spec lives in the test file as a `markTestIncomplete` skeleton — runnable, reviewable, self-deleting. |
+| "I'll keep the scenarios in a `.md` next to the test file." | The contract already has them; the test file holds a `markTestIncomplete` skeleton citing their IDs — runnable, reviewable, self-deleting. |
 
 ## When Things Go Wrong
 
@@ -127,17 +123,17 @@ One tracer proves: provider order is correct, the command is dispatchable, no mi
 |-----------|--------|
 | The first RED fails with a different error than expected (wrong interface, method name, signature) | A plan-vs-codebase mismatch is surfacing — the loop's documented early payoff. Correct the test's assumptions first; implement only once the red fails for the *stated* reason. |
 | GREEN is unreachable without touching a second command | The slice was two slices. Split the scenario into two skeleton titles and re-slice vertically. |
-| Mid-slice, the scenario sentence turns out to be wrong | If the title was quoted from a PRD/plan acceptance, this is a contract flag: the PRD (or inline acceptance) moves first, then the title — never a silent rename that lets the test outrun its contract. If the sentence was this loop's own, edit the title and GWT sentence, re-run RED, then implement against the corrected proposition. |
+| Mid-slice, the scenario sentence turns out to be wrong | If the title restates a cited PRD/plan acceptance bullet, this is a contract flag: the PRD (or inline acceptance) moves first, then the title — never a silent rename that lets the test outrun its contract. If the sentence was this loop's own, edit the title and GWT sentence, re-run RED, then implement against the corrected proposition. |
 | A later test fails and no tracer was ever written | Multiple unknowns are entangled (new code? wiring? middleware?). Write the tracer now to re-prove the path, then debug the behavior on top of it. |
 
 ## NEVER Rules
 
-- **NEVER write the full set of test *bodies* for a feature before implementing any of it.** Horizontal slicing produces tests of imagined behavior. Skeleton titles with `markTestIncomplete` GWT sentences are the spec and may be batched; bodies go one vertical slice at a time: red → green → next.
+- **NEVER write the full set of test *bodies* for a feature before implementing any of it.** Horizontal slicing produces tests of imagined behavior. Skeleton titles with `markTestIncomplete` placeholders may be batched; bodies go one vertical slice at a time: red → green → next.
 - **NEVER refactor on red.** Sub-command extraction, plugin extraction, and vocabulary graduation happen only once the slice is green — otherwise there is no safety net proving the contract survived.
 
 ## Related Skills
 
 - **REQUIRED:** `skunexus-behavior-testing` — every test this loop drives is written per that skill: body grammar, naming, vocabulary system, layer placement, data setup, assertions, mocking rules, test infrastructure.
-- **UPSTREAM:** runs on request inside `skunexus-backend-implement`, when the developer asks to drive a task test-first; the acceptance criteria already agreed in the PRD / backend plan become the skeleton scenario titles — quoted, never re-invented here.
+- **UPSTREAM:** runs on request inside `skunexus-backend-implement`, when the developer asks to drive a task test-first; the acceptance bullets the plan's `Tests:` trailer cites become the skeleton titles — cited by ID, never copied or re-invented here. The loop never edits the plan; `skunexus-backend-implement` rewrites the trailer as landed once it closes.
 
 This skill owns the *order* of testing work and stops there: it does not decide how a test is written (`skunexus-behavior-testing`), break requirements into tasks (`skunexus-backend-plan`), execute planned work that is not test-first (`skunexus-backend-implement`), or write QA testing steps (separate skill).

@@ -2,6 +2,7 @@
 
 > Status: Draft  <!-- flip to "Approved" ONLY after the developer explicitly accepts -->
 > Contract: .ai/<TICKET-KEY>/prd.md   <!-- or: "inline (see Goal & Acceptance below)" when there's no PRD -->
+> Tests: behavior  <!-- or: "none — <why>". Decided with the developer in Step 1, read by the self-review and the implement skill. A plan without this line reads as none -->
 > Scope: Backend only. See "Frontend-facing surface (intended)" for the public seam; the as-built FE handoff (exact request/response/error shapes) is a later step, produced post-implementation from the real diff.
 
 <!-- ─────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@
                               when every step is checked. The implementation skill checks boxes and flips this
                               as work lands; the plan is the live progress tracker for the ticket -->
 **Depends on:** none
-**Satisfies:** R1  <!-- requirement IDs: Rn from the PRD, or An from the inline Goal & Acceptance.
+**Satisfies:** R1  <!-- requirement IDs: Rn from the PRD, or An from the inline Goal & Acceptance / investigation.
                         Traceability is durable — it's how the PR/testing skills map back. -->
 <!-- **Existing work:** ONLY when Status is started|finished at planning time — the concrete evidence (file
      paths, classes, commit SHAs) and, for started, what's left. Never carry a status on the PRD's word
@@ -67,8 +68,9 @@
 
 **Out of scope:** <one line — the boundary; which task owns what's excluded>  <!-- omit if nothing to say -->
 **Sanity-check now:** <one line — how the implementor confirms this works in the moment; non-durable, the
-testing-steps skill derives from acceptance criteria + merged code, not from here>  <!-- optional -->
-**Tests:** <tests/… per skunexus-behavior-testing's layer map — "<falsifiable proposition>", "<guard proposition>">  <!-- qualifying tasks only (behavior-bearing work: new command, plugin, transition, vendor/factory override, GraphQL field, REST endpoint, field resolver — not pure migration/config/refactor/docs, and none when the only proof is out-of-suite: auth/CSRF/throttle, live worker, connector sandbox); path per the layer map — the subject is a command (tests/Feature/<Domain>/<Command>Test.php), an endpoint (tests/Feature/GraphQL/…, or the REST controller's Feature file) or a pure algorithm (tests/Unit/…), and often an EXISTING file, since a plugin/transition/override/resolver proves itself in the upstream command's file; propositions quoted from the Satisfies acceptance, never re-invented; NOT checkbox steps and never its own task; discharged per the implement skill's testing mode -->
+testing-steps skill derives from acceptance criteria + merged code, not from here. A requirement this task
+proves only outside the suite is recorded here as `out-of-suite: R6.a — <why>`, so the coverage check sees it>  <!-- optional -->
+**Tests:** <tests/… per skunexus-behavior-testing's layer map — R4.a, R4.b, R5.a>  <!-- only when the header says `Tests: behavior`; qualifying tasks only (behavior-bearing work: new command, plugin, transition, vendor/factory override, GraphQL field, REST endpoint, field resolver — not pure migration/config/refactor/docs, and none when the only proof is out-of-suite: auth/CSRF/throttle, live worker, connector sandbox); path per the layer map — the subject is a command (tests/Feature/<Domain>/<Command>Test.php), an endpoint (tests/Feature/GraphQL/…, or the REST controller's Feature file) or a pure algorithm (tests/Unit/…), and often an EXISTING file, since a plugin/transition/override/resolver proves itself in the upstream command's file; the IDs are the ACCEPTANCE BULLETS of the Satisfies requirements (Rn.x from PRD §6, An from the inline block / investigation) — never a bare Rn when it has bullets, never the bullet's text, which stays in the contract and is read at test-writing time; coverage is checked per bullet; NOT checkbox steps and never its own task; when the harness is missing, every trailer-bearing task depends on T0 (test harness); discharged per the implement skill's testing mode, which rewrites the line as `**Tests (landed):** <path> — R4.a "<test name>", R4.b "<test name>"`, or `**Tests (flagged):** <path> — R6.a: <why>` until the developer decides it -->
 
 ### T2 — …
 <!-- repeat -->

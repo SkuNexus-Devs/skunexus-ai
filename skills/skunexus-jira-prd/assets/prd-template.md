@@ -27,11 +27,15 @@
 - …
 
 ## 6. Acceptance Criteria
-<!-- BDD-flavored, readable bullets (not strict Gherkin). Each ties back to a requirement — cite the Rn.
-     Cover the main behaviors AND the important edge/error paths surfaced during the interview.
-     These bullets flow downstream into test scenario propositions (the backend plan quotes them into its
-     per-task `Tests:` trailers) — keep each one falsifiable and tied to its Rn. -->
-- Given …, when …, then …  (R1)
+<!-- BDD-flavored, readable bullets (not strict Gherkin). Each carries its own stable ID under the
+     requirement it proves — `R1.a`, `R1.b`, … — so a requirement with a happy path, an edge and an error
+     path has three citable bullets, not one. Cover the main behaviors AND the important edge/error paths
+     surfaced during the interview.
+     These bullets flow downstream into tests: the backend plan cites them by ID in its per-task `Tests:`
+     trailers, coverage is checked per bullet, and the implement skill names each test from the bullet's
+     current wording — so keep each one falsifiable; this file stays the only copy of the sentence. Never
+     renumber a bullet once the plan cites it; retire it and add the next letter. -->
+- **R1.a** Given …, when …, then …
 
 ## 7. Open Questions
 <!-- DURING the interview this is the LIVE tracker of unresolved ambiguities — add to it freely and clear items as they're answered.

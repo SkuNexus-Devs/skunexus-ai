@@ -1,6 +1,6 @@
 # SN Test Style Guide — Given/When/Then (Pest syntax)
 
-Pest is the default test syntax for **client repos**; PHPUnit class syntax stays the default in
+Pest is the target test syntax for **client repos**; PHPUnit class syntax stays the default in
 `skunexus-be-core`. The doctrine is identical to `phpunit-style-guide.md` — same grammar, same naming, same
 promise ledger — only the syntax shell differs; this file is self-contained and normative, so a Pest author
 needs nothing else. The practical on-ramp — a 7-step recipe, the surprises, how to run — is
@@ -52,13 +52,17 @@ Pest 5 API). `tests/Pest.php` binds the base class folder-wide
 the subject, so the falsifiable proposition no longer exists on one line and the promise-ledger greps (§5.8)
 stop seeing whole sentences. A group-scoped `beforeEach` re-blurs the shared Given the visible-`given()` rule
 just fixed — arrange-failures and contract-failures merge again, for a subset of the file. And composed
-headings (*closing a split order › closes when the last fulfillment completes*) don't travel: scenarios get
-quoted standalone into PRD diffs, QA notes and FE handoffs, where a flat proposition survives whole and a
-heading needs its context reassembled. A file that wants two groups wants two files (§8). The extractor still
+headings (*closing a split order › closes when the last fulfillment completes*) don't travel: test names get
+quoted standalone into QA notes, review threads and FE handoffs, where a flat proposition survives whole and
+a heading needs its context reassembled. A file that wants two groups wants two files. The extractor still
 *renders* `describe()` so foreign or converted files don't vanish — tolerance, not the idiom.
 Pest's default output already prints the description list — no `--testdox` needed.
 
 ### 0.1 Installing Pest on a client repo that doesn't have it (one-time)
+
+> Every command in this section is written host-style. In a repo that runs PHP only inside Docker, each one
+> takes the runner prefix from the skill's Quick Reference ("Where PHP runs" — the repo's `CLAUDE.md` names
+> it; e.g. `docker compose exec app composer require …`). Resolve it before the first command.
 
 The knot: client repos pin `phpunit/phpunit` in `require-dev` (usually alongside
 `orchestra/testbench`, which requires it and blocks its removal), and the patches workflow
@@ -155,7 +159,7 @@ Always prefer the second — that's the whole §5 bet.
 
 **One file = one behavior surface** — one command, one endpoint, or one pure algorithm. The file name is the
 subject (`CloseRmaTest.php`); the `test()` descriptions are its promises; Pest's own output of the file is
-its spec.
+the readable index of what it proves.
 
 ```
 CloseRmaTest.php
@@ -293,7 +297,8 @@ in the test must be the same words — which is also why such a helper is never 
 the name, and the name was the sentence.
 
 With deltas marked, **the body grammar is total: every line in a test body starts with `given`, `when`,
-`expect`, or `assert`.** That is mechanically checkable, and it makes spec extraction a name-splitter:
+`expect`, or `assert`.** That is mechanically checkable, and it makes the file read as the proof of its contract
+— and spec extraction a name-splitter:
 *Given every line is accepted, when close, then the RMA is closed*.
 
 **The When lives in the test body, always** — one line, calling the file's namespaced `when` + domain-verb
@@ -406,11 +411,11 @@ from the PHPUnit snake_case name: replace `_` with a space, drop nothing else).
    department`), non-obvious constraints. A *why* note about a scenario sits directly above its `test()`
    call — never inside the body, where it reads as a step. Never restate the description in a comment above
    the test.
-6. **File reads as the spec, in spec order.** Happy-path clauses first, then guards and edge cases. Before
+6. **File reads in contract order.** Happy-path clauses first, then guards and edge cases. Before
    committing, run the file (`vendor/bin/pest path/to/File.php`) — the default output *is* the description
    list; if a sentence reads wrong, the description is wrong.
-7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the GWT sentences of a §8
-   skeleton). Line them up word by word: every prose clause must own a code word (a missing assertion hides
+7. **Audit the code against the prose scenarios** (when scenarios exist — e.g. the Given/When/Then
+   acceptance bullet the test proves). Line them up word by word: every prose clause must own a code word (a missing assertion hides
    here), assertions mirror prose word order (`assertPutAwayLocationHolds`, not
    `assertStockInPutAwayLocation`), builder parameters speak prose not structure (`label: 'a'`, never
    `['location' => 'a']`), actors are named in the data so failures speak the scenario
@@ -510,29 +515,29 @@ function when<DomainVerb>(...): <DomainResult>
 
 ## 8. Scenario-first, without extra files — the skeleton form
 
-Writing the scenarios in English *before* the test code is the discipline; a standing `.scenarios.md` per
-test file is not — it would be a parallel English artifact that can drift, the same disease as labeled DSLs.
-The exercise's native home is **the test file itself, committed first as a skeleton**:
+Writing the propositions down *before* the test code is the discipline of full TDD (`skunexus-tdd-testing`);
+a standing `.scenarios.md` per test file is not — it would be a parallel English artifact that can drift, the
+same disease as labeled DSLs. The exercise's native home is **the test file itself, committed first as a
+skeleton**:
 
 ```php
 test('split order closes when its last fulfillment completes', function () {
-    $this->markTestIncomplete(
-        'Given the order is split across shipment and pickup,'
-        . ' and the shipment has already completed;'
-        . ' when the pickup completes; then the order is closed.'
-    );
+    $this->markTestIncomplete('R4.a');   // no contract file: the approved Given/When/Then sentence instead
 });
 ```
 
-`markTestIncomplete` works unchanged inside a Pest closure. Descriptions are the scenario titles (already
-propositions, §4); each body carries its GWT sentence until implemented. The skeleton is runnable (the
-runner prints the scenario list before any code exists), reviewable (the spec is commit 1 of the PR), and
-**self-deleting** — implementing a test replaces the sentence with the three role-marked lines that say the
-same thing, so drift is impossible. Batching *titles* up front is writing the spec, not horizontal slicing —
-implementation still proceeds one vertical slice at a time (red → green per scenario). Scenarios that
-pre-exist in a PRD or plan flow into the skeleton whole: a Given/When/Then acceptance sentence becomes the
-`markTestIncomplete` sentence, and the description is its *then* clause with its subject, in the §4 shape — the
-same proposition in two lengths, never two propositions. They don't get duplicated into a second document.
+Descriptions are the acceptance bullets restated as propositions (§4) — the contract leads, the skeleton follows.
+When the work has a contract (`.ai/<TICKET>/` — PRD §6, `investigation.md`, or the plan's Goal & Acceptance),
+the body **cites the bullet ID** and never copies its text: the sentence stays in the contract, the one
+source of truth. With no contract (a standalone test-first change), the body holds the Given/When/Then
+sentence the developer approved, since that sentence *is* the agreed behavior. The skeleton is runnable
+(the runner prints the proposition list before any code exists), reviewable (the proof list is the first commit of the TDD loop), and
+**self-deleting** — implementing a test replaces the placeholder with the three role-marked lines that prove
+the bullet, so nothing is left to drift. Batching *titles* up front is not horizontal slicing —
+implementation still proceeds one vertical slice at a time (red → green per scenario).
+<!-- MERGE-REVISIT(3) -->
+
+`markTestIncomplete` works unchanged inside a Pest closure.
 
 ## 9. Who shares what — the vocabulary graduation ladder (Pest amendment)
 

@@ -22,7 +22,9 @@ user-invocable: true
 **Core principle, two halves:**
 
 1. **Tests verify behavior through SN's public interfaces** — the command bus and HTTP/GraphQL endpoints — not handler internals or provider-array contents. The unit of testing in SN is the **command** (or endpoint), not the file. A test that survives an internal refactor was testing behavior; one that breaks was testing implementation.
-2. **The contract must SCREAM.** The test is the only place a command's behavior contract exists in readable form — in `src/` it is scattered across Command, Handler, plugin chain, transition, and provider entry. A behavior-coupled test whose body is buried in plumbing has thrown away half its value. Name states the rule; body demonstrates it; nothing else is visible.
+2. **The proof must SCREAM.** The test proves a behavior contract and its name restates it — in `src/` that behavior is scattered across Command, Handler, plugin chain, transition, and provider entry, so the test is where it can be read in one place. A behavior-coupled test whose body is buried in plumbing has thrown away half its value. Name restates the rule; body demonstrates it; nothing else is visible.
+
+**The direction is always contract → test, never the reverse.** Inside the engineering workflow the contract lives in `.ai/<TICKET>/` — `prd.md` §6 bullets, else `investigation.md`'s `A1…An`, else the plan's Goal & Acceptance — and each test's name restates the bullet it proves. With no `.ai/<TICKET>/` (a standalone "write a test for X"), state the proposition to the developer and get a yes *before* writing. A name derived from whatever the code does records its bugs as the contract.
 
 **Announce at start:** "I'm using the skunexus-behavior-testing skill to write/convert/reshape tests for `<behavior>`."
 
@@ -30,8 +32,8 @@ The enforcement question over everything below: **read the test name and body al
 
 ## What to Read, and When
 
-- **Detect the syntax.** Pest when `vendor/bin/pest` exists or composer.json's `test` script runs pest (client repos, the default); PHPUnit class syntax otherwise (`skunexus-be-core`). Everything here is syntax-neutral doctrine; only the shell differs. Pest runs PHPUnit classes natively, so mixed trees are normal — never convert a suite as a prerequisite to anything. Repo has no Pest yet? The one-time install — the phpunit/testbench knot, the patches workflow's `sebastian/diff` dependency, `tests/Pest.php` — is `references/pest-style-guide.md` §0.1; follow it, don't improvise the composer dance.
-- **MANDATORY: before writing, converting, or renaming any test in `tests/Feature/`, `tests/Feature/GraphQL/`, or `tests/Integrations/`, read the style guide matching the repo's syntax** — `references/pest-style-guide.md` or `references/phpunit-style-guide.md`. It is the normative convention and owns everything this file does not restate: placement and the body grammar (§3), naming (§4), the readability rules and the promise ledger (§5), plain-AAA units (§6), the copyable skeleton (§7), the scenario-first skeleton form (§8), the vocabulary graduation ladder (§9), and writing for the extractor (§10). The Pest guide's §0 table maps every PHPUnit construct to its one Pest home. Do not reproduce any of it from memory.
+- **Detect the syntax.** Pest when `vendor/bin/pest` exists or composer.json's `test` script runs pest; PHPUnit class syntax otherwise (`skunexus-be-core`). Everything here is syntax-neutral doctrine; only the shell differs. Pest runs PHPUnit classes natively, so mixed trees are normal — never convert a suite as a prerequisite to anything. Repo has no Pest yet? The one-time install — the phpunit/testbench knot, the patches workflow's `sebastian/diff` dependency, `tests/Pest.php` — is `references/pest-style-guide.md` §0.1; follow it, don't improvise the composer dance.
+- **MANDATORY: before writing, converting, or renaming any test in `tests/Feature/`, `tests/Feature/GraphQL/`, or `tests/Integrations/`, read the style guide matching the repo's syntax** — `references/pest-style-guide.md` or `references/phpunit-style-guide.md`. It is the normative convention and owns everything this file does not restate: placement and the body grammar (§3), naming (§4), the readability rules and the promise ledger (§5), plain-AAA units (§6), the copyable skeleton (§7), the scenario-first skeleton form for test-first work (§8), the vocabulary graduation ladder (§9), and writing for the extractor (§10). The Pest guide's §0 table maps every PHPUnit construct to its one Pest home. Do not reproduce any of it from memory.
 - **New to the convention?** Read `references/<syntax>-dev-guide.md` first — the 7-step recipe, the facts that surprise new authors, how to run, when to convert an old test. It is the on-ramp; the style guide wins on any conflict.
 - **Skip the guides** when writing a pure unit test (plain AAA, no ceremony) or when only running or diagnosing existing tests without editing their bodies — the infrastructure list and the troubleshooting table at the end of this file are for that.
 - **Before renaming a test or trusting someone else's suite, run the promise ledger** (style guide §5.8). A name that reads correct makes a weak body invisible in review, and the runner then publishes the promise as if it were proved.
@@ -51,9 +53,9 @@ The right test unit is one of two things:
 
 ## The Shape, in Five Lines
 
-One file = one behavior surface (one command, one endpoint, one pure algorithm). The file name is the subject, the test names are its promises, and the runner's description list of the file (`--testdox` in PHPUnit, default output in Pest) is its spec.
+One file = one behavior surface (one command, one endpoint, one pure algorithm). The file name is the subject, the test names are its promises, and the runner's description list of the file (`--testdox` in PHPUnit, default output in Pest) is the readable index of what it proves.
 
-- **Every line in a test body starts with `given`, `when`, or a Then marker** — `assert`, plus `expect` in Pest. Mechanically lintable, and the file reads as its own spec.
+- **Every line in a test body starts with `given`, `when`, or a Then marker** — `assert`, plus `expect` in Pest. Mechanically lintable, and the file reads as the proof of its contract.
 - **`setUp` / `beforeEach` is the shared Given — state only**, in vocabulary sentences, under one `// GIVEN …` headline. Never dispatch the command under test there.
 - **One When per test, one line** — a `when<DomainVerb>()` wrapper that dispatches and returns.
 - **The Then asserts one contract clause through the read-side.** A clause is a sentence, not an assertion; a second sentence is a second test.
@@ -70,7 +72,7 @@ The scenario vocabulary and domain assertions are the part of the system that ma
 | Scenario trait, per domain | `{Domain}ScenarioTrait` — article grammar: `a…()`/`an…()` **creates**, `the…()` **retrieves** what the seed guarantees, verb phrase = **Given-action** | `ReceivingScenarioTrait::aReceivingCart()`, `receiveIntoCart(...)` |
 | Assertion trait, per domain | `{Domain}AssertionsTrait` — `assert` + the scenario's sentence, failing in domain language | `PutAwayAssertionsTrait::assertPutAwayLocationHolds()` |
 | Shared assertions | `Behavior\DomainAssertionsTrait` — state propositions, cross-domain reads | `assertOrderIsInState()`, `assertFulfillmentAssignedTo()` |
-| Base `TestCase` additions | `bus()` accessor (public in Pest repos so file-level `when*` functions reach it via `test()`) + the 3-line inline `given(Closure)` marker — `$this->given()` in PHPUnit, bare global `given()` from `tests/Pest.php` in Pest | `tests/TestCase.php`, `tests/Pest.php` |
+| Base `TestCase` additions — most repos don't have them yet; adding them is its own change: `T0` in a plan; with no plan, a separate step named in the same offer as the test and committed on its own (`<TICKET>: test harness`). Never folded into a feature test | `bus()` accessor (public in Pest repos so file-level `when*` functions reach it via `test()`) + the 3-line inline `given(Closure)` marker — `$this->given()` in PHPUnit, bare global `given()` from `tests/Pest.php` in Pest | `tests/TestCase.php`, `tests/Pest.php` |
 
 Rules:
 
@@ -249,9 +251,10 @@ Two rules that look like a conflict and aren't:
 
 ## Test Infrastructure Quick Reference
 
-- **Running the suite** — Pest repos: `composer test` = `vendor/bin/pest` (installing Pest hijacks `vendor/bin/phpunit`), `vendor/bin/pest --parallel` for the full suite; Pest's default output prints the description list — the `--testdox` equivalent, free. PHPUnit repos (core): `vendor/bin/paratest` for the full suite, `php artisan test --compact --filter=<name>` for one test, `--testdox` on a file renders its spec.
+- **Where PHP runs — resolve it before the first command.** Every command below is written host-style, and in a repo that runs PHP only inside Docker every one of them fails on the host. Check the repo's `CLAUDE.md` first in case it names a runner; the trigger is `php -v` (or `vendor/bin/*`) failing on the host — only then is the prefix `docker compose exec <service>` (or `sail`, `ddev exec` — whatever the repo uses), with the compose file as the place to read the service name, not as the signal (core has a compose file and runs on host PHP fine). Resolve it once, then prefix every `php`, `composer` and `vendor/bin/*` call for the rest of the session. Syntax detection by file (`vendor/bin/pest` exists) still works from the host when `vendor/` sits in the mounted tree; when it doesn't, read composer.json's `test` script instead.
+- **Running the suite** — Pest repos: `composer test` = `vendor/bin/pest` (installing Pest hijacks `vendor/bin/phpunit`), `vendor/bin/pest --parallel` for the full suite; Pest's default output prints the description list — the `--testdox` equivalent, free. PHPUnit repos (core): `vendor/bin/paratest` for the full suite, `php artisan test --compact --filter=<name>` for one test, `--testdox` on a file renders what it proves.
 - **Every test method gets a brand-new database** (`:memory:` SQLite rebuilt per test). Cross-test setup is structurally impossible; state can never leak into another test.
-- **Real migrations never run in tests.** A new migration is invisible until `php artisan dump:schema-for-testing --env=testing` — and the staleness guard is a 10-minute wall clock, so stale schema silently passes inside that window.
+- **Real migrations never run in tests.** A new migration is invisible until `php artisan dump:schema-for-testing --env=testing` — and the test bootstrap only regenerates the dump once it is older than `INVALIDATE_SCHEMA_DUMP_AFTER` (600 s in core, the 60 s default in client repos), so stale schema silently passes inside that window.
 - **Testbench env hooks are inert.** The suite overrides `createApplication()` to boot the real repo app, so `defineEnvironment()`, `getPackageProviders()`, `testbench.yaml`, and `#[WithConfig]` silently no-op. Don't copy Testbench recipes from the docs. Pre-container config/provider injection goes through the `bootstrappingApplication()` hook.
 - **`WithoutMiddleware` is global** — HTTP middleware (auth, CSRF, throttle) is bypassed in Feature tests; `loginAsAdmin()` proves nothing about authorization.
 - **One container accessor:** `$this->app->make()` (or the `bus()` helper). Not `app()`, `container()`. The one exception is a Pest file-level function: it has no `$this` and `test()->app` is protected, so there — and only there — it is `app()->make(X::class)`.
@@ -352,7 +355,7 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 
 ### Placement and harness
 
-- **NEVER skip `php artisan dump:schema-for-testing --env=testing` after adding a migration.** Stale schema silently passes tests until cache expiry (a 10-minute wall clock).
+- **NEVER skip `php artisan dump:schema-for-testing --env=testing` after adding a migration.** Stale schema silently passes tests until the dump's staleness window expires.
 - **NEVER disable `WithoutMiddleware` globally to test auth/CSRF/throttle.** Middleware behavior needs an HTTP-level test against the real kernel, outside this suite (see "Before Writing a Test" #5).
 - **NEVER default to HTTP-level tests against a running server** when the behavior doesn't need real HTTP middleware or a real cross-process worker. Feature tests are faster, isolated, and have stronger doubles.
 - **NEVER tag a test `@group do-not-run` to skip a failure.** Either fix it, delete it, or document why it's quarantined in the file.
@@ -408,7 +411,7 @@ The generalised defect catalogue (symptom → cause → fix), the disagreement c
 ## Related Skills
 
 - **OPTIONAL COMPANION:** `skunexus-tdd-testing` — the process overlay for building new behavior test-first (when to write which test, in what order). Every test it drives is written per this skill.
-- **OPTIONAL COMPANION:** `skunexus-spec-extract` — renders these tests as the published GWT spec; §10 of the style guide is the authoring guidance that keeps its output readable.
-- **UPSTREAM:** invoked from the engineering workflow by `skunexus-backend-plan` (which names the test file and the propositions per task) and by `skunexus-backend-implement` (which writes and runs those tests as the tasks land).
+- **OPTIONAL COMPANION:** `skunexus-spec-extract` — renders these tests back as Given/When/Then prose, the readable account of what they prove; §10 of the style guide is the authoring guidance that keeps its output readable.
+- **UPSTREAM:** invoked from the engineering workflow by `skunexus-backend-plan` (which names the test file and cites the acceptance-bullet IDs per task) and by `skunexus-backend-implement` (which writes and runs those tests as the tasks land).
 
 This skill writes and runs the tests and stops there: it does not plan the work (`skunexus-backend-plan`), write the production code they exercise (`skunexus-backend-implement`), render them as the published spec (`skunexus-spec-extract`), or write QA testing steps (separate skill).
