@@ -164,6 +164,7 @@ has.** When it reads `behavior`, confirm the **testing mode** in the same exchan
 - **hybrid** (default) — each task's trailer is discharged post facto as part of that task. Default because
   it closes the verify loop at the smallest unit: the task that broke something is still the task in hand.
 - **full post-facto** — tasks run untouched; one test pass after the last one.
+- **full TDD** — tests lead the code: opt-in, and the slowest to steer.
 - **no tests** — the developer opts this run out: trailers stay bare, nothing below runs, a `T0 (tests only)`
   dependency is ignored (T0 stays `not_started`), and the wrap-up reports the bare trailers as untested
   rather than auditing them.
@@ -173,7 +174,7 @@ and changeable at any task boundary — the header records the planning decision
 switching costs nothing; trailers not yet discharged simply follow the new mode, and `**Tests (landed):**`
 ones stay landed.
 
-Two things happen once, at mode start, whenever the run writes tests (hybrid or full post-facto):
+Two things happen once, at mode start, whenever the run writes tests (hybrid, full post-facto or full TDD):
 
 - **Resolve the PHP runner — and say it.** A container prefix (`docker compose exec <service> …`, `sail …`)
   or host PHP, per `skunexus-behavior-testing`'s Quick Reference — `CLAUDE.md` first. State what you
@@ -203,6 +204,10 @@ Mode semantics:
 - **hybrid:** after a task's steps land, discharge that task's trailer as part of the task.
 - **full post-facto:** tasks run exactly as today; after the last task, one pass discharges every trailer,
   grouped by test file, in its own commit(s) (`<TICKET>: behavior tests`), results reported at final review.
+- **full TDD:** the cited acceptance bullets become the skeleton titles — each title restates its bullet,
+  per `skunexus-tdd-testing`, which owns the red → green loop per vertical slice. That skill never edits
+  the plan; when the task's last cited placeholder is green — per task, the same hand-off point as hybrid —
+  you rewrite the trailer as `**Tests (landed):**` with the real names.
 - **When the test and the code disagree, the contract decides (all modes).** A test named from the bullet
   that fails against the code is one of two things: the implementation is wrong (fix it) or the bullet is
   wrong (a contract flag — the developer decides, never you). "The test is wrong" is only ever
@@ -225,7 +230,9 @@ Mode semantics:
   touched, reported as `baseline`. A red that is *not* in the baseline is yours until classified otherwise.
 - **Existing tests (all modes):** new tests follow `skunexus-behavior-testing`'s grammar even inside a file
   that already holds older-shaped tests; those are left alone unless the change broke them (dev guide §8 —
-  repair, reshape or convert only what costs something; modernising is never a side effect).
+  repair, reshape or convert only what costs something; modernising is never a side effect). A touched file
+  is rendered whole when a render is asked for, so `⚠` markers on its pre-existing scenarios are that file's debt, not the
+  ticket's.
 
 #### Mode 1 — task-by-task
 
@@ -240,7 +247,9 @@ Loop until the developer stops or the plan is done:
    order, checking each box as its step lands. Deviations follow the tense rule. Scope discipline: the
    entry's `Out of scope` line is binding — resist fixing adjacent code you pass. In **hybrid**, the task's
    `Tests:` trailer is part of the task: once the steps land (schema dump first if one was a migration),
-   discharge it (the definition above — real test names into the landed line) before handing off.
+   discharge it (the definition above — real test names into the landed line) before handing off. In **full TDD**, the
+   trailer leads instead: skeleton first, then the steps land slice by slice through `skunexus-tdd-testing`'s
+   red → green loop, and the landed line is written when the task's last cited placeholder is green.
 3. **Do not run environment verification** (per the honesty principle): don't run migrations/tinker/endpoints
    — the in-suite tests of step 2 are not that. Restate the task's `Sanity-check now` items as the checks the
    developer should run, and note any code-level confidence or gaps.
@@ -298,7 +307,7 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    domain, so claiming `{Domain}ScenarioTrait` per task would serialize the whole run. Instead, **agents in a
    parallel hybrid run never edit those traits** — they use the existing vocabulary freely and write any new
    word local to their own test file (a private `given*`/`assert*` method in PHPUnit; an inline `given(fn)`
-   delta or the namespaced file-level `givenX()` fallback in Pest — style guide §3, ladder §8), reporting it as a
+   delta or the namespaced file-level `givenX()` fallback in Pest — style guide §3, ladder §9), reporting it as a
    **vocabulary candidate**. Record each candidate under the plan header as you record its task
    (`> Vocabulary candidates: givenX (tests/Feature/…/FooTest.php) → {Domain}ScenarioTrait; …`) — your
    context is not a resume-safe store. You graduate them into the traits yourself, serially, after the last
@@ -317,7 +326,8 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    pointers, the dependency code to read, the prohibitions (no `.ai/` writes, no commits, no scope creep) —
    and spawn as a `general-purpose` agent. Launch independent tasks in parallel. State the testing mode, the
    resolved PHP runner and the test baseline in the briefing: in **hybrid** the agent discharges its own
-   task's `Tests:` trailer (traits untouched, new words local — the rule in step 2); in **full post-facto**
+   task's `Tests:` trailer (traits untouched, new words local — the rule in step 2); in **full TDD** the agent
+   drives its task test-first per `skunexus-tdd-testing` under the same rules; in **full post-facto**
    (or with no trailer) the briefing's no-tests prohibition stands.
 5. **On each return, review before you record.** Read the agent's report against the actual diff of its
    predicted files; spot-check the seams other tasks will consume (statically — don't run migrations/tinker/
@@ -345,7 +355,7 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
 7. **Final review.** In **full post-facto**, the test pass runs first — after the last task, before this
    review: in-thread, one domain at a time (one writer, so the graduation ladder applies as written). In **hybrid**, graduate the returned
    **vocabulary candidates** first — one serial pass per domain, yours or one cheap agent's, moving each
-   local word into `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` per style guide §8 and re-running the
+   local word into `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` per style guide §9 and re-running the
    groups that used it; a commit of its own (`<TICKET>: test vocabulary`); then delete the plan's
    `> Vocabulary candidates` line. Then the **Wrap-up** checks below —
    the full-suite run against the baseline and the trailer/coverage audit — and only then present the run
@@ -376,7 +386,9 @@ You are the orchestrator: you schedule, review, track, and commit — subagents 
    behavior, so spell it out in full and treat the developer's yes as approval of that behavior, not only of
    writing a test. On a yes, before touching code: resolve the PHP runner (`CLAUDE.md` first) and say it,
    and run the touched test file/group once — the before-picture that tells your red from an old one. Then
-   write the test after the change, run it through the runner, and report the real output.
+   write the test after the change — unless the developer asked to drive it test-first: then
+   `skunexus-tdd-testing`'s no-contract route (the approved proposition goes in the placeholder) — run it
+   through the runner, and report the real output.
 3. **Escalate visibly when "trivial" stops being true.** Triggers: the change wants several independent
    tasks; a migration or shared seam that multiple edits build on; product-level ambiguity you'd have to
    guess; materially more surfaces than the prompt implied. Stop, summarize what you've learned (mapped
@@ -405,14 +417,15 @@ request; never require one.
    from the moved requirement), and the touched groups are green before hand-off. When tests are in play,
    resolve and state the PHP runner first and run those groups once *before* the change, so a red after it
    is known to be yours.
-3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule;
+3. **Apply.** Code fixes in-thread or delegated; artifact updates per the map and the tense rule; if
+   `.ai/<TICKET>/spec-from-tests.md` exists, re-render it once the tests are green;
    requirement-level changes patch `prd.md` with a changelog line.
 4. **Report per item** — fixed / upheld with rationale / needs a developer call — then hand off for diff
    review and commit.
 
 ### Wrap-up
 
-Before the final hand-off, when the run wrote tests (hybrid or full post-facto — in mode 1 this follows the
+Before the final hand-off, when the run wrote tests (hybrid, full post-facto or full TDD — in mode 1 this follows the
 last task, or the test pass, in mode 2 it precedes the run report):
 
 - **One full-suite run**, compared against the baseline. Until now only the touched file or group has ever
@@ -427,6 +440,9 @@ last task, or the test pass, in mode 2 it precedes the run report):
   landed: every acceptance bullet (`Rn.x` or `An`, or a bullet-less `Rn`) is named by a landed test or recorded as out-of-suite in a
   `Sanity-check now` line. A bullet that lost its test is reported to the developer by ID, never left
   implied.
+- **No placeholder left.** `git grep -n markTestIncomplete -- $(git diff --name-only --diff-filter=d
+  <base>...HEAD -- '*Test.php')` is empty. An incomplete test exits 0, so no run catches it: a hit is a bare
+  trailer for the bullet it cites, whatever the trailer line says.
 
 With **no tests** chosen for the run, none of this applies: the hand-off lists the bare trailers as untested,
 by bullet ID, and stops there.
@@ -434,6 +450,21 @@ by bullet ID, and stops there.
 When the last task is approved: every `Status` reads `finished` and no box lies — the one exception is a
 `T0 (tests only)` left `not_started` by a **no tests** run, reported as such in the hand-off; deviations are amended,
 earned decisions appended, the PRD patched only where requirements actually moved.
+
+One check the trailer audit can't make by itself: **a test this branch added that no `Tests (landed)` line
+names** (compare the test names the branch adds — `git diff <base>...HEAD -- '*Test.php'` — against the
+landed trailers). That is behavior nobody asked for: either the contract gains the bullet (a PRD patch with a
+changelog line, on the developer's yes, as Door C does) or the test goes. Pre-existing tests in a touched
+file are not in scope.
+
+**The rendered spec is optional.** When the run wrote tests, offer it in one line (never in Door B); on a
+yes, render `.ai/<TICKET>/spec-from-tests.md` with the `skunexus-spec-extract` skill, through the resolved
+runner — a render of the proof, never hand-edited, regenerated whenever it exists and the tests move. Its
+input is **every test file the branch added or changed**
+(`git diff --name-only --diff-filter=d <base>...HEAD -- '*Test.php'`), each rendered whole: a ticket that
+adds one test here and two there gets all three files' current tests, never a diff of test lines. A run that
+renders 0 scenarios means the tests fell outside the grammar — a signal to fix them, never a reason to
+hand-write the file. Say so in chat.
 
 Say what comes next in the workflow (`skunexus-backend-pr` for the PR description; FE handoff and testing
 steps are their own downstream skills) and stop — don't write the PR description here.

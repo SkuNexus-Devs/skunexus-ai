@@ -48,11 +48,12 @@ Everything lives under `.ai/<TICKET>/` in the current working repository:
 
 ```
 .ai/<TICKET>/
-├── prd.md            # feature intent, scope, non-goals (may be absent)
-├── decisions.md      # the WHY behind forks — scoping notes FE benefits from (may be absent)
-├── backend-plan.md   # how the work was structured (may be absent)
-├── pr*.md            # what shipped per PR round (may be absent)
-└── fe-handoff.md     # THIS skill's deliverable — one per ticket, evolving across PR rounds
+├── prd.md             # feature intent, scope, non-goals (may be absent)
+├── decisions.md       # the WHY behind forks — scoping notes FE benefits from (may be absent)
+├── backend-plan.md    # how the work was structured (may be absent)
+├── pr*.md             # what shipped per PR round (may be absent)
+├── spec-from-tests.md # Given/When/Then rendered from the backend behavior tests (may be absent)
+└── fe-handoff.md      # THIS skill's deliverable — one per ticket, evolving across PR rounds
 ```
 
 - **Artifacts answer the why**: what the feature is for, what was deliberately scoped out ("no
@@ -63,6 +64,9 @@ Everything lives under `.ai/<TICKET>/` in the current working repository:
   plan text, which describes intent at planning time. If artifacts and code disagree, the code
   wins; surface the disagreement to the developer, because it usually means an artifact went
   stale.
+- **`spec-from-tests.md`, when present, is an optional source of behavior prose** — it is written
+  in implementation-free English. Consult it, never paste it: no file path, class name, or test
+  name leaks into a document whose reader has no repository to open.
 
 Fallback chain when artifacts are absent: the Jira ticket → `git log` → the developer. Never
 invent a why or a contract detail — a wrong fact here propagates unchecked, because the reader has
