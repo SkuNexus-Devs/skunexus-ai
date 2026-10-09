@@ -125,11 +125,11 @@ pr: (filled with the URL once posted)
 status: draft
 ---
 
-<the description body, exactly as it will appear on GitHub>
+<the description body, wrapped for reading in the editor>
 ```
 
-Everything below the closing `---` is posted verbatim — so the developer reviews precisely what
-GitHub will show, title included, in their editor's markdown preview.
+Everything below the closing `---` is the PR description — the editor preview is what GitHub will
+show, title included. Only the line breaks differ: paragraphs are unwrapped on the way out (Step 4).
 
 **Title**: `<TICKET>: <lowercase imperative summary of the outcome>`. State what the change
 *means*, not its mechanics — "wait for queued transfer job so 200 means the fulfillment is already
@@ -184,9 +184,12 @@ On approval (approval to post covers the push):
    own directory (the base directory you were given when this skill loaded). `--body` does both
    halves — drops the metadata block and joins every wrapped paragraph into one line, leaving headings,
    table rows, list items, quotes and fenced blocks alone — and `--body-file -` makes `gh` read it from
-   stdin, so no intermediate file is written and there is nothing to clean up:
-   - new PR: `python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body | gh pr create --draft --base <base> --title "<title>" --body-file -`
-   - existing PR: `python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body | gh pr edit <number> --title "<title>" --body-file -`
+   stdin, so no intermediate file is written and there is nothing to clean up. Run the script
+   **first** and call `gh` only if it succeeded — never pipe it straight into `gh`: a failing script
+   (wrong `<skill-dir>`, unreadable file, empty body) would hand `gh` an empty stdin, and `gh pr edit`
+   would replace the existing description with nothing:
+   - new PR: `body="$(python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body)" && printf '%s\n' "$body" | gh pr create --draft --base <base> --title "<title>" --body-file -`
+   - existing PR: `body="$(python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body)" && printf '%s\n' "$body" | gh pr edit <number> --title "<title>" --body-file -`
      — editing never changes the PR's draft/ready state, and neither do you (`gh pr ready` is the
      developer's call).
 

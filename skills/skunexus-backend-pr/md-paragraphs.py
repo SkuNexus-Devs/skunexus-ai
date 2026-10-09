@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Re-flow markdown paragraphs: unwrap them into single lines, or wrap them to a column width.
+"""Unwrap markdown paragraphs into single lines, for posting as a GitHub PR description.
 
 Why this exists: GitHub renders markdown in two modes. In a `.md` file in a repository a single
 newline inside a paragraph collapses to a space, but in a PR description, an issue body or a comment
@@ -9,27 +9,27 @@ as ragged, hard-broken lines once it is posted.
 The pipeline that follows from this: keep `.ai/<TICKET>/pr.md` wrapped, because that is the file you
 review in your editor — and unwrap only the stream that goes to `gh pr create/edit --body-file`.
 
-Left untouched in every mode: the leading `---` frontmatter block, headings, table rows, list item
-markers, block quotes and the inside of fenced code blocks. Wrapped continuations of a list item are
-joined onto (or re-indented under) the item they belong to.
+Left untouched: the leading `---` frontmatter block, headings, table rows, list item markers, block
+quotes and the inside of fenced code blocks. Wrapped continuations of a list item are joined onto the
+item they belong to, and a paragraph keeps the indent of its first line — so a second paragraph
+inside a list item stays inside that item.
 
 Usage:
   md-paragraphs.py <file.md> --body            # frontmatter dropped + unwrapped -> stdout (for --body-file)
   md-paragraphs.py <file.md>                   # unwrapped, frontmatter kept -> stdout
-  md-paragraphs.py <file.md> --wrap 110        # wrapped to 110 columns -> stdout
-  md-paragraphs.py <file.md> --wrap 110 --write  # ... written back in place
 
-Typical use with the PR skill:
-  md-paragraphs.py .ai/PHG-446/pr.md --body | gh pr create --draft --base dev --title "<title>" --body-file -
+Exits non-zero, printing nothing to stdout, when the file cannot be read or the body is empty.
+
+Typical use with the PR skill — the script runs first and gh is called only if it succeeded:
+  body="$(md-paragraphs.py .ai/PHG-446/pr.md --body)" && printf '%s\\n' "$body" | gh pr create --draft --base dev --title "<title>" --body-file -
 """
 
 import argparse
 import re
 import sys
-import textwrap
 from pathlib import Path
 
-BLOCK_LINE = re.compile(r'^(#{1,6} |\||>|---\s*$|\s*```)')
+BLOCK_LINE = re.compile(r'^(\s*(#{1,6} |\||>)|---\s*$|\s*```)')
 LIST_ITEM = re.compile(r'^(\s*)([-*+] |\d+[.)] )')
 
 
@@ -48,8 +48,8 @@ def split_frontmatter(lines: list) -> tuple:
 def blocks(lines: list):
     """Yield (kind, payload) where kind is 'verbatim', 'paragraph' or 'list-item'.
 
-    A paragraph or list item arrives as a single already-joined string, so each mode only has to
-    decide how to lay it out again.
+    A paragraph arrives as (indent, joined text) and a list item as (indent, marker, joined text),
+    so the caller only has to put the pieces back on one line.
     """
     pending = None
     in_fence = False
@@ -92,39 +92,22 @@ def blocks(lines: list):
 
         if pending:
             kind, payload = pending
-            if kind == 'paragraph':
-                pending = ('paragraph', payload + ' ' + stripped)
-            else:
-                indent, marker, text = payload
-                pending = ('list-item', (indent, marker, text + ' ' + stripped))
+            pending = (kind, payload[:-1] + (payload[-1] + ' ' + stripped,))
             continue
 
-        pending = ('paragraph', stripped)
+        indent = line[:len(line) - len(line.lstrip())]
+        pending = ('paragraph', (indent, stripped))
 
     if pending:
         yield pending
 
 
-def reflow(text: str, width: int = None) -> str:
+def unwrap(text: str) -> str:
     frontmatter, lines = split_frontmatter(text.split('\n'))
     out = list(frontmatter)
 
     for kind, payload in blocks(lines):
-        if kind == 'verbatim':
-            out.append(payload)
-        elif kind == 'paragraph':
-            out.append(textwrap.fill(payload, width=width) if width else payload)
-        else:
-            indent, marker, item = payload
-            if width:
-                out.extend(textwrap.fill(
-                    item,
-                    width=width,
-                    initial_indent=indent + marker,
-                    subsequent_indent=indent + ' ' * len(marker)
-                ).split('\n'))
-            else:
-                out.append(indent + marker + item)
+        out.append(payload if kind == 'verbatim' else ''.join(payload))
 
     return '\n'.join(out)
 
@@ -136,28 +119,19 @@ def drop_frontmatter(text: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('file', help='markdown file to re-flow')
+    parser.add_argument('file', help='markdown file to unwrap')
     parser.add_argument('--body', action='store_true', help='drop the frontmatter and unwrap (what goes to --body-file)')
-    parser.add_argument('--wrap', type=int, metavar='COLS', help='wrap paragraphs to COLS columns instead of unwrapping')
-    parser.add_argument('--write', action='store_true', help='write the result back into the file')
     args = parser.parse_args()
 
-    if args.body and args.wrap:
-        sys.exit('--body and --wrap are mutually exclusive: a posted body is never wrapped.')
-    if args.body and args.write:
-        sys.exit('--body writes to stdout only; pipe it into `gh pr create/edit --body-file -`.')
-
-    path = Path(args.file)
-    result = reflow(path.read_text(), args.wrap)
+    result = unwrap(Path(args.file).read_text())
 
     if args.body:
         result = drop_frontmatter(result)
 
-    if args.write:
-        path.write_text(result if result.endswith('\n') else result + '\n')
-        print(f'written: {path}', file=sys.stderr)
-    else:
-        print(result, end='' if result.endswith('\n') else '\n')
+    if not result.strip():
+        sys.exit(f'{args.file}: nothing to post, the body is empty.')
+
+    print(result, end='' if result.endswith('\n') else '\n')
 
 
 if __name__ == '__main__':

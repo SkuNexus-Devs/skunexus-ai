@@ -230,19 +230,18 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 
 Some skills ship an executable next to their `SKILL.md`, so the instruction set and the tool it calls travel together.
 
-### `skunexus-backend-pr/md-paragraphs.py` — re-flow markdown paragraphs
+### `skunexus-backend-pr/md-paragraphs.py` — unwrap markdown paragraphs
 
 GitHub renders markdown in two modes: in a `.md` file in a repository a single newline inside a paragraph collapses to a space, but in a PR description, issue body or comment GFM turns it into a `<br>`. So prose that reads well wrapped in your editor renders as ragged, hard-broken lines once posted. The split this repo settles on: `pr.md` stays **wrapped** (you review it in your editor), and only the stream handed to `gh --body-file` is **unwrapped**.
 
 ```bash
 # what goes to GitHub: metadata block dropped, paragraphs joined into single lines
-python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body | gh pr create --draft --base dev --title "<title>" --body-file -
-
-# the other direction, when a draft arrived with one-line paragraphs
-python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --wrap 110 --write
+body="$(python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body)" && printf '%s\n' "$body" | gh pr create --draft --base dev --title "<title>" --body-file -
 ```
 
-Untouched in both directions: the leading `---` frontmatter, headings, table rows, list markers, block quotes and the inside of fenced code blocks. The roundtrip is stable — re-wrapping an unwrapped body yields the same text — so a formatting pass can be verified not to have changed the content.
+The script runs first and `gh` is called only if it succeeded. Piping it straight into `gh` is unsafe: when the script fails (wrong path, unreadable file, empty body) `gh` still runs on an empty stdin, and `gh pr edit` would replace an existing description with nothing.
+
+Untouched: the leading `---` frontmatter, headings, table rows, list markers, block quotes and the inside of fenced code blocks. A paragraph keeps the indent of its first line, so a second paragraph inside a list item stays inside that item. The script only unwraps — it has no wrapping mode; `pr.md` is wrapped by whoever writes it.
 
 ## Not in this repo (yet)
 
