@@ -157,14 +157,27 @@ The plan needs agreed acceptance to trace to. Reach it at the lightest weight th
   - **Substantial or genuinely ambiguous** → recommend the full PRD first (`skunexus-jira-prd`); planning on
     sand wastes the work. Hand off and stop.
   - **Moderate but well-understood** → run a **brief** scoping pass (not the relentless PRD interview): pin
-    down a Summary, a short numbered **Requirements** list (`R1…Rn`) with testable acceptance, and explicit
-    non-goals. Write it to `.ai/<TICKET>/prd.md` from the PRD skill's template
+    down a Summary, a short numbered **Requirements** list (`R1…Rn`) with testable acceptance bullets
+    (`R1.a`, `R1.b`, … — the template's §6 shape), and explicit non-goals. Write it to `.ai/<TICKET>/prd.md` from the PRD skill's template
     (`../skunexus-jira-prd/assets/prd-template.md`; if that template isn't on disk, just write those
     sections by hand), with a marker line `> Source: lightweight scoping (no
     Jira PRD)`. Confirm it captures the intent, mark it `Approved`, then plan. Tasks trace to `R1…Rn`.
   - **Simple** → don't create a spec file at all. Capture a 2–3 line **Goal & Acceptance** block at the top
     of `backend-plan.md` itself (acceptance bullets `A1…An`). Tasks trace to `A1…An`. This block is the
     contract — it lives at requirement altitude, above the step-level detail that may drift.
+
+**Decide the tests in the same exchange** — it is a choice, not a default, and the acceptance weight is what
+it scales with. Recommend one and let the developer pick:
+
+- **`behavior`** — behavior-bearing tasks carry `Tests:` trailers and the implement skill writes and runs
+  them. The natural pick for the PRD and lite-PRD doors.
+- **`none — <why>`** — no trailers, no runner resolution, no baseline, no suite runs; the plan runs exactly
+  as a plan did before tests existed. The natural pick for a Simple inline door ("two-line config change"),
+  never forced on it.
+
+Record the answer in the plan header (`> Tests: behavior` or `> Tests: none — <why>`). The header — not the
+presence of trailers — is what the self-review and `skunexus-backend-implement` read, and it survives a
+resume. A plan with no `> Tests:` line (written before this existed) reads as `none`.
 
 The **anti-guessing rule applies in every door.** In a lite/inline door, if real ambiguity surfaces or the
 scope balloons, *offer to escalate* to the full PRD rather than paper over it. If there's no Jira ticket at
@@ -207,6 +220,15 @@ Each subagent should map, for its area:
 - **Conventions to follow** — naming, structure, error handling, the validation split (FormRequest vs handler).
 - **Exact signatures** of anything tasks will call, extend, or implement.
 - **Scope-affecting constraints** — a needed migration, a breaking change, an external dependency.
+- **Test terrain** (only when the header says `Tests: behavior`) — which syntax the repo uses (Pest if
+  `vendor/bin/pest` exists or composer's `test` script runs pest, else PHPUnit), which `tests/Behavior/`
+  vocabulary already exists (`{Domain}ScenarioTrait` builders, `{Domain}AssertionsTrait`), the existing test
+  files nearest this area — so tasks name vocabulary to reuse instead of inventing it — and that the test
+  database is `:memory:` SQLite (`phpunit.xml` / `tests/Pest.php`) seeded from the shared schema dump.
+  **Check the harness itself exists**: the base `tests/TestCase.php` `bus()` accessor and `given()` marker
+  (plus the global `given()` in `tests/Pest.php` for Pest) per `skunexus-behavior-testing`'s vocabulary
+  table. Most repos don't have it yet. When it's missing, report it — Step 3 turns it into a harness task.
+  Note too when `tests/Behavior/` is already taken by real test files: the vocabulary home is then a question for the developer, not a folder to mix traits into.
 
 Have each subagent **return its structured findings** into the conversation, and draft the plan (Step 3)
 directly from them — don't persist a separate map file. The useful content lands in the task bodies, and the
@@ -228,9 +250,45 @@ see the shape to react to it.
 - **Make each task self-contained.** Header lines first — `**Status:**` (`not_started` unless real prior
   work exists, evidenced in an **Existing work** line), `**Depends on:**`, `**Satisfies:** R2` (or `A2`) —
   then the flat `- [ ]` list of atomic steps with files/classes named inline (see the operating principle),
-  then optional one-line `**Out of scope:**` / `**Sanity-check now:**` trailers. Self-contained means
-  independent of other tasks' *plan entries* — when a task builds on a dependency, point to what that
+  then optional one-line `**Out of scope:**` / `**Sanity-check now:**` / `**Tests:**` trailers. Self-contained
+  means independent of other tasks' *plan entries* — when a task builds on a dependency, point to what that
   dependency creates (the implementor reads its real code) rather than re-pasting its contract.
+- **Name what proves each behavior-bearing task — the `Tests:` trailer** (only when the header says
+  `Tests: behavior`; with `Tests: none` no task carries one). It is what lets the implementor verify its own
+  work instead of handing you a guess. A task qualifies when it adds or
+  changes behavior per `skunexus-behavior-testing`'s quick decision table (new command, plugin on an existing
+  command, state transition, vendor handler override, factory/interface override, GraphQL field/type, REST
+  endpoint, field resolver); a pure migration, config-only, refactor or docs task doesn't and gets no trailer.
+  Every qualifying task carries one line — `**Tests:** <test file path> — R4.a, R4.b, R5.a` — the path placed per that
+  skill's layer map (the subject is a command, an endpoint or a pure algorithm, so
+  `tests/Feature/<Domain>/<Command>Test.php`, `tests/Feature/GraphQL/…`, `tests/Unit/…` or
+  `tests/Integrations/…` as the map says, and often an **existing** file: a plugin, transition, override or
+  resolver proves itself in the upstream command's file), and the **acceptance-bullet IDs** of the
+  requirements the task `Satisfies` — `R4.a, R4.b, R4.c` from the PRD's §6, `An` from `investigation.md` or
+  the inline Goal & Acceptance (those are bullets already). Cite bullets, not the bare `Rn`: a requirement
+  with a happy path, an edge and an error bullet is three propositions, and citing `R4` would let one
+  happy-path test mark all three proved. (A lite PRD requirement with no bullet under it is cited as `Rn`
+  itself. A PRD written before bullet IDs existed needs its §6 bullets lettered, `Rn.a`, `Rn.b`… — only numbering,
+  but still an edit to the source of truth, so it goes like any other PRD patch: show the developer the
+  proposed lettering, and apply it in place with one changelog line under its status — "bullet IDs added,
+  wording unchanged" — only on their yes. An old bullet that cites two requirements is a question, not a
+  guess: ask which `Rn` it belongs under, or propose splitting it.) The trailer **cites, never copies**: the wording stays in the contract, which remains the one
+  source of truth, and the implementor reads the bullet's *current* text when it writes the test — the test
+  name restates that bullet in the test grammar's subject–verb–outcome shape, so a bullet that changes
+  changes its tests through the ID, with no stale copy in the plan to drift. A bullet whose proof is
+  out-of-suite (auth/CSRF/throttle, a live worker, a connector sandbox) stays out of the trailer and is
+  recorded in the task's `Sanity-check now` line as `out-of-suite: R6.a — <why>`; a task with no in-suite
+  proof at all gets no trailer, only that line. The trailer is **not** a checkbox step (status stays derived from the steps
+  alone), and a test is **never its own task** in the DAG — a red test task could never be `finished`. *When*
+  the trailer is discharged is `skunexus-backend-implement`'s business (its testing mode decides), not the
+  plan's.
+- **Missing harness → a harness task `T0`.** When Step 2 found no `bus()` / `given()` harness, add a
+  foundational `T0 — test harness` (edit `tests/TestCase.php`, and `tests/Pest.php` in a Pest repo; a Pest
+  install per the Pest style guide §0.1 only if the developer wants Pest) and list it on every trailer-bearing task as
+  `**Depends on:** … T0 (tests only)`. The edge gates discharging the trailer, not the task: under a
+  `no tests` run the implement skill ignores it and T0 stays `not_started`. T0 is infrastructure, not a test — it carries no trailer and finishes when its steps land, so
+  it doesn't break "a test is never its own task". Without it the first test of the run edits a file no task
+  owns: an unplanned infra edit hidden in a feature task, or a collision in an orchestrated run.
 - **Wire the DAG.** Each task's `depends_on`; then derive the **execution waves** (wave 1 = no deps; wave N =
   depends only on earlier waves) so parallelism is obvious to a human and an implementor.
 - **Declare the Frontend-facing surface — the intended seam, not the handoff.** Name the public surface this
@@ -247,7 +305,12 @@ Then **self-review** before showing anything: is every requirement covered by �
 to one (or is it justified scaffolding)? is the graph acyclic? could an agent run each task from its own entry plus its
 dependencies' real code, without reading another task's entry? is every step one atomic, verb-first action
 naming its concrete file/class inline — no prose walls, no "see above", no placeholder ("add validation",
-"handle errors") without the specific failure and exception named? Fix gaps now.
+"handle errors") without the specific failure and exception named? does the header carry a `> Tests:` line?
+When it reads `behavior`: does every qualifying task carry a `Tests:` trailer naming a real test file plus the
+bullet IDs it proves? is **every acceptance bullet** (`Rn.x` or `An`, or a bullet-less `Rn`) either cited by at least one trailer
+or explicitly recorded as out-of-suite in a `Sanity-check now` line — never silently uncovered? does every
+trailer-bearing task depend on `T0` when the harness is missing? When it reads `none`, none of the test
+questions apply. Fix gaps now.
 
 **Seed `decisions.md` only if planning produced a genuine decision** — apply the bar in "The decisions log"
 below. If nothing clears it, don't create the file.
@@ -258,7 +321,7 @@ below. If nothing clears it, don't create the file.
    waves. Ask the developer to react to the *structure*: a missing foundational task, a dependency that
    shouldn't exist, two tasks that should merge or split, wrong ordering. The tasks are *ordered* by
    dependency, but the `Satisfies` column lets you read the same table *by requirement* — scan it to confirm
-   every `Rn`/`An` is covered. Structural ripples are cheap to fix here, before any detailed reading. (For a
+   every `Rn`/`An` is covered (per-bullet test coverage is the self-review's job, not the manifest's). Structural ripples are cheap to fix here, before any detailed reading. (For a
    tiny collapsed plan, just present the one or two tasks.)
 2. **Then hand the document over for self-review** — the developer reads `backend-plan.md` in their own
    editor; do NOT walk the task bodies through the chat (re-pasting the deliverable clutters the context
@@ -314,7 +377,8 @@ don't reorder.
    first.* Collapsed for a one/two-task plan.
 4. **Tasks** — detailed, in dependency order; each self-contained: `Status` / `Depends on` / `Satisfies`
    header lines, then flat `- [ ]` atomic steps (files/classes inline), then optional one-line
-   `Out of scope` / `Sanity-check now` trailers.
+   `Out of scope` / `Sanity-check now` / `Tests` trailers (the last on every behavior-bearing task when the
+   header says `Tests: behavior`).
 5. **Frontend-facing surface (intended)** — one line each for the public surface this DAG introduces
    (endpoints/resolvers/events): the intended seam a later FE-handoff step reconciles against, *not* the
    as-built handoff (full request/response/error shapes come post-implementation, from the real diff).

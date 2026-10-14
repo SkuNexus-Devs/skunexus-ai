@@ -150,7 +150,8 @@ their cascade behavior. Omit the section if the ticket touched no schema.>
 ## Backend map
 <Where everything lives, with file paths: domain entities/VOs, commands + handlers, plugins and
 what they attach to, endpoints (method + path + FormRequest + command), GraphQL types, jobs and
-schedules, providers, config/env keys with defaults, permissions and what they gate.>
+schedules, providers, config/env keys with defaults, permissions and what they gate, behavior test
+files added or changed plus any `{Domain}ScenarioTrait` / `{Domain}AssertionsTrait` vocabulary introduced.>
 
 ## Decisions & gotchas
 <The non-obvious, each with its why: shapes that look wrong but are deliberate, constraints

@@ -185,7 +185,7 @@ know where to look.
 3. **Goals & Non-Goals** — desired outcomes + explicit out-of-scope.
 4. **Requirements** — numbered R1, R2…, testable "shall" statements. *(Carries weight for the design skill.)*
 5. **Scope of Changes** — product-scope: which areas/components are touched, as outcomes (not tasks).
-6. **Acceptance Criteria** — BDD-flavored readable bullets, each tied to a requirement.
+6. **Acceptance Criteria** — BDD-flavored readable bullets, each with its own ID under the requirement it proves (`R1.a`, `R1.b`).
 7. **Open Questions** — live tracker during the interview; only deliberately-deferred items at approval.
 
 Plus an **optional "Notes for Design" footer** — include *only* when the developer shared technical/approach
