@@ -127,11 +127,11 @@ pr: (filled with the URL once posted)
 status: draft
 ---
 
-<the description body, exactly as it will appear on GitHub>
+<the description body, wrapped for reading in the editor>
 ```
 
-Everything below the closing `---` is posted verbatim — so the developer reviews precisely what
-GitHub will show, title included, in their editor's markdown preview.
+Everything below the closing `---` is the PR description — the editor preview is what GitHub will
+show, title included. Only the line breaks differ: paragraphs are unwrapped on the way out (Step 4).
 
 **Title**: `<TICKET>: <lowercase imperative summary of the outcome>`. State what the change
 *means*, not its mechanics — "wait for queued transfer job so 200 means the fulfillment is already
@@ -166,6 +166,10 @@ three lines. No padding either way.
   human testers — separate skill; the behavior tests that landed in the diff are a different thing
   and are legitimately described), deployment/release runbooks. Env/config *callouts* stay
   (reviewers must know); deploy *instructions* don't.
+- **`pr.md` itself stays wrapped** — it is the file the developer reads in their editor. The
+  unwrapping happens on the way out (Step 4), because GFM turns every single newline in a GitHub text
+  field into a `<br>`, so a wrapped body renders as ragged, broken lines. Write the file for reading;
+  post the body unwrapped.
 
 ### Step 3 — The review gate
 
@@ -179,10 +183,21 @@ the *code*, is not approval of the PR.
 On approval (approval to post covers the push):
 
 1. Push the branch if it isn't on the remote: `git push -u origin <branch>`.
-2. Extract the body (everything below the metadata block) into a scratchpad file, then:
-   - new PR: `gh pr create --draft --base <base> --title "<title>" --body-file <file>`
-   - existing PR: `gh pr edit <number> --title "<title>" --body-file <file>` — editing never
-     changes the PR's draft/ready state, and neither do you (`gh pr ready` is the developer's call).
+2. **Pipe the body unwrapped straight into `gh`** with `md-paragraphs.py`, which sits in this skill's
+   own directory (the base directory you were given when this skill loaded). `--body` does both
+   halves — drops the metadata block and joins every wrapped paragraph into one line, leaving headings,
+   table rows, list items, quotes and fenced blocks alone — and `--body-file -` makes `gh` read it from
+   stdin, so no intermediate file is written and there is nothing to clean up. Run the script
+   **first** and call `gh` only if it succeeded — never pipe it straight into `gh`: a failing script
+   (wrong `<skill-dir>`, unreadable file, empty body) would hand `gh` an empty stdin, and `gh pr edit`
+   would replace the existing description with nothing:
+   - new PR: `body="$(python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body)" && printf '%s\n' "$body" | gh pr create --draft --base <base> --title "<title>" --body-file -`
+   - existing PR: `body="$(python3 <skill-dir>/md-paragraphs.py .ai/<TICKET>/pr.md --body)" && printf '%s\n' "$body" | gh pr edit <number> --title "<title>" --body-file -`
+     — editing never changes the PR's draft/ready state, and neither do you (`gh pr ready` is the
+     developer's call).
+
+   Do it even when the draft looks unwrapped; a body posted with wrapped prose renders a `<br>` at every
+   newline and has to be reposted. Never unwrap `pr.md` in place — that is the developer's reading copy.
 3. Set nothing else — no assignees, reviewers, or labels; those stay manual.
 4. Write the PR URL into the file's `pr:` field and flip `status:` to `posted`, so the file
    remains the local record of what went out.
