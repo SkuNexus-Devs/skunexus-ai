@@ -254,8 +254,10 @@ GitHub renders markdown in two modes: in a `.md` file in a repository a single n
 
 ```bash
 # what goes to GitHub: metadata block dropped, paragraphs joined into single lines
-body="$(python3 skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body)" && printf '%s\n' "$body" | gh pr create --draft --base dev --title "<title>" --body-file -
+body="$(python3 ~/.claude/skills/skunexus-backend-pr/md-paragraphs.py .ai/PHG-446/pr.md --body)" && printf '%s\n' "$body" | gh pr create --draft --base dev --title "<title>" --body-file -
 ```
+
+Run it from the repository the PR is for, where `.ai/<TICKET>/pr.md` lives. The script path follows the install in step 1 of the setup; if you installed the skills elsewhere (e.g. `.claude/skills/` in the project root), use `skunexus-backend-pr/md-paragraphs.py` from there. When the skill runs it, it takes the path from the base directory Claude Code reports when the skill loads.
 
 The script runs first and `gh` is called only if it succeeded. Piping it straight into `gh` is unsafe: when the script fails (wrong path, unreadable file, empty body) `gh` still runs on an empty stdin, and `gh pr edit` would replace an existing description with nothing.
 
