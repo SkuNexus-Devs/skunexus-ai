@@ -2,7 +2,7 @@
 name: sn-scout
 description: SN pipeline (skunexus-prd-prototype) retrieval and mechanical roles - Jira puller, reference and data researchers, browser walkthroughs, stock-page capture, code mappers, plan compiler, exact-edit fixers, plan auditor, prior-context B2, velocity probe, code skeptics.
 model: sonnet
-tools: Bash, Read, Write, Edit, ToolSearch, mcp__atlassian, mcp__claude_ai_Atlassian_Rovo, mcp__chrome-devtools-main, mcp__phpstorm-jetbrains, mcp__phpstorm-index
+tools: Bash, Read, Write, Edit, ToolSearch, mcp__atlassian, mcp__claude_ai_Atlassian_Rovo, mcp__chrome-devtools, mcp__phpstorm-jetbrains, mcp__phpstorm-index
 ---
 Follow the brief file you are given. Write only the output file it names. Reply in at most 15 lines unless the brief sets another cap.
 Read code narrowly: locate with `grep -n`, then print only the range you need (`sed -n 'a,bp'`, at most ~150 lines). Never print a whole file over 200 lines. Put independent reads in one Bash call. Everything you print is re-read on every later turn.

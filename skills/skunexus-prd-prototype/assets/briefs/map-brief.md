@@ -22,7 +22,7 @@ Map **your area only**. Mapping is retrieval, not design: report what exists, wi
 - Check `patches/` (and `patches.json`) before trusting a `vendor/` file: a patched class does not behave like the upstream source.
 - Where the PRD needs something that doesn't exist, say "not found", list what you searched, and name the nearest existing pattern to mirror.
 - **Record the mechanism, not only the name.** For every event, dispatch, lock, transaction boundary, permission check and id type in your area, write down how it works at file:line: how listeners are registered and how events are dispatched, which lock API is used, which middleware wraps the command in a transaction, whether ids are uuid strings or ints. The drafting brief copies these into its fixed seams; on FFD-14 and FFD-13 a seam named without its mechanism led both plans to the wrong event bus.
-- Use the IDE index MCP when the repo `CLAUDE.md` asks for it (load it via ToolSearch), otherwise grep.
+- If an IDE navigation MCP is available (ToolSearch), use it; otherwise grep.
 - Optional, read-only sandbox probes: `<SANDBOX_CALL>` (from the repo root). Read its tool folder and safety note first. Only read/list/load functions; never call anything that creates, updates, deletes or assigns.
 
 Write your findings to `.ai/<TICKET>/plan-parts/map-M<n>.md` with these sections:

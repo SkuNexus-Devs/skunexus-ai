@@ -11,7 +11,7 @@ We are in the **requirements** step (PRD), not design. Your job is to answer ope
 <DEVELOPER> (backend developer, owns the PRD), then <PO> (product owner, PO), <TECH_LEAD> (tech lead) and <FE_DEV> (frontend estimates).
 
 ## Sources of truth, highest first
-1. **Code** in `<REPO>`: `app/`, `config/`, `patches/` (check patches before trusting vendor), then `vendor/skunexus/core/` and the other `vendor/skunexus/*` packages; frontend in `frontend-client/src`. Prefer the IDE index MCP for navigation (`phpstorm-index` or `phpstorm-jetbrains`, loaded via ToolSearch); grep is the fallback. Cite **file:line** for every code claim.
+1. **Code** in `<REPO>`: `app/`, `config/`, `patches/` (check patches before trusting vendor), then `vendor/skunexus/core/` and the other `vendor/skunexus/*` packages; frontend in `frontend-client/src`. If an IDE navigation MCP is available (ToolSearch), use it; otherwise grep. Cite **file:line** for every code claim.
 2. **Ticket exports:** `.ai/<TICKET>/jira/`, `.ai/<TICKET>/jira-summary.md`, and every file in `.ai/<TICKET>/input/` (list each by title and date).
 3. **Related work:** <RELATED_SOURCES>. A precedent ticket in another client's repo (`<REPO>/../skunexus-client-<code>/`): read that repo's `.ai/<KEY>/` and code. If this repo's `CLAUDE.md` limits Jira to one project key, don't read the other project's Jira; say what you'd need instead.
 

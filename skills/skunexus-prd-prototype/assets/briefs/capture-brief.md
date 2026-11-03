@@ -15,7 +15,7 @@ You are the capture agent. Produce the "before" picture of every stock SkuNexus 
 - **Append to `sn-baseline.md` after each page**, so progress survives a crash.
 
 ## Browser
-- Load the tools first: `ToolSearch` with `select:mcp__chrome-devtools-main__list_pages,mcp__chrome-devtools-main__new_page,mcp__chrome-devtools-main__navigate_page,mcp__chrome-devtools-main__take_snapshot,mcp__chrome-devtools-main__take_screenshot,mcp__chrome-devtools-main__evaluate_script,mcp__chrome-devtools-main__click,mcp__chrome-devtools-main__close_page`. Use `chrome-devtools-main`; if `list_pages` fails, stop and report (no browser = no capture).
+- Load the tools first: `ToolSearch` with `select:mcp__chrome-devtools__list_pages,mcp__chrome-devtools__new_page,mcp__chrome-devtools__navigate_page,mcp__chrome-devtools__take_snapshot,mcp__chrome-devtools__take_screenshot,mcp__chrome-devtools__evaluate_script,mcp__chrome-devtools__click,mcp__chrome-devtools__close_page`. Use `chrome-devtools`; if `list_pages` fails, stop and report (no browser = no capture).
 - Open your own tab (`new_page`) on `<LOCAL_APP_URL>`. Touch no other tab, especially not Jira, GitHub, Fathom, Tempo, Google or claude.ai. Close your tab at the end.
 - The look source is the stock local app, not a client environment: client dev/stage sites carry overlays and are not a stock baseline.
 
@@ -38,7 +38,7 @@ Per page, prefer **one** `evaluate_script` that returns a compact JSON of everyt
   <!-- either "None: read-only. If a page state needs data you can't find, describe it from the code and any reused
   baseline section, marked 'drawn from code, not captured', and report it." or "Allowed on the local app/DB
   (<LOCAL_DB>) only, as the developer granted on <DATE>." -->
-- When writes are allowed, log every change in the Data log table so it can be undone. Never run queued jobs or workers: some push to the client's external system (a queued shipment push nearly reached the Miva store on FFD-14). List any job or statement you leave pending. Before the first write, check that no job can run: `grep -m1 '^QUEUE_CONNECTION=' <REPO>/.env` must not be `sync`, and no worker may be up (`pgrep -af 'queue:work|horizon'`; under Docker, `docker compose ps` shows no worker service running). If either check fails, make no writes: draw the state from code and report why.
+- When writes are allowed, log every change in the Data log table so it can be undone. Never run queued jobs or workers: some push to the client's external system (a queued shipment push once nearly reached a client's live store). List any job or statement you leave pending. Before the first write, check that no job can run: `grep -m1 '^QUEUE_CONNECTION=' <REPO>/.env` must not be `sync`, and no worker may be up (`pgrep -af 'queue:work|horizon'`; under Docker, `docker compose ps` shows no worker service running). If either check fails, make no writes: draw the state from code and report why.
 - Never touch a remote DB, a client sandbox's admin UI, or an external system. Learn submit behaviour from the code, not by clicking: open, inspect, cancel, never confirm.
 
 ## Reply (≤15 lines)

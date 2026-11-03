@@ -33,7 +33,7 @@ The storyboard format on captured stock pages fixed both. Build it in that forma
    - §8 visual system and `--sn-*` tokens.
    
    Capture only what's missing.
-2. **Preflight the browser** before launching the agent: `ToolSearch` `select:mcp__chrome-devtools-main__list_pages`, then `list_pages`. If no browser works, tell the developer; the build can still run on reused sections, marked "unclicked".
+2. **Preflight the browser** before launching the agent: `ToolSearch` `select:mcp__chrome-devtools__list_pages`, then `list_pages`. If no browser works, tell the developer; the build can still run on reused sections, marked "unclicked".
 3. **Local writes** (creating test orders, driving one through pick/pack): ask the developer. A grant covers the local app and DB only. The capture brief forbids queue workers (after checking that none can run) and requires an undo log. With no grant, draw that page state from code plus the reused baseline, marked "drawn from code, not captured" in `sn-baseline.md`.
 4. Copy `assets/briefs/capture-brief.md` to `prototype/CAPTURE-BRIEF.md`, fill in `<REQ_SOURCE>` (the frozen PRD snapshot or `prototype/requirements-lite.md`) and the page list in workflow order, and run **one** `sn-scout` capture agent (~30 min). Keep capture and build as separate agents: a combined one died with too much in its context.
 
@@ -103,7 +103,7 @@ Text only, always. Images pulled into context killed a storyboard agent twice an
 | Layout | `getBoundingClientRect` boxes, `innerWidth`, `scrollWidth` at 1920, `1280x800x1`, `390x844x1`; no sideways scroll at phone width; the header stays one row |
 | Console | `list_console_messages` with `types:["error","warn"]` |
 | Counts | Steps and index rows per scope; drawer items equal to the DOM tags per part |
-| No browser, or `chrome-devtools-main` doesn't answer | The check script only; publish with the badge "unclicked" |
+| No browser, or `chrome-devtools` doesn't answer | The check script only; publish with the badge "unclicked" |
 
 Visual judgement the text can't settle (crowding, alignment) goes to one short-lived subagent that views at most 3 saved screenshots and returns text. Ask the developer to describe a visual problem, or give a file path, rather than paste a screenshot.
 

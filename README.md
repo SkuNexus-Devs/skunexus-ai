@@ -21,20 +21,25 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    mkdir -p ~/.claude/agents && ln -s "$PWD"/agents/sn-*.md ~/.claude/agents/
    ```
 
+   Optional: the rule that keeps the teammate profiles its simulated reviewers read (`rules/team-personas.md`; it applies in every project, so Claude logs review observations while you work):
+
+   ```bash
+   mkdir -p ~/.claude/rules && ln -s "$PWD"/rules/team-personas.md ~/.claude/rules/
+   ```
+
 2. **Prerequisites** the skills rely on:
 
    | Dependency | Needed by | For |
    |---|---|---|
-   | **Atlassian MCP** (Jira) | `skunexus-jira-prd`, `skunexus-bug-hunt`, `skunexus-prd-prototype` | Fetching and distilling tickets |
+   | **[Atlassian Rovo MCP Server](https://github.com/atlassian/atlassian-mcp-server)** (Jira): `claude mcp add --transport http --scope user atlassian https://mcp.atlassian.com/v2/mcp`, then `/mcp` to sign in | `skunexus-jira-prd`, `skunexus-bug-hunt`, `skunexus-prd-prototype` | Fetching and distilling tickets |
    | **Context7 MCP** + the `skunexus-docs-c7` skill | nearly every skill | Building the platform mental model (command bus, plugins, state machines) before touching code. ⚠️ `skunexus-docs-c7` is **not in this repo yet** — get it from a teammate until it's added. |
    | **`gh` CLI**, authenticated | `skunexus-backend-pr` | Pushing the branch and opening the draft PR |
    | **Pest** (client repos) | `skunexus-behavior-testing` | Decides the authoring syntax: Pest where installed, PHPUnit otherwise (core). One-time install: `references/pest-style-guide.md` §0.1 |
    | **A PHP runner** — host PHP or Docker (`docker compose exec <app>`, `sail`) | `skunexus-backend-implement`, `skunexus-behavior-testing` | Running the tests Claude writes. Detected per repo — name it in the repo's `CLAUDE.md` and every test command gets the right prefix |
-   | **SN docs checkout** in the client repo's `.ai/skunexus-docs/` (a clone of `SkuNexus-Devs/skunexus-docs-tryout`) | `skunexus-prd-prototype` and its `sn-*` agents | The platform model its researchers, code mappers and plan drafters read |
-   | **Chrome DevTools MCP** named exactly `chrome-devtools-main` (`claude mcp add -s user chrome-devtools-main -- npx chrome-devtools-mcp@latest`) + your **local SN app** running | `skunexus-prd-prototype` | Capturing the stock pages the storyboard redraws, and clicking through the storyboard. With no browser it ships marked "unclicked" |
-   | **claude.ai Artifact tools** in Claude Code | `skunexus-prd-prototype` | Publishing the storyboard as a private artifact |
-   | **`~/.claude/CLAUDE.md` Projects/People tables, `~/.claude/people/` profiles** (optional) | `skunexus-prd-prototype` | Who the PO, tech lead and FE developer are, and the grounding for the panel's simulated reviews. Without them the skill asks for the names and runs each persona from its documented role |
-   | **python3** 3.8+; **node** 16+ (optional) | `skunexus-prd-prototype` | Its check scripts; `node --check` on the storyboard's script when present |
+   | **SN docs checkout** in the client repo's `.ai/skunexus-docs/`: from the client repo, `git clone git@github.com:SkuNexus-Devs/skunexus-docs-tryout.git .ai/skunexus-docs` | `skunexus-prd-prototype` and its `sn-*` agents | The platform model its researchers, code mappers and plan drafters read |
+   | **[Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp)**: `claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest` (Node 20.19+, current Chrome; use this command, not the vendor's plugin install, which prefixes the tool names the agents call) + your **local SN app** running, logged in once in the browser it opens | `skunexus-prd-prototype` | Capturing the stock pages the storyboard redraws, and clicking through the storyboard. With no browser it ships marked "unclicked" |
+   | **[Claude Code artifacts](https://code.claude.com/docs/en/artifacts)**: a Pro, Max, Team or Enterprise plan, Claude Code signed in with `/login` (a claude.ai account, not an API key), v2.1.281+ | `skunexus-prd-prototype` | Publishing the storyboard as a private artifact |
+   | **`~/.claude/CLAUDE.md` Projects/People tables, `~/.claude/people/` profiles** (optional), kept by Anthropic's [productivity plugin](https://github.com/anthropics/knowledge-work-plugins/tree/main/productivity): `claude plugin marketplace add anthropics/knowledge-work-plugins`, `claude plugin install productivity@knowledge-work-plugins`, then `/productivity:start` from `~/.claude` and `ln -s ~/.claude/memory/people ~/.claude/people`; the profiles' persona sections come from the `rules/team-personas.md` rule (step 1) | `skunexus-prd-prototype` | Who the PO, tech lead and FE developer are, and the grounding for the panel's simulated reviews. Without them the skill asks for the names and runs each persona from its documented role |
 
 3. **Run Claude Code in the repo you're working on** (e.g. `skunexus-client-*`), not in this one. All workflow artifacts land in `.ai/<TICKET>/` inside that working repo.
 
@@ -274,7 +279,7 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 - **You own the environment.** Expect every implementation and investigation to end with a checklist of things only you can run. That's not laziness — it's the honesty rule that keeps "done" meaning done.
 - **Don't fear the ceremony — it scales down.** Say *"skip the ceremony"* or *"just plan this, no PRD"* and the skills right-size. They'll tell you when a change has outgrown the shortcut, and continuing anyway is a legitimate answer.
 - **`decisions.md` being absent is normal.** It's created only for genuine forks whose rationale the code can't reveal. Two real entries get read; twenty trivial ones bury them.
-- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions) and the full style guides; an executable helper the skill calls sits next to its `SKILL.md` (or in its `scripts/`); `agents/` holds the subagent definitions a skill spawns by type. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions) and the full style guides; an executable helper the skill calls sits next to its `SKILL.md` (or in its `scripts/`); `agents/` holds the subagent definitions a skill spawns by type; `rules/` holds optional user-level rules. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
 
 ## Skill helpers
 

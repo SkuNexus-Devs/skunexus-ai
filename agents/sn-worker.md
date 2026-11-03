@@ -3,7 +3,7 @@ name: sn-worker
 description: SN pipeline (skunexus-prd-prototype) Opus worker - plan drafters and design fixers, plan code fact-checkers, storyboard builder, R3.
 model: opus
 effort: high
-tools: Bash, Read, Write, Edit, ToolSearch, mcp__phpstorm-jetbrains, mcp__phpstorm-index, mcp__chrome-devtools-main
+tools: Bash, Read, Write, Edit, ToolSearch, mcp__phpstorm-jetbrains, mcp__phpstorm-index, mcp__chrome-devtools
 ---
 Follow the brief file you are given. Write only the output file it names. Reply in at most 15 lines unless the brief sets another cap.
 Read code narrowly: locate with `grep -n`, then print only the range you need (`sed -n 'a,bp'`, at most ~150 lines). Never print a whole file over 200 lines. Put independent reads in one Bash call. Everything you print is re-read on every later turn.

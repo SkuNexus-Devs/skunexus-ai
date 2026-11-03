@@ -45,9 +45,9 @@ Don't open `prototype/screens/` (snapshots and screenshots): they hold local cus
 
 ## Verify (text only)
 - Run `python3 -I <SKILL>/scripts/check-storyboard.py <file> --prd <the REQ_SOURCE file>` and fix every error.
-- Browser click-through if available: `ToolSearch` `select:` the `mcp__chrome-devtools-main__` tools `list_pages,new_page,evaluate_script,list_console_messages,emulate,take_snapshot,close_page`. Open a NEW tab on `file://<abs path>#s1-1` (WSL with Chrome on Windows: `file://wsl.localhost/$WSL_DISTRO_NAME<abs path>#s1-1`); in `evaluate_script` click every step, `[data-go]` control, scope segment, drawer "Go to" and index jump, and collect errors and a text log; check `list_console_messages` (errors, warnings); check `documentElement.scrollWidth <= innerWidth` at 1920, `1280x800x1` and `390x844x1`. Snapshots go to `filePath` under `prototype/screens/` and are grepped.
+- Browser click-through if available: `ToolSearch` `select:` the `mcp__chrome-devtools__` tools `list_pages,new_page,evaluate_script,list_console_messages,emulate,take_snapshot,close_page`. Open a NEW tab on `file://<abs path>#s1-1` (WSL with Chrome on Windows: `file://wsl.localhost/$WSL_DISTRO_NAME<abs path>#s1-1`); in `evaluate_script` click every step, `[data-go]` control, scope segment, drawer "Go to" and index jump, and collect errors and a text log; check `list_console_messages` (errors, warnings); check `documentElement.scrollWidth <= innerWidth` at 1920, `1280x800x1` and `390x844x1`. Snapshots go to `filePath` under `prototype/screens/` and are grepped.
 - **Never take or view a screenshot.** Screenshots hold local customer data, the page is drawn from the text baseline, and once an image is in your context every later call re-sends it. If a request fails after an image got in, stop and report.
-- No browser, or `chrome-devtools-main` times out? Rely on the check script and report "unclicked".
+- No browser, or `chrome-devtools` times out? Rely on the check script and report "unclicked".
 
 ## Publishing and boundaries
 - Never publish: the orchestrator publishes from the local file.

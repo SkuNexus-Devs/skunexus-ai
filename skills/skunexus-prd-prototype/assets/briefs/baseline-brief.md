@@ -54,7 +54,7 @@ Every item carries a confidence (H/M/L) and short evidence: a quote of at most 2
 4. **Agreed on the call and carried over** (T).
 5. **Not baseline:** Claude drafting with no PO endorsement (C).
 6. **Open or contradictory** `X-1…X-n`, each phrased as a question for the PO with options and the way the evidence leans; then the list of silences.
-7. **Facts the PO may not have had:** data and code facts that bear on the PO's decisions (e.g. (FFD-14): 551 core-charge products in the client's CSV, an existing Miva field that made a requested new tag unnecessary).
+7. **Facts the PO may not have had:** data and code facts that bear on the PO's decisions (e.g. (FFD-14): 551 core-charge products in the client's CSV, an existing field in the client's store that made a requested new tag unnecessary).
 
 ## Output: `review/deviations.md` (the deviation checker writes it)
 **Classes**

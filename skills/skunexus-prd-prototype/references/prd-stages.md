@@ -27,7 +27,7 @@ Contents: §1 Intake · §2 Evidence triage · §3 PO baseline · §4 Interview 
 - Copy `assets/briefs/research-brief.md` to `research/BRIEF.md`. Give each researcher (R1…Rn) its own Q-ids, and one narrow researcher per external reference (another client's implementation, the core package, the sandbox data).
   - Run reference-implementation and data researchers as `sn-scout`; a researcher that judges this client's own baseline (FFD-35 R3) as `sn-worker`.
   - A browser walkthrough of another client's app is the costliest agent type (FFD-35 R2: 292 turns, 6% of the run). Give it a fixed page list tied to Q-ids. Grant a write walkthrough only for a named decision the code can't settle, as a separate fresh agent. Put any per-click guard into one `evaluate_script` helper that guards, clicks and reads in one call.
-- Data probes are read-only. Run client CSVs and the client sandbox (`<SANDBOX_CALL>`), and record counts and value shapes. On FFD-14 a read-only Miva probe showed a requirement's premise false in 261 of 261 shipped orders.
+- Data probes are read-only. Run client CSVs and the client sandbox (`<SANDBOX_CALL>`), and record counts and value shapes. One read-only probe showed a requirement's premise false in 261 of 261 shipped orders.
 - The main agent reads only the description and the PO's own documents. Agents read the rest.
 - Verify every claim that will shape a requirement yourself, even when two agents agree. Fold each answer into §7 as **evidence → proposed default → who decides**.
 

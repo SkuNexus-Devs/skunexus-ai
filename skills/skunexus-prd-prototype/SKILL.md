@@ -33,7 +33,7 @@ Each stage writes files under `.ai/<TICKET>/` in the client repo, and each stage
 | `<TICKET>`, `<DATE>` | The ticket key; today as YYYY-MM-DD |
 | `<REPO>`, `<REPO_SLUG>` | The git root (`git rev-parse --show-toplevel`); the main checkout's `~/.claude/projects/` folder name: its path (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`, the same as `<REPO>` outside a worktree) with every character other than a letter or digit replaced by `-` |
 | `<CLIENT>`, `<PO>`, `<TECH_LEAD>`, `<FE_DEV>`, `<DEVELOPER>` | Projects and People tables in `~/.claude/CLAUDE.md` (the PO/PM is per project; `<DEVELOPER>` is "Me"); else ask the developer once and record the answers in the memory note |
-| `<SANDBOX_CALL>` | The repo `CLAUDE.md` Commands section, if its script exists on disk (FFD: `php .ai/FFD-6/tools/miva-call.php '<json>'`; with Docker PHP, use the repo's exec prefix), else "none: skip data probes" |
+| `<SANDBOX_CALL>` | A read-only script for the client's system named in the repo `CLAUDE.md` Commands section, if it exists on disk (with Docker PHP, use the repo's exec prefix), else "none: skip data probes" |
 | `<LOCAL_APP_URL>`, `<LOCAL_DB>` | The repo's memory notes (FFD: `http://skunexus-ffd.test/`; PhpStorm connection `WSL`, schema `skunexus_dev_ffd`), else ask |
 | `<SKILL>` | This skill's folder: the base directory Claude Code reports when the skill loads (normally `~/.claude/skills/skunexus-prd-prototype`). The sibling skills it uses sit next to it |
 | `<VERSION>` | The PRD header's version, v1 if none (as in `review/prd-<VERSION>-<DATE>.md`); in the build brief, the storyboard's version; in `plan-parts/BRIEF.md` revision headers, the brief's revision (v2, v3…) |
@@ -124,7 +124,7 @@ These rules come from what went wrong on FFD-14 and FFD-13. Each reason is in th
 | Rule | Why |
 |---|---|
 | No writes to Jira or Confluence, from you or any agent. The developer posts comments and estimates | Repo rule; the posted figures are the developer's |
-| External systems are read-only: client sandboxes (e.g. the Miva dev store via `<SANDBOX_CALL>`), client dev/stage admin UIs and remote DBs. Record counts and value shapes, never PII | They're live client systems |
+| External systems are read-only: client sandboxes (via `<SANDBOX_CALL>`), client dev/stage admin UIs and remote DBs. Record counts and value shapes, never PII | They're live client systems |
 | Local app/DB writes only when the developer grants them, with every change logged for undo. Never run queue jobs or workers | A queued job nearly pushed a shipment to the client's store |
 | Keep images out of every context. Screenshots and snapshots go to `filePath` only; work from text. Visual judgement goes to a short-lived subagent that views at most 3 images. If an agent fails after an image got into its context, start a fresh agent and never resume the dead one. Ask the developer to give file paths, not pasted screenshots | Screenshots of the local app hold customer data, and once an image is in a context every later call re-sends it |
 | Persona reviews are labelled "Simulated <Name> review", grounded in `~/.claude/people/`, and never quoted in anything sent to others. Write no profile entries from simulated content. `review/panel/` carries a `.gitignore` of `*`, so persona files never reach a commit | `~/.claude/rules/team-personas.md`; client repos commit selected `.ai/` files |
