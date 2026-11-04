@@ -15,7 +15,9 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    ln -s "$PWD"/skills/skunexus-* ~/.claude/skills/
    ```
 
-   `skunexus-prd-prototype` also spawns four subagent types (`agents/sn-*.md`: model, effort and a lean tool list per role). Install them the same way:
+   Install the skills together, in one skills folder: they read each other by sibling path. `skunexus-storyboard` and `skunexus-backend-plan`'s subagent drafting read `skunexus-contract` (its model and check script), and `skunexus-contract` reads `skunexus-jira-prd`'s PRD template.
+
+   `skunexus-contract`, `skunexus-storyboard` and `skunexus-backend-plan`'s subagent drafting also spawn four subagent types (`agents/sn-*.md`: model, effort and a lean tool list per role). Install them the same way:
 
    ```bash
    mkdir -p ~/.claude/agents && ln -s "$PWD"/agents/sn-*.md ~/.claude/agents/
@@ -27,19 +29,22 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    mkdir -p ~/.claude/rules && ln -s "$PWD"/rules/team-personas.md ~/.claude/rules/
    ```
 
+   **Upgrading:** re-run the `ln -s` lines (the "File exists" errors are harmless: existing links already follow `git pull`), replace any copied `sn-*.md` agent or rule with a link, and remove `~/.claude/skills/skunexus-prd-prototype` if you copied it in: `skunexus-contract` and `skunexus-storyboard` replace it.
+
 2. **Prerequisites** the skills rely on:
 
    | Dependency | Needed by | For |
    |---|---|---|
-   | **[Atlassian Rovo MCP Server](https://github.com/atlassian/atlassian-mcp-server)** (Jira): `claude mcp add --transport http --scope user atlassian https://mcp.atlassian.com/v2/mcp`, then `/mcp` to sign in | `skunexus-jira-prd`, `skunexus-bug-hunt`, `skunexus-prd-prototype` | Fetching and distilling tickets |
+   | **[Atlassian Rovo MCP Server](https://github.com/atlassian/atlassian-mcp-server)** (Jira): `claude mcp add --transport http --scope user atlassian https://mcp.atlassian.com/v2/mcp`, then `/mcp` to sign in. Keep the server name `atlassian`, or use the claude.ai Atlassian connector: the `sn-*` agents' tool lists name these two | `skunexus-jira-prd`, `skunexus-bug-hunt`, `skunexus-contract` | Fetching and distilling tickets. `skunexus-contract` takes the cloudId from the repo `CLAUDE.md` Atlassian rules, or asks you once for the Jira site URL |
    | **Context7 MCP** + the `skunexus-docs-c7` skill | nearly every skill | Building the platform mental model (command bus, plugins, state machines) before touching code. ⚠️ `skunexus-docs-c7` is **not in this repo yet** — get it from a teammate until it's added. |
+   | **Python 3.8+** as `python3` (standard library only). Optional: `tesseract` (OCR of Jira image attachments; without it the images are listed for you to review) and Node (also syntax-checks the storyboard's script with `node --check`). Run Claude Code on Linux, macOS or WSL | `skunexus-contract`, `skunexus-storyboard`, `skunexus-backend-plan` (subagent drafting) | The check scripts (`check-contract.py`, `check-storyboard.py`, `check-plan.py`) |
    | **`gh` CLI**, authenticated | `skunexus-backend-pr` | Pushing the branch and opening the draft PR |
    | **Pest** (client repos) | `skunexus-behavior-testing` | Decides the authoring syntax: Pest where installed, PHPUnit otherwise (core). One-time install: `references/pest-style-guide.md` §0.1 |
    | **A PHP runner** — host PHP or Docker (`docker compose exec <app>`, `sail`) | `skunexus-backend-implement`, `skunexus-behavior-testing` | Running the tests Claude writes. Detected per repo — name it in the repo's `CLAUDE.md` and every test command gets the right prefix |
-   | **SN docs checkout** in the client repo's `.ai/skunexus-docs/`: from the client repo, `git clone git@github.com:SkuNexus-Devs/skunexus-docs-tryout.git .ai/skunexus-docs` | `skunexus-prd-prototype` and its `sn-*` agents | The platform model its researchers, code mappers and plan drafters read |
-   | **[Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp)**: `claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest` (Node 20.19+, current Chrome; use this command, not the vendor's plugin install, which prefixes the tool names the agents call) + your **local SN app** running, logged in once in the browser it opens | `skunexus-prd-prototype` | Capturing the stock pages the storyboard redraws, and clicking through the storyboard. With no browser it ships marked "unclicked" |
-   | **[Claude Code artifacts](https://code.claude.com/docs/en/artifacts)**: a Pro, Max, Team or Enterprise plan, Claude Code signed in with `/login` (a claude.ai account, not an API key), v2.1.281+ | `skunexus-prd-prototype` | Publishing the storyboard as a private artifact |
-   | **`~/.claude/CLAUDE.md` Projects/People tables, `~/.claude/people/` profiles** (optional), kept by Anthropic's [productivity plugin](https://github.com/anthropics/knowledge-work-plugins/tree/main/productivity): `claude plugin marketplace add anthropics/knowledge-work-plugins`, `claude plugin install productivity@knowledge-work-plugins`, then `/productivity:start` from `~/.claude` and `ln -s ~/.claude/memory/people ~/.claude/people`; the profiles' persona sections come from the `rules/team-personas.md` rule (step 1) | `skunexus-prd-prototype` | Who the PO, tech lead and FE developer are, and the grounding for the panel's simulated reviews. Without them the skill asks for the names and runs each persona from its documented role |
+   | **SN docs checkout** in the client repo's `.ai/skunexus-docs/`: from the client repo, `git clone git@github.com:SkuNexus-Devs/skunexus-docs-tryout.git .ai/skunexus-docs` | the `sn-*` agents | The platform model the researchers, code mappers and plan drafters read |
+   | **[Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp)**: `claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest` (Node 20.19+, current Chrome; use this command, not the vendor's plugin install, which prefixes the tool names the agents call) + your **local SN app** running, logged in once in the browser it opens | `skunexus-storyboard` | Capturing the stock pages the storyboard redraws, and clicking through the storyboard. With no browser it ships marked "unclicked" |
+   | **[Claude Code artifacts](https://code.claude.com/docs/en/artifacts)**: a Pro, Max, Team or Enterprise plan, Claude Code signed in with `/login` (a claude.ai account, not an API key), v2.1.281+ | `skunexus-storyboard` | Publishing the storyboard as a private artifact |
+   | **`~/.claude/CLAUDE.md` Projects/People tables, `~/.claude/people/` profiles** (optional), kept by Anthropic's [productivity plugin](https://github.com/anthropics/knowledge-work-plugins/tree/main/productivity): `claude plugin marketplace add anthropics/knowledge-work-plugins`, `claude plugin install productivity@knowledge-work-plugins`, then `/productivity:start` from `~/.claude` and `ln -s ~/.claude/memory/people ~/.claude/people`; the profiles' persona sections come from the `rules/team-personas.md` rule (step 1) | `skunexus-contract`, `skunexus-storyboard` | Who the PO, tech lead and FE developer are, and the grounding for the panel's simulated reviews. Without them the skill asks for the names and runs each persona from its documented role |
 
 3. **Run Claude Code in the repo you're working on** (e.g. `skunexus-client-*`), not in this one. All workflow artifacts land in `.ai/<TICKET>/` inside that working repo.
 
@@ -47,17 +52,21 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
 
 ## The workflow at a glance
 
+**Two front doors for tickets, chosen by one question: must the PO see and price it before it is built?** Yes: `/skunexus-contract <TICKET>`. It owns `run.md`, asks which workflow you want (A–F below), and drives the chain: it calls `skunexus-jira-prd` for the interview, `skunexus-backend-plan` for the plan and `skunexus-storyboard` for the drawing, each at its turn. No: `/skunexus-jira-prd <TICKET>` (*"let's start PHG-418"*), the regular route, unchanged.
+
 ```mermaid
 flowchart TD
     F([Feature ticket]) --> PRD["skunexus-jira-prd<br/>→ prd.md"]
-    F -. "PO needs a mock-up<br/>and an estimate" .-> PROTO["skunexus-prd-prototype<br/>→ prd.md · storyboard · backend-plan.md · estimate.md"]
-    PRD -. "approved PRD:<br/>just the storyboard" .-> PROTO
-    PROTO --> IMPL
+    F -- "PO must see and<br/>price it first" --> CON["skunexus-contract<br/>asks which workflow → run.md<br/>→ approved prd.md · workflows.md"]
+    PRD -. "later: PO must<br/>see it first" .-> CON
+    CON -- "A: + plan<br/>and estimate" --> PLAN
+    CON -. "B–F: storyboard,<br/>no plan" .-> SB
     B([Bug report / misbehavior]) --> HUNT["skunexus-bug-hunt<br/>→ investigation.md"]
     HUNT -- "verdict: change request<br/>in disguise" --> PRD
     HUNT -- "verdict: bug,<br/>trivial fix" --> IMPL
     HUNT -- "verdict: bug,<br/>complex fix" --> PLAN
     PRD --> PLAN["skunexus-backend-plan<br/>→ backend-plan.md"]
+    PLAN -. "A: FE plan<br/>and estimate" .-> SB["skunexus-storyboard<br/>→ storyboard · estimate.md"]
     S([Small change,<br/>well understood]) -. inline spec,<br/>no PRD .-> PLAN
     T([Trivial change,<br/>well described]) -. no plan,<br/>no ceremony .-> IMPL
     PLAN --> IMPL["skunexus-backend-implement<br/>→ code on the ticket branch"]
@@ -67,16 +76,25 @@ flowchart TD
     BT["skunexus-behavior-testing"] -. how every test is written .-> IMPL
 ```
 
-Two entry points, one build spine, three wrap-up documents. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
+Two front doors for tickets, chosen by whether the PO must see and price it first, one for bugs, one build spine, three wrap-up documents. You don't always start at the top — the pipeline **right-sizes its ceremony**: a trivial change can go straight to implementation with no artifacts at all, and downstream skills fall back gracefully (`prd.md` → `investigation.md` → the plan's inline Goal & Acceptance → the real diff).
 
 ### Which skill do I start with?
 
 | Situation | Start with |
 |---|---|
+| Any ticket, not sure which route | Ask: must the PO see and price it before it is built? Yes: `skunexus-contract` — *"/skunexus-contract FFD-17"* asks one question (the workflow menu below). No: `skunexus-jira-prd` — *"let's start PHG-418"* |
 | Feature ticket, requirements not nailed down | `skunexus-jira-prd` — *"let's start PHG-418"* |
-| Client ticket the PO must see and price first: a clickable mock-up plus an hours estimate | `skunexus-prd-prototype` — *"PRD, storyboard and estimate for FFD-40"*, *"PRD and plan are done, just build the storyboard"* |
+| Client ticket the PO must see and price first: a clickable mock-up plus an hours estimate | `skunexus-contract`, workflow `prd-storyboard-estimate`: then `skunexus-backend-plan` and `skunexus-storyboard`, chained — *"PRD, storyboard and estimate for FFD-40"* |
+| The same, while you're away (a small or medium UI ticket with a clear ask) | `skunexus-contract`, workflow `unattended`: it stops at a Draft, an internal storyboard and a ranked decision list, with no plan and no hours — *"I'm away: run FFD-17 without stopping"* |
+| An unattended run has stopped; you want a draft to discuss with the PO and the FE developer | `skunexus-contract`, workflow `triage`, then `skunexus-storyboard`: you rule the guesses that move scope or price, and the storyboard is rebuilt as "Draft for discussion" — *"triage FFD-17"* |
+| A BE-only, integration or data-contract ticket | `skunexus-jira-prd`, the regular route (then `skunexus-backend-plan`), no storyboard — *"let's start RL-47"* |
+| The ticket changed under a contract | `skunexus-contract`, workflow `re-pull` — *"re-pull FFD-14 and diff it"* |
+| A mock-up fast, no full PRD | `skunexus-contract`, workflow `lite-storyboard` (a lite contract), then `skunexus-storyboard` — *"a quick storyboard, no PRD"* |
+| PRD and plan exist; the PO needs the storyboard, FE plan or estimate | `skunexus-storyboard`, workflow `storyboard-only` — *"PRD and plan are done, just build the storyboard"* |
+| A client ticket half done | the workflow recorded in `run.md`, at the skill that owns the first missing artifact — *"continue FFD-40"* |
 | Something is broken, wrong, or regressed (ticket or not) | `skunexus-bug-hunt` — *"investigate PHG-456"*, *"orders are stuck in status X"* |
 | Requirements are agreed, work needs a task breakdown | `skunexus-backend-plan` — *"plan the backend for PHG-418"*, *"skip the PRD, just plan this"* |
+| A big plan, drafted in parallel | `skunexus-backend-plan`, `plan-fan-out` on (any workflow) — *"plan it, fan out to subagents"* |
 | An approved plan exists | `skunexus-backend-implement` — *"implement the plan"*, *"let's do T3"* |
 | Trivial, well-described change | `skunexus-backend-implement` — *"just add X to endpoint Y, skip the ceremony"* |
 | QA findings / review comments on implemented work | `skunexus-backend-implement` — *"we need to change how X works"* |
@@ -85,19 +103,47 @@ Two entry points, one build spine, three wrap-up documents. You don't always sta
 | Ticket's work should be documented for the team | `skunexus-backend-summary` — *"write the backend summary"* |
 | Writing, converting, naming or placing a test | `skunexus-behavior-testing` — *"write a test for this command"*, *"where does this test go"* |
 
----
+Full attended (workflow `prd-storyboard-estimate`, *"PRD, storyboard and estimate for X"*) is still the route when the first share must carry an estimate, when more than about 7 questions for the PO remain after a triage, or when the ticket is large.
+
+### Workflows
+
+`skunexus-contract` and `skunexus-storyboard` run a named **workflow**: a route through the steps, a stop point, and the settings it fixes. A plain `/skunexus-contract FFD-17` asks you one question, the menu below; one letter is enough. A shortcut phrase or an argument (`/skunexus-contract FFD-17 workflow=unattended`) picks the workflow and skips the question. Either way the skill first echoes one line, e.g. *Working with workflow `prd-storyboard` (PRD + storyboard): evidence → interview → contract → storyboard v2. Attended; stops at each gate. Say "workflow <name>" to switch.*, then records the workflow in `.ai/<TICKET>/run.md`, so a resume never changes behaviour because of how an ask was phrased.
+
+| Letter | Workflow | Label | Stops at |
+|---|---|---|---|
+| A | `prd-storyboard-estimate` | PRD + storyboard + estimate | the estimate posted; scope and price go to the PO together |
+| B | `prd-storyboard` | PRD + storyboard | storyboard v2 shared for scope (no BE plan, no hours) |
+| C | `lite-storyboard` | lite + storyboard | storyboard v1, internal only |
+| D | `lite` | lite only | the lite contract |
+| E | `unattended` | unattended draft, then triage | a ranked decision list; nothing shared until you triage |
+| F | `storyboard-only` | just the storyboard (PRD exists; offered only then) | storyboard v2 |
+
+Follow-ups, offered only when they apply: `triage` (after an unattended run has stopped: you rule the guesses that move scope or price, and the storyboard is rebuilt as "Draft for discussion") and `re-pull` (re-pull the ticket, diff it, rule on the changes).
+
+| Shortcut phrase | Workflow |
+|---|---|
+| *"PRD, storyboard and estimate for FFD-40"* | `prd-storyboard-estimate` |
+| *"I'm away: run FFD-17 without stopping"* | `unattended` |
+| *"a quick storyboard, no PRD"* | `lite-storyboard` |
+| *"PRD and plan are done, just build the storyboard"* | `storyboard-only` |
+| *"re-pull FFD-14 and diff it"* | `re-pull` |
+| *"triage FFD-17"* | `triage` |
+| *"plan it, fan out to subagents"* | unchanged; switches `plan-fan-out` on (`skunexus-backend-plan` drafts in parallel) |
+| *"continue FFD-40"* | the one recorded in `run.md` |
+
+Only your explicit words switch the workflow; each switch is logged in `run.md`. The routes, the question, the settings each workflow fixes (`mode`, `chain`) and the routing by ticket kind are in `skills/skunexus-contract/references/model.md` §8.
 
 ## What to expect from every skill
 
 These conventions hold across the whole pipeline — internalizing them once is most of the onboarding.
 
-- **You will be interviewed.** The skills never guess: any ambiguous value, boundary, or intent becomes a question to you — usually one focused question at a time, with concrete options to pick from. This is by design; a confident wrong assumption is the most expensive failure mode. Answering "just decide" defeats the point. (`skunexus-prd-prototype` turns what is left after its review panel into marked, visible assumptions instead of more questions; you can overturn any of them.)
+- **You will be interviewed.** The skills never guess: any ambiguous value, boundary, or intent becomes a question to you — usually one focused question at a time, with concrete options to pick from. This is by design; a confident wrong assumption is the most expensive failure mode. Answering "just decide" defeats the point. (`skunexus-contract` turns what is left after its review panel into marked, visible assumptions instead of more questions; you can overturn any of them.)
 - **Every deliverable is a gate.** Documents start as `Status: Draft` and flip to `Approved` **only when you explicitly say so**. Silence is not approval; approving the code is not approving the PR text. Nothing proceeds downstream, and nothing reaches GitHub, without your explicit go-ahead.
 - **You review documents in your editor, not in chat.** When a draft is ready, the skill points you at the file (e.g. `.ai/PHG-418/backend-plan.md`) and waits. Read it there, come back with issues or approval — chat walkthroughs of a document you can open are deliberately avoided.
 - **Everything resumes from disk.** The `.ai/<TICKET>/` files are the complete state. You can close your laptop, clear context, or open a fresh conversation days later and say *"continue the plan for PHG-418"* — the skill re-reads the folder, recaps where things stand in one line, and picks up.
-- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it". **The one exception is the test suite** — behavior tests run on in-memory SQLite, which isn't your environment, so Claude writes them, runs them — through your repo's PHP runner, host or Docker — and shows you the real output, against a baseline of what was already red before the run and with one full-suite run before hand-off. That exception is the point: it closes the verify loop. A test Claude can run is the one check it can perform on itself, so a regression gets caught and fixed inside the run instead of parked at your review — which is what makes an orchestrated wave of tasks worth trusting. Everything else on that list is still yours. `skunexus-prd-prototype` is the other exception: to redraw stock pages faithfully it browses your **local** app (writes only on your explicit grant, logged for undo, never queue workers), and it runs **read-only** probes against client sandboxes. It never writes to Jira, Confluence or a client system.
+- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it". **The one exception is the test suite** — behavior tests run on in-memory SQLite, which isn't your environment, so Claude writes them, runs them — through your repo's PHP runner, host or Docker — and shows you the real output, against a baseline of what was already red before the run and with one full-suite run before hand-off. That exception is the point: it closes the verify loop. A test Claude can run is the one check it can perform on itself, so a regression gets caught and fixed inside the run instead of parked at your review — which is what makes an orchestrated wave of tasks worth trusting. Everything else on that list is still yours. `skunexus-contract` and `skunexus-storyboard` are the other exception: to redraw stock pages faithfully the storyboard browses your **local** app (writes only on your explicit grant, logged for undo, never queue workers), and both run **read-only** probes against client sandboxes. Neither writes to Jira, Confluence or a client system.
 - **Ceremony is proportional.** A one-line change gets no PRD, no plan file, no decisions log. Skills escalate visibly when a "trivial" change turns out not to be — and *you* decide whether to escalate or continue.
-- **Each skill stops at its boundary.** The PRD skill won't start designing; the plan skill won't start coding; the PR skill won't write testing steps. When a skill finishes, it names the next step and stops — you invoke it when ready.
+- **Each skill stops at its boundary.** The PRD skill won't start designing; the plan skill won't start coding; the PR skill won't write testing steps. When a skill finishes, it names the next step and stops — you invoke it when ready. The exception: ask `skunexus-contract` for the whole chain, and the contract and storyboard skills load the next skill instead of stopping. They still stop at every gate, and after each approval (G2, G3, G5) you start a fresh session with *"continue <TICKET>"*.
 
 ### The artifact folder: `.ai/<TICKET>/`
 
@@ -105,21 +151,25 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 | File | Written by | What it is |
 |---|---|---|
-| `jira-summary.md` | jira-prd / bug-hunt / prd-prototype | Distilled ticket (a subagent reads the noisy Jira payload so your context doesn't) |
-| `prd.md` | jira-prd (or a lite version by backend-plan) | The **contract**: requirements `R1…Rn`, scope, acceptance criteria |
+| `jira-summary.md` | jira-prd / bug-hunt / contract | Distilled ticket (a subagent reads the noisy Jira payload so your context doesn't) |
+| `prd.md` | jira-prd or contract (or a lite version by backend-plan) | The **contract**: requirements `R1…Rn`, scope, acceptance criteria |
 | `investigation.md` | bug-hunt | Evidence-backed verdict, root cause, proposed fix, acceptance `A1…An` |
 | `backend-plan.md` | backend-plan | The task DAG; live tracker — checkboxes and statuses updated as code lands |
 | `decisions.md` | backend-plan / backend-implement | ADR-style log of real technical forks — **created only when earned; absent is the normal case** |
 | `pr.md`, `pr2.md`… | backend-pr | The PR title + body, exactly as posted (one file per PR round) |
 | `fe-handoff.md` | fe-handoff | Self-contained API contract for the FE team |
 | `backend-summary.md` | backend-summary | Current-state feature doc of what the ticket implemented |
-| `jira/`, `jira-<DATE>/`, `jira-diff-<DATE>.md` | prd-prototype | The whole ticket pulled as files (description, comments, changelog, attachments); later re-pulls and their diff. The first pull is never overwritten |
+| `workflows.md` | contract | The use cases (steps `s1.3`: actor, trigger, before → after, cited ids) and the PO's priced parts; the second half of the contract |
+| `run.md` | contract / storyboard | The workflow, the settings it fixes (`mode`, `chain`), `plan-fan-out`, and their dated History, including triages |
+| `feedback.md` | storyboard, backend-plan, contract's panel and re-pulls, you | Every question or change against the contract (`WRONG` / `CHOICE` / `SILENCE` / `CHANGE`); only contract's rulings change the contract |
+| `jira/`, `jira-<DATE>/`, `jira-diff-<DATE>.md` | contract | The whole ticket pulled as files (description, comments, changelog, attachments); later re-pulls and their diff. The first pull is never overwritten |
 | `input/` | you | Call transcripts, Basecamp posts and attachments the skill asked you for |
-| `research/` | prd-prototype | One file per researcher: evidence and a proposed default for each open question |
-| `review/` | prd-prototype | Frozen PRD snapshots, the PO baseline, the panel's reviewer files (`review/panel/`, git-ignored) and `panel-synthesis.md`, re-evaluations (`reeval-<DATE>/`), and the `*-BRIEF.md` files its agents work from |
-| `prototype/` | prd-prototype | `sn-baseline.md` (text capture of the stock pages), `<slug>-storyboard.html` (+ `-v<N>` backups), `artifact.md` (URL and version table); raw captures in `screens/` are never published |
-| `plan-parts/` | prd-prototype | The plan brief, code maps and per-drafter parts that are assembled into `backend-plan.md` |
-| `estimate.md` | prd-prototype | Part · Hours · Scope: a draft for the Jira estimate you post yourself |
+| `research/` | contract | One file per researcher: evidence and a proposed default for each open question |
+| `review/` | contract | Frozen contract snapshots (`prd-v<N>-<DATE>.md`, `workflows-v<N>-<DATE>.md`), the PO baseline, the panel's reviewer files (`review/panel/`, git-ignored) and `panel-synthesis.md`, re-pull re-evaluations (`reeval-<DATE>/`), decision lists, and the `*-BRIEF.md` files its agents work from |
+| `prototype/` | storyboard | `sn-baseline.md` (text capture of the stock pages), `<slug>-storyboard.html` (+ `-v<N>` backups), `artifact.md` (URL and version table); raw captures in `screens/` are never published |
+| `plan-parts/` | backend-plan (subagent drafting) | The map and plan briefs, code maps and per-drafter parts that `check-plan.py` assembles into `backend-plan.md` |
+| `frontend-plan.md` | storyboard | Each storyboard page → components, the plan's API calls, validation, FE hours; the FE developer confirms or replaces it |
+| `estimate.md` | storyboard | Part · Hours · Scope (BE hours from the plan, FE hours from `frontend-plan.md`): a draft for the Jira estimate you post yourself |
 
 ---
 
@@ -222,15 +272,49 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 **It will not** plan work, implement production code, or write QA testing steps.
 
-### 9. `skunexus-prd-prototype` — ticket → PRD, storyboard, plan and estimate
+### 9. `skunexus-contract` — client ticket → the contract (`prd.md` + `workflows.md`)
 
-**When:** a client ticket the PO has to see and price before it is built. *"PRD, storyboard and estimate for FFD-40"*, *"build the storyboard, similar to the RMA one"*, *"PRD and plan are done, just build the storyboard"*, *"re-pull the ticket and diff it before the daily"*. It is the heavy path: a ticket that only needs requirements goes to `skunexus-jira-prd`.
+**When:** a client ticket the PO has to see and price before it is built, or a contract that has to change. *"PRD, storyboard and estimate for FFD-40"* (this skill first, then `skunexus-backend-plan` and `skunexus-storyboard`, chained), *"I'm away: run FFD-17 without stopping"*, *"a quick storyboard, no PRD"*, *"re-pull FFD-14 and diff it"*, *"rule on the feedback"*, *"what is stale"*. A ticket that only needs requirements goes to `skunexus-jira-prd`.
 
-**What happens:** the jira-prd → backend-plan path, run by subagents, with stages added. The skill reads `.ai/<TICKET>/` and enters at the first stage whose output is missing, so it starts anywhere. The stages: the whole ticket pulled as files, evidence research, a baseline of what the PO actually decided, the interview, then a 4–6 reviewer panel on a frozen PRD (functional checkers plus simulated teammate reviews, labelled as simulated and never quoted). You rule on the panel's decision list; the remaining items become marked assumptions (`assumed, Qn`) instead of more questions, so nothing is decided silently. Then the storyboard: the stock pages it needs are captured as text from your **local** app, redrawn with fake data, and every addition is marked NEW or CHANGED against them. Each version is published as a **private** claude.ai artifact; nobody sees it until you share the link. Last, the plan (backend-plan's template and approval gate) and an estimate. It says real durations up front (panel ~45 min, capture ~30 min).
+**Why:** a storyboard looks finished even when it rests on guesses, so nothing is shared or priced on a guess nobody can see. Before anyone else sees a prototype it needs the evidence on disk, the PO baseline, stock pages captured rather than guessed, every open item decided or marked as an assumption, and parts in the PO's shape. That investigation is heavier than the regular route because it is where errors were caught: the stock-page capture caught a packing-slip error on FFD-14 that the review panel repeated, and none of 28 regular-route PRDs on disk records a default for an open item. It is also cheap: capture plus build is 6–10% of a run's tokens.
 
-**You get:** an approved `prd.md`, the storyboard URL in `prototype/artifact.md`, `backend-plan.md`, and `estimate.md` (Part · Hours · Scope, which you adjust and post yourself), plus its working folders `review/`, `prototype/` and `plan-parts/`.
+**What happens:** the contract is `prd.md` (jira-prd's template, so every other skill reads it unchanged) plus `workflows.md` (the use cases and the PO's priced parts), grounded in evidence on disk. Everything else (storyboard, plan, estimate, code) is a view of it that adds binding, never behaviour. The skill reads `.ai/<TICKET>/` and picks a door:
 
-**It will not** write to Jira or Confluence, put hours or real data on the artifact, or write code. It stops at each stage's gate and offers the next one. Once a ticket is in this skill, re-pull it with its re-pull and diff (*"re-pull and diff"*), not jira-prd's refetch, which would overwrite `jira-summary.md`.
+- **Evidence:** the whole ticket pulled as files, what's missing asked of you, a researched default for each open question, a baseline of what the PO actually decided.
+- **Interview seed** (attended): `prd.md` §7 seeded with the evidence-backed questions, then `skunexus-jira-prd` interviews you.
+- **Draft with defaults** (unattended): every open item becomes a marked assumption (`assumed, Qn`) with evidence or an owner; it stays a Draft, with a decision list for your return.
+- **Lite:** defaults only, no panel; enough for a first storyboard.
+- **Harden:** the use cases written, then a review panel on a frozen snapshot (functional checkers plus simulated teammate reviews, labelled as simulated and never quoted).
+- **Rulings:** one lettered decision list from everything in `feedback.md` (storyboard, plan, panel, re-pull diff, the PO's reaction); you rule, an editor applies, an independent checker verifies. *"Triage FFD-17"* rules only the guesses that move scope or price, after an unattended run.
+- **Version and staleness:** each approval writes a version line; `check-contract.py --stale` tells each view what to rebuild.
+
+At the gates, you rule on the decision list (G1) and approve the contract (G2), then start a fresh session. Asked for the whole chain, it loads the next skill instead of stopping, except at a gate.
+
+**You get:** an approved `prd.md` and `workflows.md`, with their evidence in `jira/`, `input/`, `research/` and `review/`.
+
+**It will not** plan, draw, or write to Jira or Confluence. Re-pull a ticket here with *"re-pull and diff"*, not jira-prd's refetch, which would overwrite `jira-summary.md`.
+
+### 10. `skunexus-storyboard` — contract → storyboard, FE plan and estimate
+
+**When:** the PO has to approve scope and price together. *"PRD and plan are done, just build the storyboard"*, *"build the storyboard, similar to the RMA one"*, *"republish the storyboard"*, *"the FE plan for FFD-40"*, *"the estimate for FFD-40"*. It needs a contract from `skunexus-contract` (a missing piece sends you there) and, for the FE plan and the estimate, `backend-plan.md`.
+
+**Why:** the PO has asked for this storyboard format on every FFD ticket since FFD-14, and changed FFD-14's scope by pointing at it. An unattended run plus your triage gives the PO and the FE developer an early, researched draft to discuss together, so polish questions can come up before the estimate instead of in QA. What is shown so far: the format is wanted and cheap. What the pilots must still show: that an early, unpriced share is acted on, that the unattended defaults hold (1 of the 2 reviewed so far was overturned, hence the triage), that the triage fits in 15–30 minutes, and that QA rounds shrink. Details: `model.md` "Why".
+
+**What happens:** each output is a view of the contract: it adds pages, components or hours, never behaviour. Whatever the contract doesn't settle goes to `feedback.md` for `skunexus-contract` to rule on. The doors:
+
+- **v1** (internal, discovery): drawn from a frozen contract; its gaps become feedback entries.
+- **v1.x** ("Draft for discussion"): rebuilt after your triage, with its open assumptions counted on the first screen and no price; you share it with the PO and the FE developer together, with a short list of plain questions and the date the estimate follows.
+- **v2** (PO-facing): the stock pages it needs captured as text from your **local** app, redrawn with fake data, one page per use-case step, every addition marked NEW or CHANGED.
+- **FE plan:** each storyboard page bound to components, the plan's API calls, validation and FE hours.
+- **Estimate:** hours per part: BE from the plan's size (`check-plan.py`), FE from the FE plan.
+- **Rebuild stale:** after a contract change, only the pages and rows whose ids changed.
+- **Publish:** each storyboard version as a **private** claude.ai artifact; nobody sees it until you share the link.
+
+At the gates, the FE developer confirms or replaces the FE plan (G4); you set and post the estimate (G5); the PO approves scope and price together (G6).
+
+**You get:** the storyboard URL and version table in `prototype/artifact.md`, `frontend-plan.md`, and `estimate.md` (Part · Hours · Scope, which you adjust and post yourself).
+
+**It will not** edit `prd.md` or `workflows.md`, put hours or real data on the storyboard, write to Jira or Confluence, or write code.
 
 ---
 

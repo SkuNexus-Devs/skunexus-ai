@@ -1,6 +1,6 @@
 ---
 name: sn-writer
-description: SN pipeline (skunexus-prd-prototype) document-only Opus worker - PRD section drafters D1/D2, editor, checker, V2 traceability auditor, PO baseline B0/B1 and its synthesizer, deviation checker, panel clusterer and synthesizer, estimate drafter. Loads no CLAUDE.md.
+description: SN pipeline document-only Opus worker - skunexus-contract: section drafters D1/D2, use-case drafter, B0/B1 baseline and synthesizer, deviation checker, V2 traceability auditor, panel clusterer and synthesizer, editor, checker, re-pull analysts A1 and A3; skunexus-storyboard: estimate drafter. Loads no CLAUDE.md.
 model: opus
 effort: high
 omitClaudeMd: true

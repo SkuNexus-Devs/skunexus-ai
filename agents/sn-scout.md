@@ -1,6 +1,6 @@
 ---
 name: sn-scout
-description: SN pipeline (skunexus-prd-prototype) retrieval and mechanical roles - Jira puller, reference and data researchers, browser walkthroughs, stock-page capture, code mappers, plan compiler, exact-edit fixers, plan auditor, prior-context B2, velocity probe, code skeptics.
+description: SN pipeline retrieval and mechanical roles - skunexus-contract: puller (intake and re-pull), researchers R1..Rn, B2 prior-context, code skeptics, fixer; skunexus-storyboard: stock-page capture, velocity probe, visual judgement; skunexus-backend-plan parallel drafting: code mappers, coverage and implementability auditor, second code fact-checker (optional).
 model: sonnet
 tools: Bash, Read, Write, Edit, ToolSearch, mcp__atlassian, mcp__claude_ai_Atlassian_Rovo, mcp__chrome-devtools, mcp__phpstorm-jetbrains, mcp__phpstorm-index
 ---

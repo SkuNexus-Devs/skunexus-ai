@@ -373,6 +373,7 @@ contract, decide *with them, in this thread* what it is:
 Single global gate. When the developer **explicitly approves**, flip `Status: Draft` → `Approved` and save.
 Deliberately-deferred items stay in Open Questions, each with a one-line "why". Then **stop** — the plan is
 ready for the implementation skill. Do not start coding.
+If the PO must see and price the feature before it is built, offer it in one line: `skunexus-storyboard` builds the storyboard, the FE plan and the estimate from the approved contract and this plan.
 
 ## The backend plan structure
 

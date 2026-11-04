@@ -173,6 +173,7 @@ any §7 item that's actually unresolved. Then:
    Anything they chose to defer stays in §7 Open Questions with a one-line reason.
 
 Then stop. The PRD is ready for the downstream planning/design skill — do not start designing or implementing.
+If the PO must see and price the feature before it is built, say so in one line: `skunexus-contract` turns this PRD into the contract (use cases and parts) that the storyboard and the estimate are drawn from.
 
 ## The PRD structure
 

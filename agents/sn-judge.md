@@ -1,6 +1,6 @@
 ---
 name: sn-judge
-description: SN pipeline (skunexus-prd-prototype) judgement roles - plan architect, V1 red team, V3 big-picture reviewer and simulated personas, simulated tech-lead plan review, source skeptic. Runs at the session's effort.
+description: SN pipeline judgement roles - skunexus-contract: panel reviewers V1 and V3 and the simulated personas, source skeptic; skunexus-backend-plan parallel drafting: plan architect (optional), simulated tech-lead plan review. Runs at the session's effort.
 model: inherit
 tools: Bash, Read, Write, Edit, ToolSearch, mcp__phpstorm-jetbrains, mcp__phpstorm-index
 ---

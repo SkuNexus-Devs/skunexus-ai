@@ -1,0 +1,881 @@
+<!-- Storyboard skeleton (skunexus-storyboard). Copy to .ai/<TICKET>/prototype/<slug>-storyboard.html, then fill:
+  1. Markup: <title> (a stable name, never versioned), the .pname text and the .draft badge ('Internal draft v1' for discovery, 'Draft for discussion <DATE>' for a triaged v1.x, 'Draft v<n>' from v2 on; on a pause the build agent sets the WIP badge from the build brief). In the script, only the TICKET CONTENT region; leave the ENGINE region alone.
+  2. Content: STAGE ('internal' v1 · 'discussion' v1.x · 'approved' v2 on), TICKET/HOST/USER/BUILT_FROM, TODAY (fixed clock), NAV, fake data, PARTS, QT, page builders, SC (scenarios → steps), IX (before/after rows). The example content is fake; replace all of it.
+  3. One helper per id type, so grep can audit: A('<key>') for assumptions, key = the §7 id (A('Q6'); a legacy drawing decision (b) is A('Dev b')), or in storyboard v1 only the feedback.md id of a CHOICE entry (A('FB3')); R-ids only as the 2nd item of a news/changes tuple ('R3, R7.a');
+     NEW()/CHG() for markers; part tags only through step p:[n], scoped(), pa() or the part argument of NEW/CHG. Unmarked = stock SN.
+  4. Ids are the contract's: a scenario's id is its workflows.md scenario id ('s4'), a step's id its workflows.md step id ('s4.2'), a step's p:[n] its workflows.md Part. A retired step is not drawn; a live step without a page is listed in NOT_DRAWN with its reason. Deep links: #s4.2 (a step), #s4 (a scenario's first step), #index.
+     BUILT_FROM = the contract version the build read ('contract v2 (2026-11-03)'). QT = the "Assumed:" text of each §7 entry in that snapshot, verbatim (an FB key: the entry's What line). PARTS = workflows.md "Parts" (Name and Scope verbatim).
+     Re-copy both after every contract version, then grep the page for the old wording.
+  5. Never show effort or time estimates on the page (the check greps for them). Fake data only: invented names, example.com emails, 555 phones, never values from the local app or a client system.
+  6. One PARTS entry hides all scope UI (scope control, part cards, chips, badges, drawer). Each step = one SN page in one state.
+  7. Check: python3 -I <SKILL>/scripts/check-storyboard.py <file> --contract .ai/<TICKET>; staleness: python3 -I <SKILL>/../skunexus-contract/scripts/check-contract.py --stale <file>.
+-->
+<title>CLIENT Feature Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-row sticky prototype bar (name, tabs, estimate scope, legend dropdown), the part cards, then a stage of one recreated SkuNexus screen + a caption panel; a second tab holds the before/after index. SN tokens from sn-baseline §8. Light only, like SkuNexus itself. */
+:root{
+  --sn-text:#181818;--sn-muted:#585871;--sn-label:#828294;
+  --sn-primary:#1d0269;--sn-primary-600:#170254;--sn-primary-800:#0c012a;--sn-primary-900:#060015;--sn-primary-100:#d2cce1;
+  --sn-secondary:#0ac1ef;--sn-link:#0079a6;--sn-blue:#87e3fa;
+  --sn-warning:#fe9a03;--sn-danger:#f4363c;--sn-danger-ink:#b3141a;--sn-success:#4caf50;--sn-success-ink:#2e7d32;
+  --sn-grey-20:#f2f2f2;--sn-grey-50:#eaeaed;--sn-grey-100:#d5d5db;--sn-grey-200:#ababb8;--sn-grey-500:#2e2e4d;--sn-row-alt:#f7f9fc;--sn-white:#ffffff;
+  --sn-warn-bg:#fff4e0;--sn-warn-line:#f3cf8f;--sn-warn-ink:#7a4a00;
+  --sn-bad-bg:#fdecec;--sn-bad-line:#f3b3b5;--sn-ok-bg:#e8f5e9;--sn-ok-line:#b9dfbb;--sn-ok-ink:#1e5e22;
+  --sn-info-bg:#e6f8fd;--sn-info-line:#b5e9f7;--sn-info-ink:#04506a;
+  --pc-bg:#eef0f4;--pc-ink:#1f2330;--pc-muted:#5b6170;--pc-line:#d9dce4;--pc-card:#ffffff;--pc-tip:#1f2330;--pc-tip-ink:#ffffff;--pc-tip-key:#c9cdf5;
+  --new:#2e9d4a;--new-tag:#1f7a36;--new-ink:#ffffff;
+  --chg:#e3a008;--chg-tag:#f2b705;--chg-ink:#3a2900;--chg-bg:#fff8e6;
+  --asm-bg:#eef0fb;--asm-line:#6d6fa8;--asm-ink:#34366b;
+  --opt-bg:#f3eefc;--opt-line:#7b5cc4;--opt-ink:#3d2483;
+  --p1:#2b3a67;--p1-bg:#e9ecf6;--p2:#0a6b6b;--p2-bg:#e0f3f2;--p3:#5b3cb0;--p3-bg:#f1ecfb;
+  --paper:#fbfaf6;--paper-ink:#2b3038;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --shadow:0 4px 8px rgba(17,17,17,.16);--shadow-modal:0 24px 32px rgba(17,17,17,.16);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--pc-bg);color:var(--pc-ink);font:14px/1.5 var(--font);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--pc-card)}
+h1,h2,h3,h5,h6{margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sn-secondary);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- prototype chrome ---------- */
+.pbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--pc-card);border-bottom:1px solid var(--pc-line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.pname{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-weight:700;font-size:16px}
+.draft{font-size:12px;font-weight:600;color:var(--pc-muted);border:1px solid var(--pc-line);border-radius:100px;padding:2px 10px;background:var(--pc-bg)}
+.tabs{display:flex;gap:4px}
+.tabs button{border:0;background:none;padding:6px 12px;border-radius:6px;font-weight:600;color:var(--pc-muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--pc-ink);color:var(--pc-card)}
+.lgd{position:relative}
+.lgd summary{list-style:none;cursor:pointer;padding:5px 10px;border:1px solid var(--pc-line);border-radius:6px;font-size:12.5px;font-weight:600;color:var(--pc-muted);white-space:nowrap}
+.lgd summary::-webkit-details-marker{display:none}
+.lgd summary::after{content:" ▾"}
+.lgd[open] summary{background:var(--pc-bg);color:var(--pc-ink)}
+.legend{position:absolute;right:0;top:calc(100% + 6px);width:max-content;max-width:min(420px,calc(100vw - 32px));display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--pc-card);border:1px solid var(--pc-line);border-radius:8px;box-shadow:var(--shadow);font-size:12px;color:var(--pc-muted)}
+.lg{display:inline-flex;align-items:center;gap:6px}
+.sw-sn{width:26px;height:16px;border:1px solid var(--sn-grey-100);border-radius:4px;background:var(--sn-white)}
+.sw-new,.sw-chg{width:26px;height:16px;border-radius:4px;background:var(--sn-white)}
+.sw-new{outline:2px solid var(--new);outline-offset:1px}
+.sw-chg{outline:2px solid var(--chg);outline-offset:1px}
+.lt{font:700 10px/17px var(--font);letter-spacing:.07em;padding:0 7px;border-radius:4px}
+.lt.n{background:var(--new-tag);color:var(--new-ink)}
+.lt.c{background:var(--chg-tag);color:var(--chg-ink)}
+.wrap{padding-block:14px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1720px;margin:0 auto}
+.scn{display:flex;flex-wrap:wrap;gap:8px}
+.scn button{border:1px solid var(--pc-line);background:var(--pc-card);border-radius:8px;padding:7px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;line-height:1.3}
+.scn button b{font-size:13px}
+.scn button small{font-size:11.5px;color:var(--pc-muted)}
+.scn button[aria-pressed="true"]{background:var(--pc-ink);border-color:var(--pc-ink);color:var(--pc-card)}
+.scn button[aria-pressed="true"] small{color:var(--pc-line)}
+.scn button.opt{border-style:dashed;border-color:var(--opt-line)}
+.steps{display:flex;gap:6px;overflow-x:auto;padding-block:10px 4px}
+.st{flex:none;display:flex;gap:7px;align-items:center;border-radius:100px;padding:3px 12px 3px 3px;background:var(--pc-card);border:1px solid var(--pc-line);cursor:pointer;font-size:12.5px;font-weight:500;color:var(--pc-ink)}
+.st i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--pc-bg);font-weight:700;font-size:11px;font-variant-numeric:tabular-nums}
+.st[aria-current="step"]{border-color:var(--pc-ink);font-weight:700}
+.st[aria-current="step"] i{background:var(--pc-ink);color:var(--pc-card)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 330px;grid-template-areas:"screen cap";gap:18px;align-items:start;margin-top:8px}
+.stage>.screen{grid-area:screen}
+.cap{grid-area:cap;background:var(--pc-card);border:1px solid var(--pc-line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;position:sticky;top:calc(var(--pbar-h,60px) + 12px)}
+.cap .k{font-size:11.5px;font-weight:700;color:var(--pc-muted);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:18px;line-height:1.3}
+.cap h3{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--pc-muted);margin-top:6px}
+.cap ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.today{background:var(--pc-bg);border-radius:8px;padding:10px 12px;font-size:13px}
+.rid{font:600 11px var(--mono);color:var(--asm-ink);background:var(--asm-bg);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.cnav{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:var(--pc-muted);font-variant-numeric:tabular-nums}
+.cnav button{border:1px solid var(--pc-line);background:var(--pc-card);border-radius:8px;padding:7px 12px;font-weight:600;cursor:pointer}
+.cnav button.pri{background:var(--pc-ink);border-color:var(--pc-ink);color:var(--pc-card)}
+.cnav button[disabled]{opacity:.4;cursor:default}
+.hintline{font-size:12px;color:var(--pc-muted)}
+@media (max-width:1180px){.stage{grid-template-columns:minmax(0,1fr);grid-template-areas:"cap" "screen"}.cap{position:static}}
+
+/* markers */
+.mk{position:relative;outline:2px solid var(--mk-c);outline-offset:3px;border-radius:9px}
+.mk.new{--mk-c:var(--new);--mk-t:var(--new-tag);--mk-i:var(--new-ink)}
+.mk.chg{--mk-c:var(--chg);--mk-t:var(--chg-tag);--mk-i:var(--chg-ink)}
+.mkt{position:absolute;top:-12px;left:10px;z-index:2;display:flex;gap:3px;pointer-events:none;font-style:normal;line-height:1}
+.mkt b{background:var(--mk-t);color:var(--mk-i);font:700 10px/17px var(--font);letter-spacing:.07em;padding:0 7px;border-radius:4px}
+.mkt .pc{margin:0;pointer-events:auto}
+.mk.in{display:inline-block;border-radius:100px;vertical-align:middle}
+.mk.in>.mkt{left:auto;right:-10px;top:-14px}
+.asm{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px dashed var(--asm-line);background:var(--asm-bg);color:var(--asm-ink);border-radius:100px;font-size:11px;font-weight:600;font-style:italic;white-space:nowrap;cursor:help;vertical-align:middle;margin-left:4px;font-family:var(--font)}
+#tip{position:fixed;z-index:50;max-width:340px;background:var(--pc-tip);color:var(--pc-tip-ink);font-size:12.5px;line-height:1.45;padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none}
+#tip b{display:block;margin-bottom:4px;color:var(--pc-tip-key)}
+.optbanner{border:2px dashed var(--opt-line);background:var(--opt-bg);color:var(--opt-ink);border-radius:8px;padding:12px 16px;font-weight:700;font-size:15px}
+.optbanner small{display:block;font-weight:500;font-size:13px}
+
+/* estimate parts: chips, part cards, the scope control and scope notices */
+/* part colours P1 navy, P2 teal, P3 purple (never the NEW green or CHANGED amber); a 4th part needs --p4/--p4-bg and .pt4 */
+.pt1{--pt-c:var(--p1);--pt-b:var(--p1-bg)}.pt2{--pt-c:var(--p2);--pt-b:var(--p2-bg)}.pt3{--pt-c:var(--p3);--pt-b:var(--p3-bg)}
+.pc{display:inline-flex;align-items:center;height:17px;padding:0 5px;margin-left:3px;border:1px solid var(--pt-c);border-radius:4px;background:var(--pt-b);color:var(--pt-c);font:700 10px/1 var(--font);letter-spacing:.04em;font-style:normal;text-decoration:none;cursor:help;vertical-align:middle;white-space:nowrap}
+.ptag{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 3px;border:1px solid var(--pt-c);border-radius:4px;background:var(--pt-b);color:var(--pt-c);font-size:11px;font-weight:600;font-style:normal;white-space:nowrap;vertical-align:middle}
+.ptag .pc,.optbanner .pc{margin:0 4px 0 0}
+.parts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.scope{display:flex;flex-wrap:wrap;align-items:center;row-gap:4px;margin-left:auto}
+.scope-l{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--pc-ink);margin-right:8px}
+.scope label{position:relative;display:block}
+.scope input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.scope label span{display:block;padding:5px 10px;border:1px solid var(--pc-line);background:var(--pc-card);color:var(--pc-muted);font-size:12.5px;font-weight:600;white-space:nowrap}
+.scope label+label span{border-left-width:0}
+.scope label:first-of-type span{border-radius:6px 0 0 6px}
+.scope label:last-of-type span{border-radius:0 6px 6px 0}
+.scope label:has(~label>input:checked)>span{background:var(--pc-bg);color:var(--pc-ink)}
+.scope input:checked+span{background:var(--pc-ink);border-color:var(--pc-ink);color:var(--pc-card)}
+.scope input:focus-visible+span{outline:2px solid var(--sn-secondary);outline-offset:2px}
+.pcard{flex:1 1 230px;min-width:0;border:1px solid var(--pc-line);border-radius:6px;background:var(--pt-b);padding:5px 10px;display:flex;flex-direction:column;gap:1px;font-size:12.5px;line-height:1.35;text-align:left;cursor:pointer}
+.pcard:hover{border-color:var(--pt-c)}
+.pcard .pnm{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-weight:700;color:var(--pc-ink)}
+.pcard .pnm .pc{margin:0}
+.pcard .pnm i{font-style:normal;font-weight:500;color:var(--pc-muted)}
+.pcard .see{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--pt-c);text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.oos{display:none;font-size:11px;font-weight:600;color:var(--pc-muted)}
+.pt-note,.snote{font-size:12px;font-weight:500;font-style:italic;color:var(--pc-muted);border:1px dashed var(--pc-line);border-radius:6px;padding:2px 8px;background:var(--pc-card)}
+.pt-note{display:none}
+.snote{flex:none;align-self:center}
+span.pt-el{display:contents}
+/* out-of-scope parts: setScope() writes their hide rules into <style id="scope-css">; a single part hides all scope UI */
+body.one-part :is(.scope,.parts,.sban,.pc,.pb,.lg-pt){display:none!important}
+/* per-part count badges (step bar, scenario buttons), the "what it adds" drawer, the scope-change banner, Highlight and Go to flash */
+.pb{display:inline-flex;align-items:center;height:17px;padding:0 5px;margin-left:4px;border:1px solid var(--pt-c);border-radius:4px;background:var(--pt-b);color:var(--pt-c);font:700 10px/1 var(--font);letter-spacing:.03em;font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle}
+.pb.whole{background:var(--pt-c);color:var(--pc-card)}
+.st.hlm,.scn button.hlm{box-shadow:0 0 0 3px var(--hl-c)}
+.sban{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 14px;margin-bottom:10px;padding:10px 12px;border:1px solid var(--pt-c);border-left-width:5px;border-radius:8px;background:var(--pt-b);font-size:13px}
+.sban[hidden]{display:none}
+.sban p{flex:1 1 420px;min-width:0}
+.sban p i{font-weight:600}
+.sban .ln{display:block;margin-top:3px}
+.sban .ln .pc{margin:0}
+.sban-a{display:flex;gap:6px;align-items:center}
+.sban-a button{border:1px solid var(--pt-c);background:var(--pc-card);color:var(--pt-c);border-radius:6px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.sban-a button[aria-pressed="true"]{background:var(--pt-c);color:var(--pc-card)}
+.sban-a #sban-x{border-color:transparent;background:none;color:var(--pc-muted);font-size:20px;line-height:1;padding:2px 6px}
+[data-hl]{position:relative;outline:4px solid var(--hl-c)!important;outline-offset:4px}
+[data-hl="2"]{--hl-c:var(--p2)}[data-hl="3"]{--hl-c:var(--p3)}
+[data-hl]::after{content:"P" attr(data-hl) " adds";position:absolute;top:-15px;right:-10px;z-index:4;background:var(--hl-c);color:var(--pc-card);font:700 10px/16px var(--font);letter-spacing:.04em;padding:0 6px;border-radius:4px;white-space:nowrap;pointer-events:none}
+.screen[data-hl]::after{content:"P" attr(data-hl) " adds · whole step";top:6px;right:8px}
+.flash{outline:3px solid var(--fl-c)!important;outline-offset:5px!important;animation:flash 1s ease-out 2}
+@keyframes flash{from{box-shadow:0 0 0 0 color-mix(in srgb,var(--fl-c) 60%,transparent)}to{box-shadow:0 0 0 18px color-mix(in srgb,var(--fl-c) 0%,transparent)}}
+.drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(460px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;border-left:4px solid var(--pt-c);background:var(--pc-card);color:var(--pc-ink);box-shadow:-12px 0 32px rgba(20,24,40,.22);overscroll-behavior:contain}
+.drawer::backdrop{background:rgba(20,24,40,.3)}
+.dr-h{position:sticky;top:0;z-index:1;display:flex;align-items:flex-start;gap:10px;padding:14px 16px 12px;padding-top:max(14px,env(safe-area-inset-top,0px));background:var(--pt-b);border-bottom:1px solid var(--pc-line)}
+.dr-h>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.dr-h h2{font-size:17px;display:flex;align-items:center;gap:6px}
+.dr-h h2 .pc{margin:0}
+.dr-h p{font-size:12.5px;color:var(--pc-muted)}
+.dr-x{border:0;background:none;color:var(--pc-muted);font-size:24px;line-height:1;padding:0 4px;cursor:pointer}
+.dr-b{display:flex;flex-direction:column;gap:8px;padding:12px 16px 28px;padding-bottom:max(28px,env(safe-area-inset-bottom,0px))}
+.dr-note{font-size:12.5px;border:1px dashed var(--pt-c);border-radius:6px;padding:6px 10px;background:var(--pt-b)}
+.dr-b h3{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--pc-muted);margin-top:8px}
+.dr-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dr-l li{display:flex;align-items:center;gap:8px;border:1px solid var(--pc-line);border-radius:8px;padding:6px 8px 6px 10px}
+.dr-l li.nest{margin-left:16px}
+.dr-l li>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.dr-l b{font-size:13px;font-weight:600;line-height:1.35}
+.dr-l small{font-size:11.5px;color:var(--pc-muted);line-height:1.35}
+.wh{flex:none;font-size:10.5px;font-weight:700;color:var(--pc-card);background:var(--pt-c);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.dr-l button{flex:none;border:1px solid var(--pt-c);background:var(--pc-card);color:var(--pt-c);border-radius:100px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.dr-l button:hover{background:var(--pt-c);color:var(--pc-card)}
+@media (max-width:700px){.pbar{position:relative}.scope-l{flex-basis:100%}.lgd[open]{flex-basis:100%}.legend{position:static;margin-top:8px}}
+
+/* ---------- recreated SkuNexus screen ---------- */
+.screen{background:var(--sn-white);border:1px solid var(--pc-line);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(20,24,40,.08);min-width:0}
+.addr{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--pc-bg);border-bottom:1px solid var(--pc-line);font:12px var(--mono);color:var(--pc-muted)}
+.addr .url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.dots{display:flex;gap:4px;flex:none}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--sn-grey-100)}
+.sn{display:grid;grid-template-columns:212px minmax(0,1fr);color:var(--sn-text);font-family:var(--font);font-size:14px}
+.sn-side{background:var(--sn-primary-800);color:var(--sn-white);display:flex;flex-direction:column;padding-bottom:14px}
+.sn-logo{display:flex;align-items:center;gap:12px;height:72px;padding:0 18px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.sn-logo i{font-style:normal;font-size:18px;color:var(--sn-primary-100)}
+.sn-logo b span{color:var(--sn-secondary)}
+.nav{display:flex;flex-direction:column}
+.nav a{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;padding:0 18px;color:var(--sn-white);font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap}
+.nav a .ic{width:16px;height:16px;border:1.6px solid var(--sn-label);border-radius:4px;flex:none}
+.nav a.on::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:4px;background:var(--sn-warning);border-radius:0 3px 3px 0}
+.nav .grp{background:var(--sn-primary-900);padding-bottom:4px}
+.nav .grp>a:first-child{color:var(--sn-warning);min-height:50px}
+.nav .grp a.sub{padding-left:46px;font-size:14px;min-height:38px}
+.ver{margin-top:auto;padding:18px 18px 0;font-size:11px;color:var(--sn-grey-200);line-height:1.45}
+.sn-main{position:relative;min-width:0;background:var(--sn-white);display:flex;flex-direction:column}
+.sn.has-modal .sn-main{min-height:900px}
+.sn-head{display:flex;align-items:center;gap:14px;min-height:83px;padding:10px 24px 10px 16px;box-shadow:0 2px 4px rgba(17,17,17,.08);background:var(--sn-white);z-index:1}
+.hist{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--sn-label);border:1px solid var(--sn-grey-50);flex:none;font-size:18px}
+.ttl{min-width:0;flex:1}
+.ttl h1{font-size:24px;font-weight:700;line-height:1.3}
+.crumbs{font-size:14px;color:var(--sn-label);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.crumbs b{font-weight:400}
+.crumbs span{color:var(--sn-text)}
+.user{text-align:right;font-weight:600;font-size:14px;line-height:1.3;flex:none}
+.user small{display:block;font-size:11px;letter-spacing:.06em;color:var(--sn-label)}
+.sn-body{padding:22px 16px 30px;display:flex;flex-direction:column;gap:24px;min-width:0}
+@media (max-width:820px){.sn{grid-template-columns:minmax(0,1fr)}.sn-side{display:none}.user{display:none}.sn-head{padding-right:16px}}
+
+.card{background:var(--sn-white);border:1px solid var(--sn-grey-50);border-radius:8px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-height:60px;padding:8px 16px 8px 24px}
+.card-h h5{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-h .sum{font-size:13px;color:var(--sn-label);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.card-b{padding:4px 24px 24px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card-b.flush{padding:0}
+.card.blue>.card-h{background:var(--sn-primary-600);color:var(--sn-white);border-radius:8px 8px 0 0}
+.card.stub{box-shadow:none}
+.card.stub .card-h{min-height:52px}
+.card.stub h5{font-size:17px}
+.cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px}
+@media (max-width:700px){.cols{grid-template-columns:minmax(0,1fr)}}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:7px 12px;margin:0;font-size:14px;font-weight:500;align-items:center}
+.kv dt{color:var(--sn-muted)}
+.kv dd{margin:0;min-width:0}
+.bcn{font-size:12px;color:var(--sn-muted);font-variant-numeric:tabular-nums}
+.bc{display:block;max-width:100%}
+.addrb h6{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.addrb p{font-size:14px;font-weight:500;color:var(--sn-muted);margin:4px 0 14px}
+.edit{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;color:var(--sn-grey-200);border:1px solid var(--sn-grey-50);font-size:13px}
+a.lnk,.lnk{color:var(--sn-link);font-weight:600;text-decoration:none;cursor:default}
+.prod .sku,.sub{font-size:12.5px;color:var(--sn-muted);font-weight:500}
+.mut{color:var(--sn-muted)}
+.warnt{color:var(--sn-warn-ink);font-weight:600}
+.empty{padding:18px 24px 22px;color:var(--sn-muted);font-weight:500}
+.help{font-size:12.5px;color:var(--sn-muted);font-weight:500}
+.num{font-variant-numeric:tabular-nums}
+
+.tw{overflow-x:auto;min-width:0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;font-weight:500}
+.tbl th{background:var(--sn-secondary);color:var(--sn-primary-800);font-size:15px;font-weight:700;text-align:left;padding:10px 8px;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{padding-left:16px}
+.tbl th.nc{box-shadow:inset 0 -4px 0 var(--new)}
+.tbl td{padding:9px 8px;vertical-align:top;border-bottom:1px solid var(--sn-grey-50)}
+.tbl tbody tr:nth-child(even){background:var(--sn-row-alt)}
+.tbl tr.ghost td{background:var(--chg-bg);color:var(--chg-ink);font-style:italic;border-top:1px dashed var(--chg);border-bottom:1px dashed var(--chg)}
+.tbl tr.ghost s{font-style:normal}
+.tbl tr.full td{background:var(--sn-white);padding-top:0}
+.tbl tr.sys td{background:var(--sn-info-bg)}
+.tfoot{background:var(--sn-primary-600);color:var(--sn-white);display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px 32px;padding:10px 16px;font-weight:700;font-size:14px;border-radius:0 0 8px 8px}
+.shipc{font-size:13px;line-height:1.45;white-space:nowrap}
+.opts{white-space:nowrap;color:var(--sn-link);font-weight:600}
+
+.mg .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0;background:var(--sn-primary-600);color:var(--sn-white);border-radius:8px 8px 0 0;min-height:53px;padding:7px 12px;font-weight:700;font-size:14px}
+.mg .bar>span{padding:0 12px;border-right:1px solid rgba(255,255,255,.25)}
+.mg .bar>span:last-child,.mg .bar>span.nb{border-right:0}
+.mg .srch{background:var(--sn-white);color:var(--sn-grey-200);border-radius:4px;padding:5px 10px;min-width:170px;font-weight:400;margin:0 12px;border:0!important}
+.mg .grow{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-left:1px solid var(--sn-grey-50);border-right:1px solid var(--sn-grey-50)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 12px;border-radius:100px;background:var(--sn-primary-600);color:var(--sn-white);font-size:12px;font-weight:600}
+.mg .tbl td{padding-block:7px}
+.mg .tbl tbody tr:nth-child(even){background:var(--sn-grey-20)}
+.mgfoot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 16px;font-size:13px;color:var(--sn-muted);border:1px solid var(--sn-grey-50);border-top:0;border-radius:0 0 8px 8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 20px;border-radius:100px;font:600 14px var(--font);border:1px solid transparent;white-space:nowrap;cursor:default;user-select:none}
+.btn.md{height:50px;padding:0 28px;font-size:16px}
+.btn.sm{height:30px;padding:0 14px;font-size:13px}
+.btn.p{background:var(--sn-primary);color:var(--sn-white);border-color:var(--sn-grey-500)}
+.btn.d{background:var(--sn-danger);color:var(--sn-white)}
+.btn.s{background:var(--sn-success);color:var(--sn-white)}
+.btn.o{background:transparent;border-color:var(--sn-secondary);color:var(--sn-primary)}
+.btn.po{background:transparent;border-color:var(--sn-primary-100);color:var(--sn-primary)}
+.btn.do{background:transparent;border-color:var(--sn-danger);color:var(--sn-danger-ink)}
+.btn.dis{opacity:.4}
+[data-go]{cursor:pointer}
+.btn[data-go]{box-shadow:0 0 0 3px rgba(10,193,239,.35)}
+.btn[data-go]:hover{filter:brightness(1.15)}
+
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>label,.flabel{color:var(--sn-label);font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.inp,.sel{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;border:1px solid var(--sn-grey-100);border-radius:8px;font-size:14px;font-weight:500;background:var(--sn-white);min-width:0;color:var(--sn-text)}
+.sel{min-height:36px;padding:0 10px 0 12px;display:inline-flex;gap:8px;white-space:nowrap}
+.sel i{font-style:normal;color:var(--sn-label)}
+.inp.ph{color:var(--sn-grey-200)}
+.inp.focus{border-color:var(--sn-secondary);box-shadow:0 0 0 3px rgba(10,193,239,.2)}
+.inp.ta{align-items:flex-start;padding:10px 14px;min-height:64px}
+.inp.sm{min-height:36px;font-size:13px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.span2{grid-column:span 2}
+@media (max-width:600px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.swrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--sn-label);font-weight:600}
+.sw i{width:34px;height:18px;border-radius:9px;background:var(--sn-primary);position:relative}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--sn-white)}
+.sw i.r::after{left:18px}
+.sw .on{color:var(--sn-primary)}
+.stp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.stp i{width:26px;height:26px;border-radius:50%;border:1px solid var(--sn-secondary);display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--sn-primary)}
+.stp i.off{border-color:var(--sn-grey-100);color:var(--sn-grey-200)}
+.stp b{min-width:34px;height:30px;border:1px solid var(--sn-grey-100);border-radius:6px;display:grid;place-items:center;font-variant-numeric:tabular-nums;background:var(--sn-white)}
+.stp small{color:var(--sn-label);font-size:12px}
+.chk,.rad{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500}
+.chk i{width:18px;height:18px;border:1.5px solid var(--sn-grey-200);border-radius:4px;flex:none;display:grid;place-items:center;background:var(--sn-white)}
+.chk.on i{background:var(--sn-primary);border-color:var(--sn-primary)}
+.chk.on i::after{content:"";width:5px;height:9px;border:solid var(--sn-white);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.chk.big{padding:8px 14px;border:1px solid var(--sn-warn-line);border-radius:8px;background:var(--sn-white);font-weight:700;box-shadow:0 0 0 3px rgba(10,193,239,.35)}
+.rad i{width:18px;height:18px;border:1.5px solid var(--sn-grey-200);border-radius:50%;flex:none;display:grid;place-items:center}
+.rad.on i{border-color:var(--sn-primary)}
+.rad.on i::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--sn-primary)}
+.rad .pr{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.msg{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid}
+.msg .mi{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--sn-white)}
+.msg>div{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.msg.warn{background:var(--sn-warn-bg);border-color:var(--sn-warn-line);color:var(--sn-warn-ink)}
+.msg.warn .mi{background:var(--sn-warning)}
+.msg.err{background:var(--sn-bad-bg);border-color:var(--sn-bad-line);color:var(--sn-danger-ink)}
+.msg.err .mi{background:var(--sn-danger)}
+.msg.info{background:var(--sn-info-bg);border-color:var(--sn-info-line);color:var(--sn-info-ink)}
+.msg.info .mi{background:var(--sn-link)}
+.msg.ok{background:var(--sn-ok-bg);border-color:var(--sn-ok-line);color:var(--sn-ok-ink)}
+.msg.ok .mi{background:var(--sn-success-ink)}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--sn-white);background:var(--sn-primary);vertical-align:middle}
+.tag.warn{background:var(--sn-warning);color:var(--chg-ink)}
+.tag.ok{background:var(--sn-success-ink)}
+.tag.flag{background:var(--sn-danger)}
+.tag.info{background:var(--sn-secondary);color:var(--sn-primary-800)}
+.stat{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toast{align-self:flex-end;background:var(--sn-white);border-left:4px solid var(--sn-success);box-shadow:var(--shadow);border-radius:6px;padding:10px 16px;font-weight:600;font-size:14px;max-width:100%}
+.toast.w{border-left-color:var(--sn-warning)}
+.cfoot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;padding:0 24px 24px}
+.subtabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--sn-grey-50)}
+.subtabs span{padding:11px 18px;font-weight:600;font-size:15px}
+.subtabs span.on{background:var(--sn-secondary);color:var(--sn-white)}
+.lead{font-size:16px;font-weight:700}
+.ri3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:900px){.ri3{grid-template-columns:minmax(0,1fr)}}
+.center{display:flex;justify-content:center;padding:28px 0}
+.disp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.disp>span{font-size:13px;color:var(--sn-muted)}
+.rfoot{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;padding:16px}
+.rfoot .g3{flex:1;min-width:0}
+.thumb{width:40px;height:40px;border-radius:6px;background:var(--sn-grey-20);border:1px solid var(--sn-grey-50);flex:none}
+.pcell{display:flex;gap:10px;align-items:flex-start}
+.tiles{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.tile{flex:none;border:1px solid var(--sn-grey-100);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600}
+.tile.on{border:2px solid var(--sn-secondary);background:var(--sn-white)}
+.rates{display:flex;flex-direction:column;gap:10px}
+.rates h6{font-size:15px;font-weight:700}
+.mstep{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--sn-label);font-weight:600}
+.mstep b{padding:3px 10px;border-radius:100px;border:1px solid var(--sn-grey-100);font-weight:600}
+.mstep b.on{background:var(--sn-primary);border-color:var(--sn-primary);color:var(--sn-white)}
+.fs{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--sn-grey-50);padding-top:14px}
+.fs h6{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.facts{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.mailprev{border:1px solid var(--sn-grey-50);border-radius:8px;padding:12px 14px;background:var(--sn-row-alt);display:flex;flex-direction:column;gap:6px;font-size:13px}
+
+.mwrap{position:absolute;inset:0;background:rgba(0,0,0,.2);display:flex;justify-content:center;align-items:flex-start;padding:96px 16px 24px;overflow:auto;z-index:3}
+.modal{width:min(560px,100%);background:var(--sn-white);border:1px solid var(--sn-grey-50);border-radius:8px;box-shadow:var(--shadow-modal)}
+.m-h{display:flex;justify-content:space-between;align-items:center;padding:22px 20px 0 24px;gap:12px}
+.m-h h5{font-size:20px;font-weight:700;border-left:4px solid var(--sn-secondary);padding-left:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.m-h .x{font-size:24px;color:var(--sn-label);line-height:1}
+.m-b{padding:18px 24px 0;font-size:14px;font-weight:500;display:flex;flex-direction:column;gap:14px}
+.m-f{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:24px}
+
+.paperrow{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.paperrow>.tw{flex:1;min-width:0}
+.paper{width:210px;max-width:100%;aspect-ratio:8.5/11;background:var(--paper);color:var(--paper-ink);border:1px solid var(--sn-grey-100);box-shadow:0 2px 6px rgba(0,0,0,.12);padding:14px;font-size:8px;line-height:1.4;display:flex;flex-direction:column;gap:6px;flex:none}
+.paper .ph1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;font-size:9px}
+.paper table{border-collapse:collapse;width:100%}
+.paper td{border-bottom:1px solid var(--sn-grey-100);padding:2px 0}
+.paper .pn{margin-top:auto;font-weight:700;border-top:1px solid var(--paper-ink);padding-top:4px}
+
+/* ---------- index ---------- */
+.ix{display:flex;flex-direction:column;gap:22px;margin-top:6px}
+.ixintro{font-size:14px;color:var(--pc-muted);max-width:80ch}
+.ixrow{background:var(--pc-card);border:1px solid var(--pc-line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.ixh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.ixh h2{font-size:18px}
+.ixh code{font:12px var(--mono);color:var(--pc-muted)}
+.ixh .jump{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.ixh .jump button{border:1px solid var(--pc-line);background:var(--pc-bg);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer}
+.ixchg{margin:0;padding-left:18px;columns:2 340px;column-gap:28px;font-size:13.5px}
+.ixchg li{break-inside:avoid;margin-bottom:5px}
+.ixb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.ixb.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:1000px){.ixb{grid-template-columns:minmax(0,1fr)}}
+.pane{border:1px solid var(--pc-line);border-radius:8px;overflow:hidden;min-width:0;background:var(--sn-white)}
+.pane>.ph{padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--pc-bg);color:var(--pc-muted);border-bottom:1px solid var(--pc-line)}
+.pane>.ph.a{color:var(--new-tag)}
+.mini{zoom:.74;padding:22px 16px;display:flex;flex-direction:column;gap:24px;color:var(--sn-text);font-family:var(--font);font-size:14px;overflow-x:auto}
+.note1{font-size:13px;color:var(--pc-muted);font-style:italic}
+</style>
+<style id="scope-css"></style>
+
+<header class="pbar" id="pbar">
+  <div class="pname">CLIENT Feature Prototype <span class="draft" id="badge">Internal draft v1</span></div>
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-story" aria-selected="true">Storyboards</button>
+    <button type="button" role="tab" id="tab-index" aria-selected="false">Before / after index</button>
+  </div>
+  <div class="scope" id="scope" role="radiogroup" aria-labelledby="scope-l"></div>
+  <details class="lgd" id="lgd">
+    <summary>Legend</summary>
+    <div class="legend">
+      <span class="lg"><span class="sw-sn"></span>Existing SN</span>
+      <span class="lg"><span class="sw-new"></span><span class="lt n">NEW</span></span>
+      <span class="lg"><span class="sw-chg"></span><span class="lt c">CHANGED</span></span>
+      <span class="lg"><span class="asm" tabindex="0" data-q="legend">Assumed · Qn</span> hover for the assumption</span>
+      <span class="lg lg-pt" id="lg-parts"></span>
+      <span class="lg lg-pt"><span class="pb pt2">P2·3</span> 3 Part 2 elements in a step</span>
+    </div>
+  </details>
+</header>
+
+<main class="wrap">
+  <div class="parts" id="pcards"></div>
+  <div class="sban" id="sban" role="status" hidden><p id="sban-t"></p><div class="sban-a"><button type="button" id="sban-hl" aria-pressed="false">Highlight</button><button type="button" id="sban-x" aria-label="Dismiss">×</button></div></div>
+  <section id="story">
+    <div class="scn" id="scn" aria-label="Scenario"></div>
+    <div class="steps" id="steps" aria-label="Steps"></div>
+    <div class="stage" id="stage"></div>
+  </section>
+  <section id="index" hidden>
+    <div class="ix" id="ix"></div>
+  </section>
+</main>
+<div id="tip" role="tooltip" hidden></div>
+<dialog id="drawer" class="drawer" aria-labelledby="dr-h"></dialog>
+
+<script>
+'use strict';
+/* ==== TICKET CONTENT — replace for each ticket ==== */
+/* Every helper used here (A, NEW, CHG, B, card, shell, …) is a function declaration in the ENGINE below, so it is callable from this region. */
+const STAGE='internal';                    // 'internal' (v1) · 'discussion' (v1.x, after the developer's triage) · 'approved' (v2 on); check-storyboard.py enforces it
+const TICKET='TICKET-0';                   // e.g. 'FFD-14': index pane headers and the saved-scope key
+const HOST='skunexus-client.test';         // the stock local app's host in the fake address bar, e.g. '<client>.test'
+const USER=['Dana Kirby','SYSTEM ADMIN'];  // fake signed-in user · role; a page can override it with shell({user:[…]})
+const BUILT_FROM='contract v1 (2026-01-15)'; // the contract version this page was built from (the view header), e.g. 'contract v2 (2026-11-03)'; shown in each tooltip
+const TODAY=new Date(2026,0,15,14,30);     // fixed clock: all dates derive from it, so the page never drifts
+const ago=(daysAgo,h=10,m=0)=>snDate(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-daysAgo,h,m));
+
+/* SN left menu, top to bottom (sn-baseline §7); ['Group',[subs]] opens when a sub item is the active nav */
+const NAV=['Dashboard','Products','Orders','Purchase Orders','Receive Inventory','RMA','Cycle Count ▾',['Fulfillments',['Ship','Pickup','Replenishments']],'Customers','Vendors','Productivity Report','Settings'];
+
+/* workflows.md "Parts", live parts only, keyed by part number: name = Name and scope = Scope verbatim, q = the PO's shape in brackets, short = a label for the scope control; never effort figures. Part 1 is the base; one entry = no scope UI. */
+const PARTS={
+  1:{name:'Review hold',short:'Base',q:'(base)',scope:'Hold an order for review from its details page, see held orders in the grid, and release them.'},
+  2:{name:'Customer notice',short:'Notice',q:'(separately priced option)',scope:'Email the customer when their order is held for review, with a send line on the order.'}
+};
+
+/* §7 assumptions of the contract snapshot, verbatim, one per line. Keys = the §7 ids ('Q<n>'; a legacy drawing decision (x) is 'Dev <x>', shown as "Assumed · dev (x)"); in storyboard v1 also 'FB<n>' for a CHOICE entry, valued with its What line. */
+const QT={
+  Q1:'Only Open and On Hold orders can be held for review.',
+  Q2:'A held order keeps its fulfillments; picking skips it until it is released.',
+  Q3:'The reason list is fixed in code for now, not a setting.'
+};
+
+/* ---------- fake data (invented; never copied from the local app) ---------- */
+const O1={no:'SO-100231',bc:'0100 2310 0042',state:'finalized',status:'Open',cust:'Alex Rivera',email:'alex.rivera@example.com',created:ago(2,9,12),updated:ago(0,11,40),addr:'Alex Rivera<br>12 Example St<br>Springfield, IL 62701, US<br>(217) 555-0134'};
+const P={
+  widget:()=>prod('Example Widget 40 mm','EXW-40'),
+  bolts:()=>prod('Example Bolt Kit','EXB-20')
+};
+const HOLD={reason:'Address check',note:'Customer asked to confirm the unit number.',by:'dana.k',when:ago(0,14,31)};
+
+/* ---------- page builders ---------- */
+function orderCard(o){
+  const left=kv([
+    ['Barcode',`${bars(o.bc,150,34)}<div class="bcn">${o.bc}</div>`],
+    ['Order Number',o.no],['State',o.state],
+    ['Status',`<span class="stat">${o.status}${o.badge||''}</span>`],
+    ['Customer Name',o.cust],['Customer Email',o.email],['Shipping Method','Ground'],['Created',o.created],['Updated',o.updated]
+  ]);
+  const right=`<div class="addrb"><h6>Billing address <span class="edit">✎</span></h6><p>${o.addr}</p></div><div class="addrb"><h6>Shipping address <span class="edit">✎</span></h6><p>${o.addr}</p></div>`;
+  return card('Order Details',`<div class="cols">${left}<div>${right}</div></div>`,{acts:o.acts});
+}
+const stockActs=()=>B('Cancel Order','d dis')+B('Auto Decide Order','p dis');
+const items=()=>card('Products Assigned for Fulfillment',tbl(['Product','Qty','Item Price','Total Price'],[tr([P.widget(),'2','24.00','48.00']),tr([P.bolts(),'1','9.50','9.50'])],'<span>Total Qty: 3</span>'),{flush:1});
+const attrs=()=>stub('Order Attributes','Customer Info · Order Info · Cost Info · custom fields (unchanged)');
+const orderPage=x=>shell({nav:'Orders',path:'/orders/3f9a51c2-…',h1:O1.no,crumbs:['Orders',O1.no],...x});
+const orderBefore=()=>orderCard({...O1,acts:stockActs()})+items()+attrs();
+const heldTag=()=>NEW(tag('Held for review','warn'),1)+A('Q2');
+const noticeLine=()=>scoped(2,'Customer notice line',msg('info',`Customer emailed at ${HOLD.when}: “Your order is being reviewed.”`),'div','','Customer notice line on the Review hold card');
+const reviewCard=go=>NEW(card('Review hold',kv([['Reason',HOLD.reason],['Note',HOLD.note],['Held by',HOLD.by],['Held at',HOLD.when]])+noticeLine(),{acts:B('Release','p',go)}));
+const orderHeld=go=>orderCard({...O1,badge:heldTag(),updated:HOLD.when,acts:stockActs()})+reviewCard(go)+items()+attrs();
+const holdModal=go=>modal('Hold for review',
+  fld('Reason',sel(HOLD.reason))+fld('Note (optional)',inp(HOLD.note,'ta'))+`<p class="help">Reasons: Address check · Payment check · Customer request. ${A('Q3')}</p>`,
+  B('Cancel','po')+B('Hold order','p',go));
+const noticeModal=()=>modal(`Customer notice ${PT(2,'notice option')}`,
+  fld('To',inp(O1.email))+`<div class="mailprev"><b>Your order ${O1.no} is being reviewed</b><span>We'll email you again when it ships.</span></div>`,
+  B('Close','po'),0,pa(2,'Notice email preview'));
+const reviewCell=r=>r?NEW(tag('Held · '+r,'warn'),1):'';
+const orderRows=(after,held)=>[
+  [L(O1.no),'','Open',...(after?[reviewCell(held&&HOLD.reason)]:[]),'Alex Rivera','Springfield','IL','2','3'],
+  [L('SO-100228'),'','Open',...(after?[reviewCell('Payment check')]:[]),'Sam Lee','Columbus','OH','1','1']
+].map(c=>tr([...c,'<span class="opts">Options ▾</span>']));
+const ordersGrid=(after,held)=>grid(['Order Number','Tags','Status',...(after?['+Review']:[]),'Customer Name','Destination City','Destination State','Items','Total Qty',''],
+  orderRows(after,held),{lead:['Create Order'],total:248});
+
+/* ---------- scenarios: workflows.md order, live steps only ----------
+   scenario {id:'s<n>' (its workflows.md id), name, opt:1 when every step is in a part other than Part 1 (an appendix), steps}
+   step {id:'s<n>.<m>' (its workflows.md step id; deep link #s<n>.<m>), t, page:()=>…, news:[[html,'R-ids']], today:'one line from sn-baseline',
+         p:[part] (its workflows.md Part; default [1]; the lowest decides visibility), pn:'drawer name' + hide:'hidden-notice label' when the step is not Part 1} */
+const SC=[
+{id:'s1',name:'Hold an order for review',steps:[
+ {id:'s1.1',t:'Orders grid: spot held orders',page:()=>shell({nav:'Orders',path:'/orders',h1:'Orders',crumbs:['Orders'],body:CHG(ordersGrid(1,0))}),
+  news:[['<b>Review</b> column: the hold reason on held orders, blank otherwise.','R4'],
+        ['A <b>Held for review</b> option in Filter.','R4.a']],
+  today:'The Orders grid has no review column; staff search order notes.'},
+ {id:'s1.2',t:'Order details: hold for review',page:()=>orderPage({body:orderCard({...O1,acts:stockActs()+NEW(B('Hold for review','p','next'),1)})+items()+attrs()}),
+  news:[['<b>Hold for review</b> in the Order Details header, next to Cancel Order and Auto Decide Order. '+A('Q1'),'R1']],
+  today:'The only hold is On Hold, set from the Options menu, with no reason.'},
+ {id:'s1.3',t:'Pick a reason',page:()=>orderPage({body:orderBefore(),modal:holdModal('next')}),
+  news:[['Fixed reason list and an optional note. '+A('Q3'),'R2'],
+        ['<b>Hold order</b> saves and returns to the order.','R1.a']],
+  today:'On Hold takes no reason or note.'}
+]},
+{id:'s2',name:'Release the hold',steps:[
+ {id:'s2.1',t:'Order details: held',page:()=>orderPage({body:orderHeld('next'),toast:`${O1.no} held for review.`}),
+  news:[['<b>Held for review</b> tag next to Status. '+A('Q2'),'R3'],
+        ['<b>Review hold</b> card: reason, note, who and when, and Release.','R3, R5'],
+        [PT(2,'notice option')+' The card shows when the customer was emailed.','R6']],
+  today:'On Hold shows as the status text only; nothing says why or who.'},
+ {id:'s2.2',t:'Released',page:()=>orderPage({body:orderBefore(),toast:'Hold released.'}),
+  news:[['<b>Release</b> clears the hold; the order continues where it was.','R5']],
+  today:'Unhold from the Options menu returns the order to its previous state.'}
+]},
+{id:'s3',name:'Appendix: customer notice',opt:1,steps:[
+ {id:'s3.1',t:'Customer notice (Part 2)',p:[2],pn:'Notice step: the email sent on hold',hide:'Customer notice step',
+  page:()=>orderPage({body:`<div class="optbanner">${chip(2)}Priced option · not in base<small>Shown only to price the option.</small></div>`+orderHeld(),modal:noticeModal()}),
+  news:[['Holding an order emails the customer from the store address; the card logs the send.','R6']],
+  today:'SkuNexus sends no email when an order goes On Hold.'}
+]}
+];
+
+/* live workflows.md steps with no page, each with its reason (e.g. a system step with nothing on screen); every other live step needs a page */
+const NOT_DRAWN={};
+
+/* ---------- before / after index: one row per SN page the ticket changes ----------
+   row {name, path, before:()=>…, after:()=>… | only:()=>… (a new screen, one pane), jump:['s<n>.<m>', …] (step ids), changes:[[text,'R-ids',part?]], part?, note?, ph?} */
+const IX_INTRO=`One row per SkuNexus page ${TICKET} changes. Left: the stock page as captured from the local app (sn-baseline). Right: the ${TICKET} version, with NEW and CHANGED marked. New screens show the ${TICKET} version only.`;
+const IX=[
+ {name:'Orders grid',path:'/orders',before:()=>ordersGrid(0),after:()=>CHG(ordersGrid(1,1)),jump:['s1.1'],
+  changes:[['Review column and Held for review filter','R4, R4.a']]},
+ {name:'Order details',path:'/orders/&lt;id&gt;',before:orderBefore,after:()=>orderHeld(),jump:['s1.2','s2.1'],
+  changes:[['Hold for review in the Order Details header','R1'],['Held for review tag and the Review hold card with Release','R3, R5'],['Customer notice line on the Review hold card','R6',2]]},
+ {name:'Hold for review dialog',path:'/orders/&lt;id&gt; · dialog',only:()=>holdModal(),jump:['s1.3'],note:'A new dialog; stock SN has nothing like it.',
+  changes:[['Reason and optional note, then Hold order','R2']]}
+];
+
+/* ==== ENGINE — don't edit per ticket ==== */
+const LEGEND_TIP='An "Assumed · Qn" chip marks UI that rests on an open assumption. Hover or focus any chip to read the assumption and where it comes from.';
+/* ---------- markers and part tags (one helper per id type) ---------- */
+function at(s){return String(s).replace(/&/g,'&amp;').replace(/\x22/g,'&quot;').replace(/</g,'&lt;');}
+function pName(p){return `Part ${p} · ${PARTS[p].name}${PARTS[p].q?' '+PARTS[p].q:''}`;}
+function chip(p){return `<abbr class="pc pt${p}" title="${at(pName(p))}">P${p}</abbr>`;}
+function PT(p,t){return `<span class="ptag pt${p}">${chip(p)}${t}</span>`;}
+/* an element that exists only in part p: hidden with a one-line notice when p is out of scope */
+function pa(p,n){return ` data-part="${p}" data-pn="${n}"`;}
+function scoped(p,what,h,t='span',c='',n=what){return `<${t} class="pt-el ${c}"${pa(p,n)}>${h}</${t}><${t} class="pt-note" data-part="${p}">${what} hidden: Part ${p} not in scope</${t}>`;}
+function mk(k,h,inl,p=1,n){const t=inl?'span':'div';return `<${t} class="mk ${k}${inl?' in':''}"${p>1?pa(p,n):''}><span class="mkt"><b>${k==='new'?'NEW':'CHANGED'}</b>${chip(p)}</span>${h}</${t}>`;}
+/* NEW(html, inline?, part?, drawerName?) · CHG(…) · A('Q6') or A('Dev b') */
+function NEW(h,i,p,n){return mk('new',h,i,p,n);}
+function CHG(h,i,p,n){return mk('chg',h,i,p,n);}
+function A(q){return `<span class="asm" tabindex="0" data-q="${q}">Assumed · ${q.startsWith('Dev')?'dev ('+q.slice(4)+')':q}</span>`;}
+/* ---------- SN widgets ---------- */
+function B(l,c='p',go){return `<span class="btn ${c}"${go?` data-go="${go}" role="button" tabindex="0"`:''}>${l}</span>`;}
+function L(t){return `<a class="lnk">${t}</a>`;}
+function prod(n,s,x=''){return `<div class="prod">${L(n)}<div class="sku">SKU: ${s}</div>${x}</div>`;}
+function kv(r){return `<dl class="kv">${r.map(([k,v])=>`<dt>${k}:</dt><dd>${v}</dd>`).join('')}</dl>`;}
+function card(t,b,o={}){return `<section class="card ${o.cls||''}"><div class="card-h"><h5>${t}</h5>${o.acts?`<div class="acts">${o.acts}</div>`:''}</div>${b==null?'':`<div class="card-b${o.flush?' flush':''}">${b}</div>`}</section>`;}
+function stub(t,s){return `<section class="card stub"><div class="card-h"><h5>${t}</h5><span class="sum">${s} ▸</span></div></section>`;}
+function tr(c,cls=''){return `<tr class="${cls}">${c.map(x=>`<td>${x}</td>`).join('')}</tr>`;}
+/* a header starting with '+' is a NEW column */
+function tbl(h,rows,foot){return `<div class="tw"><table class="tbl"><thead><tr>${h.map(x=>x.startsWith('+')?`<th class="nc">${x.slice(1)}</th>`:`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>${foot?`<div class="tfoot">${foot}</div>`:''}`;}
+function ghost(t,n){return `<tr class="ghost"><td colspan="${n}">${t}</td></tr>`;}
+function full(h,n){return `<tr class="full"><td colspan="${n}">${h}</td></tr>`;}
+function gridBar(lead=[]){return `<div class="bar">${lead.map(x=>`<span>${x}</span>`).join('')}<span>Export CSV</span><span>⟳</span><span class="nb">☰</span><span class="srch">Search...</span><span class="grow nb"></span><span>Show columns</span><span>Filter</span></div>`;}
+/* an SN grid page: navy toolbar, optional filter chips, table, "Showing 25 of N" footer */
+function grid(h,rows,o={}){return `<div class="mg">${gridBar(o.lead)}${o.chips?`<div class="chips">${o.chips}</div>`:''}${tbl(h,rows)}<div class="mgfoot"><span>Showing 25 ▾ of ${o.total??rows.length} entries · Last update: just now</span><span>Prev 1 Next</span></div></div>`;}
+function stp(n,t,max){return `<span class="stp"><i>–</i><b>${n}</b><i${max?' class="off"':''}>+</i>${t!=null?`<small>(${t} total)</small>`:''}</span>`;}
+function sel(v){return `<span class="sel">${v}<i>▾</i></span>`;}
+function inp(v,c=''){return `<span class="inp ${c}">${v}</span>`;}
+function fld(l,c,cls=''){return `<div class="fld ${cls}"><label>${l}</label>${c}</div>`;}
+function msg(k,h){return `<div class="msg ${k}"><span class="mi">${k==='ok'?'✓':k==='info'?'i':'!'}</span><div>${h}</div></div>`;}
+function tag(t,k=''){return `<span class="tag ${k}">${t}</span>`;}
+function chk(on,l,x=''){return `<span class="chk${on?' on':''}"${x}><i></i>${l}</span>`;}
+function rad(on,l,p){return `<span class="rad${on?' on':''}"><i></i>${l}<span class="pr">${p}</span></span>`;}
+function sw(m){return `<span class="sw"><span class="${m==='Scan'?'on':''}">Scan</span><i class="${m==='Select'?'r':''}"></i><span class="${m==='Select'?'on':''}">Select</span></span>`;}
+function ship(t,s,e){return `<div class="shipc">Tracking Code: <b>${t}</b><br>Status: ${s}${e!=null?`<br>Est Delivery: ${e}`:''}</div>`;}
+/* modal(title, body, footer, wide?, extraAttrs) — pass it as shell({modal}) to draw it over the page */
+function modal(t,b,f,w,a=''){return `<div class="modal"${a}${w?' style="width:min(660px,100%)"':''}><div class="m-h"><h5>${t}</h5><span class="x" aria-hidden="true">×</span></div><div class="m-b">${b}</div><div class="m-f">${f}</div></div>`;}
+/* SN formats: dates MM/DD/YYYY hh:mm am (snDate); ids are 7-digit zero-padded strings ('0000118') */
+function snDate(d,time=true){const z=n=>String(n).padStart(2,'0');return `${z(d.getMonth()+1)}/${z(d.getDate())}/${d.getFullYear()}`+(time?` ${z(d.getHours()%12||12)}:${z(d.getMinutes())} ${d.getHours()<12?'am':'pm'}`:'');}
+function bars(s,w,h){
+  let x=8,r='';
+  for(const c of [104,...String(s).replace(/\s/g,'').split('').map(ch=>ch.charCodeAt(0)),106]){
+    let v=(c*2654435761)>>>0;
+    for(let k=0;k<6;k++){const bw=1+(v%3);v=Math.floor(v/3);if(k%2===0)r+=`<rect x="${x}" y="0" width="${bw}" height="${h}" fill="#111111"/>`;x+=bw;}
+  }
+  x+=8;
+  return `<svg class="bc" viewBox="0 0 ${x} ${h}" width="${w}" height="${h}" preserveAspectRatio="none" role="img" aria-label="Barcode ${s}"><rect width="${x}" height="${h}" fill="#ffffff"/>${r}</svg>`;
+}
+
+/* ---------- SkuNexus shell: fake browser frame, sidebar, header ---------- */
+function side(active){
+  const items=NAV.map(n=>{
+    if(!Array.isArray(n))return `<a class="${n===active?'on':''}"><span class="ic"></span>${n}</a>`;
+    const [g,subs]=n;
+    return subs.includes(active)?`<div class="grp"><a><span class="ic"></span>${g} ▴</a>${subs.map(s=>`<a class="sub${s===active?' on':''}">${s}</a>`).join('')}</div>`:`<a><span class="ic"></span>${g} ▾</a>`;
+  }).join('');
+  return `<aside class="sn-side" aria-hidden="true"><div class="sn-logo"><i>≡</i><b>Sku<span>Nexus</span></b></div><nav class="nav">${items}</nav><div class="ver">Version stage<br>© 2017-2026 SkuNexus LLC, All Rights Reserved</div></aside>`;
+}
+/* shell({nav, path, h1, crumbs:[…], body, isNew?, toast?, toastW?, modal?, user?}) */
+function shell(p){
+  const cr=p.crumbs.map((c,i)=>i<p.crumbs.length-1?`<a>${c}</a>`:`<span>${c}</span>`).join('<b>›</b>');
+  const u=p.user||USER;
+  return `<div class="screen"><div class="addr"><span class="dots"><i></i><i></i><i></i></span><span class="url">${HOST}${p.path}</span></div>
+<div class="sn${p.modal?' has-modal':''}">${side(p.nav)}<div class="sn-main">
+<header class="sn-head"><span class="hist" aria-hidden="true">⟲</span><div class="ttl"><h1>${p.isNew?NEW(p.h1,1):p.h1}</h1><nav class="crumbs">${cr}</nav></div><div class="user">${u[0]}<small>${u[1]}</small></div></header>
+<div class="sn-body">${p.toast?`<div class="toast${p.toastW?' w':''}">${p.toast}</div>`:''}${p.body}</div>
+${p.modal?`<div class="mwrap">${p.modal}</div>`:''}</div></div></div>`;
+}
+
+/* ---------- parts and scope ---------- */
+const PN=Object.keys(PARTS).map(Number).sort((a,b)=>a-b);
+const OPT=PN.slice(1);
+const SL=p=>PN.filter(x=>x<=p).join('+');
+const SCOPE_KEY=TICKET.toLowerCase()+'-storyboard-scope';
+let scope=PN.at(-1);
+const inScope=p=>p<=scope;
+const parts=x=>x.p||[1];
+const lowPart=x=>Math.min(...parts(x));
+const chips=ps=>ps.filter(inScope).map(chip).join('');
+const visSteps=sc=>sc.steps.map((x,k)=>k).filter(k=>inScope(lowPart(sc.steps[k])));
+const visScn=()=>SC.map((s,k)=>k).filter(k=>visSteps(SC[k]).length);
+const hiddenNote=(what,p)=>`<span class="snote">${what} hidden: Part ${p} not in scope</span>`;
+const scLabel=s=>SC[s].opt?'Appendix':'Scenario '+(s+1);
+/* [scenario index, step index] of a workflows.md step id, or null (a retired or undrawn step) */
+const stepAt=id=>{for(let k=0;k<SC.length;k++){const i=SC[k].steps.findIndex(x=>x.id===id);if(i>=0)return [k,i];}return null;};
+
+/* ---------- before / after index ---------- */
+function renderIndex(){
+  const jb=id=>{const [s,i]=stepAt(id)||[];return s==null?'':`<button type="button" data-jump="${id}">${scLabel(s)}, step ${i+1}</button>`;};
+  const li=([t,id,p=1])=>{const h=`${chip(p)} ${t} ${id!=='—'?`<span class="rid">${id}</span>`:''}`;return p>1?scoped(p,PARTS[p].short+' bullet',h,'li','',t):`<li>${h}</li>`;};
+  const row=r=>`<div class="ixh"><h2>${r.name}${r.part?chip(r.part):''}</h2><code>${r.path}</code><div class="jump">${r.jump.map(jb).join('')}</div></div>
+  <ul class="ixchg">${r.changes.map(li).join('')}</ul>
+  ${r.only?`${r.note?`<p class="note1">${r.note}</p>`:''}<div class="ixb one"><div class="pane"><div class="ph a">${r.ph||TICKET+' (new screen)'}</div><div class="mini">${r.only()}</div></div></div>`
+  :`<div class="ixb"><div class="pane"><div class="ph">Stock SN today</div><div class="mini">${r.before()}</div></div><div class="pane"><div class="ph a">${r.ph||TICKET}</div><div class="mini">${r.after()}</div></div></div>`}`;
+  $('#ix').innerHTML=`<p class="ixintro">${IX_INTRO}${OPT.length?' Each change carries its estimate part chip; the estimate scope above hides what is out of scope, and a part card lists everything that part adds.':''}</p>`+
+  IX.map(r=>r.part?scoped(r.part,PARTS[r.part].short+' row',row(r),'article','ixrow',r.name):`<article class="ixrow">${row(r)}</article>`).join('');
+}
+
+/* ---------- runtime ---------- */
+function $(s){return document.querySelector(s);}
+const $$=s=>[...document.querySelectorAll(s)];
+const st={s:0,i:0,tab:'story'};
+
+/* what each part adds, read from the tags the page renders: a step's p list, and every [data-pn] element (scoped(), NEW/CHG with a part, pa()) */
+let TAGS,ITEMS;
+const tagsOf=html=>{const t=document.createElement('template');t.innerHTML=html;return [...t.content.querySelectorAll('[data-pn]')].map(e=>({p:+e.dataset.part,n:e.dataset.pn}));};
+const cnt=(s,i,p)=>TAGS[s][i].filter(g=>g.p===p).length;
+const rowName=row=>row.querySelector('h2').firstChild.textContent.trim();
+function buildItems(){
+  TAGS=SC.map(sc=>sc.steps.map(x=>tagsOf(x.page())));
+  ITEMS=Object.fromEntries(PN.map(p=>[p,[]]));
+  SC.forEach((sc,s)=>sc.steps.forEach((x,i)=>{
+    const lp=lowPart(x),at=`${scLabel(s)} · step ${i+1}`,seen={};
+    ITEMS[lp].push({p:lp,s,i,whole:1,n:x.pn||x.t,where:x.pn?`${at} · ${x.t}`:at});
+    TAGS[s][i].forEach(g=>{seen[g.p]=(seen[g.p]??-1)+1;ITEMS[g.p].push({p:g.p,s,i,k:seen[g.p],n:g.n,where:`${at} · ${x.t}`});});
+  }));
+  for(const p of OPT)$$(`#ix [data-pn][data-part="${p}"]`).forEach((e,k)=>{
+    const row=e.closest('.ixrow'),top=e===row;
+    ITEMS[p].push({p,ix:1,k,whole:top?1:0,nest:!top&&!!e.parentElement.closest(`[data-pn][data-part="${p}"]`),n:e.dataset.pn,where:top?'Index row':'Index · '+rowName(row)});
+  });
+  $$('#ix .ixrow').forEach((row,r)=>{if(!row.dataset.part)ITEMS[1].push({p:1,ix:1,row:r,whole:1,n:rowName(row),where:'Index row'});});
+}
+/* "P2·3" = 3 Part 2 elements; a filled badge means the whole step (or every step) is that part */
+function badges(s,ii){
+  return OPT.filter(inScope).map(p=>{
+    const n=ii.reduce((a,i)=>a+cnt(s,i,p),0),whole=ii.every(i=>lowPart(SC[s].steps[i])===p);
+    if(!n&&!whole)return '';
+    const what=`${n} Part ${p} element${n===1?'':'s'}`+(whole?(ii.length>1?`; every step is Part ${p}`:`; the whole step is Part ${p}`):'');
+    return `<span class="pb pt${p}${whole?' whole':''}" title="${at(pName(p)+': '+what)}">P${p}·${n}</span>`;
+  }).join('');
+}
+let hl=[],banAdds=[];
+const hlOf=(s,ii)=>hl.find(p=>ii.some(i=>cnt(s,i,p)||lowPart(SC[s].steps[i])===p));
+const hlAttr=m=>m?` style="--hl-c:var(--p${m})"`:'';
+const box=el=>el&&getComputedStyle(el).display==='contents'?el.firstElementChild:el;
+function applyHl(){
+  $$('[data-hl]').forEach(e=>e.removeAttribute('data-hl'));
+  const b=$('#sban-hl');b.setAttribute('aria-pressed',String(hl.length>0));b.textContent=hl.length?'Remove highlight':'Highlight';
+  for(const p of hl){
+    $$(`#stage [data-pn][data-part="${p}"],#ix [data-pn][data-part="${p}"]`).forEach(e=>{if(!e.parentElement.closest(`[data-pn][data-part="${p}"]`))box(e).dataset.hl=p;});
+    if(st.tab==='story'&&lowPart(SC[st.s].steps[st.i])===p)$('#stage .screen').dataset.hl=p;
+  }
+}
+function partSummary(p){
+  const it=ITEMS[p],u=a=>[...new Set(a)];
+  const steps=it.filter(x=>x.whole&&!x.ix).map(x=>SC[x.s].steps[x.i].t);
+  const els=u(it.filter(x=>!x.whole&&!x.ix).map(x=>x.n));
+  const ix=u(it.filter(x=>x.ix&&!x.nest).map(x=>x.n)).filter(n=>!els.includes(n));
+  const f=(a,one,many)=>a.length?`${a.length} ${a.length>1?many:one} (${a.join(' · ')})`:'';
+  return [f(steps,'step','steps'),f(els,'element','elements'),f(ix,'index entry','index entries')].filter(Boolean).join(' · ');
+}
+function showBanner(from,to,why){
+  const lo=Math.min(from,to),add=to>from,ps=PN.filter(p=>p>lo&&p<=Math.max(from,to));
+  banAdds=add?ps:[];hl=[];
+  $('#sban').className='sban pt'+ps.at(-1);
+  $('#sban-t').innerHTML=(why?`<i>${why}</i> `:'')+`<b>${SL(from)} → ${SL(to)} ${add?'adds':'removes'}:</b>`+ps.map(p=>`<span class="ln">${chip(p)} ${partSummary(p)}</span>`).join('');
+  $('#sban-hl').hidden=!add;
+  $('#sban').hidden=false;
+}
+function openDrawer(p){
+  const it=ITEMS[p],d=$('#drawer'),groups=[];
+  it.forEach((x,j)=>{const g=x.ix?'Before / after index':`${scLabel(x.s)} · ${SC[x.s].name}`;let G=groups.find(y=>y.g===g);if(!G)groups.push(G={g,l:[]});G.l.push([x,j]);});
+  const ws=it.filter(x=>x.whole&&!x.ix).length,se=it.filter(x=>!x.whole&&!x.ix).length,ix=it.filter(x=>x.ix).length;
+  const others=OPT.map(q=>'P'+q).join('/');
+  const intro=p===1
+    ?`<p class="dr-note"><b>Base: everything not tagged ${others}.</b> Listed: its main features, one per storyboard step (${ws}), and the index pages (${ix}). A step with a ${others} badge also holds pieces of that part.</p>`
+    :`<p class="dr-note">${it.length} items tagged P${p}: ${ws} whole step${ws===1?'':'s'}, ${se} element${se===1?'':'s'} inside steps, ${ix} index entr${ix===1?'y':'ies'}.${inScope(p)?'':` <b>Not in the current scope (${SL(scope)}): Go to widens it to ${SL(p)}.</b>`}</p>`;
+  d.className='drawer pt'+p;
+  d.innerHTML=`<div class="dr-h"><div><h2 id="dr-h">${chip(p)}${p===1?'Part 1 · the base':`What Part ${p} adds`}</h2><p>${pName(p)}. ${PARTS[p].scope}</p></div><button type="button" class="dr-x" id="dr-x" aria-label="Close">×</button></div>
+  <div class="dr-b">${intro}${groups.map(G=>`<h3>${G.g}</h3><ul class="dr-l">${G.l.map(([x,j])=>`<li${x.nest?' class="nest"':''}><div><b>${x.n}</b><small>${x.where}</small></div>${x.whole&&p>1?`<span class="wh">${x.ix?'Whole row':'Whole step'}</span>`:''}<button type="button" data-goto="${p}-${j}" aria-label="Go to: ${x.n}">Go to</button></li>`).join('')}</ul>`).join('')}</div>`;
+  d.showModal();
+}
+function reveal(el){
+  const r=el.getBoundingClientRect(),pb=$('#pbar'),bar=getComputedStyle(pb).position==='sticky'?pb.offsetHeight:0,room=innerHeight-bar;
+  scrollTo(0,Math.max(0,r.top+scrollY-bar-(r.height>room*.8?12:(room-r.height)/2)));
+}
+function flash(el,p){
+  el.style.setProperty('--fl-c',`var(--p${p})`);
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+  clearTimeout(el._ft);el._ft=setTimeout(()=>el.classList.remove('flash'),2000);
+}
+function goTo(x){
+  $('#drawer').close();
+  if(!inScope(x.p))setScope(x.p,true,`Go to widened the scope to ${SL(x.p)} to show this Part ${x.p} item.`);
+  if(x.ix)st.tab='index';else{st.tab='story';st.s=x.s;st.i=x.i;}
+  render();
+  const el=box(x.ix?(x.row!=null?$$('#ix .ixrow')[x.row]:$$(`#ix [data-pn][data-part="${x.p}"]`)[x.k]):(x.k==null?$('#stage .screen'):$$(`#stage [data-pn][data-part="${x.p}"]`)[x.k]));
+  reveal(el);flash(el,x.p);
+}
+function clamp(){
+  const vsc=visScn();
+  if(!vsc.includes(st.s)){st.s=vsc.filter(k=>k<st.s).pop()??vsc[0];st.i=SC[st.s].steps.length-1;}
+  const vs=visSteps(SC[st.s]);
+  if(!vs.includes(st.i))st.i=vs.filter(k=>k<st.i).pop()??vs[0];
+}
+function render(){
+  $('#tab-story').setAttribute('aria-selected',st.tab==='story');
+  $('#tab-index').setAttribute('aria-selected',st.tab==='index');
+  $('#story').hidden=st.tab!=='story';
+  $('#index').hidden=st.tab!=='index';
+  if(st.tab==='index'){setHash('index');applyHl();return;}
+  clamp();
+  const sc=SC[st.s],step=sc.steps[st.i],vs=visSteps(sc),vsc=visScn(),pos=vs.indexOf(st.i),si=vsc.indexOf(st.s);
+  $('#scn').innerHTML=vsc.map(k=>{const s=SC[k],v=visSteps(s),n=v.length,m=hlOf(k,v);return `<button type="button" class="${s.opt?'opt':''}${m?' hlm':''}"${hlAttr(m)} data-s="${k}" aria-pressed="${k===st.s}"><b>${s.opt?'':(k+1)+'. '}${s.name}</b><small>${n} step${n>1?'s':''} ${badges(k,v)}</small></button>`;}).join('')+
+    SC.filter(s=>!visSteps(s).length).map(s=>hiddenNote(s.name,Math.min(...s.steps.map(lowPart)))).join('');
+  $('#steps').innerHTML=vs.map((k,j)=>{const m=hlOf(st.s,[k]);return `<button type="button" class="st${m?' hlm':''}"${hlAttr(m)} data-i="${k}"${k===st.i?' aria-current="step"':''}><i>${j+1}</i>${sc.steps[k].t}${badges(st.s,[k])}</button>`;}).join('')+
+    sc.steps.filter(x=>!inScope(lowPart(x))).map(x=>hiddenNote(x.hide||x.t,lowPart(x))).join('');
+  const last=pos===vs.length-1,first=pos===0,lastScn=si===vsc.length-1;
+  const nextLabel=last?(lastScn?'Done':'Next scenario →'):'Next →';
+  $('#stage').innerHTML=step.page()+`<aside class="cap" aria-live="polite"><div class="k">${scLabel(st.s)}: ${sc.name} · step ${pos+1} of ${vs.length}</div><h2>${step.t} ${chips(parts(step))}</h2>
+    <h3>What's new here</h3><ul>${step.news.map(([t,r])=>`<li>${t} ${r?`<span class="rid">${r}</span>`:''}</li>`).join('')}</ul>
+    <h3>Today in SN</h3><p class="today">${step.today}</p>
+    <div class="cnav"><button type="button" id="prev"${first&&si===0?' disabled':''}>← Prev</button><span>${pos+1} / ${vs.length}</span><button type="button" id="next" class="pri"${last&&lastScn?' disabled':''}>${nextLabel}</button></div>
+    <p class="hintline">Highlighted buttons on the screen also advance. Arrow keys work too.</p></aside>`;
+  setHash(step.id);
+  applyHl();
+}
+/* each step is a history entry, so Back steps back; corrections (boot, a Back onto an out-of-scope step) replace instead of push */
+let navReplace=true;
+function setHash(h){try{if(location.hash!=='#'+h)history[navReplace||!location.hash?'replaceState':'pushState'](null,'','#'+h);}catch(e){}}
+function go(d){
+  const vsc=visScn(),vs=visSteps(SC[st.s]),pos=vs.indexOf(st.i),si=vsc.indexOf(st.s);
+  if(d>0){if(pos<vs.length-1)st.i=vs[pos+1];else if(si<vsc.length-1){st.s=vsc[si+1];st.i=visSteps(SC[st.s])[0];}}
+  else{if(pos>0)st.i=vs[pos-1];else if(si>0){st.s=vsc[si-1];st.i=visSteps(SC[st.s]).at(-1);}}
+  render();
+}
+function setScope(v,save,why){
+  const from=scope;
+  scope=v;
+  $('#scope-'+v).checked=true;
+  $('#scope-css').textContent=PN.filter(p=>!inScope(p)).map(p=>`.pt-el[data-part="${p}"]{display:none!important}.pt-note[data-part="${p}"]{display:revert}.pcard.pt${p}{opacity:.55}.pcard.pt${p} .oos{display:inline}`).join('\n');
+  if(save){try{localStorage.setItem(SCOPE_KEY,String(v));}catch(e){}if(v!==from)showBanner(from,v,why);}
+  setBar();
+  render();
+}
+function renderParts(){
+  document.body.classList.toggle('one-part',!OPT.length);
+  $('#scope').innerHTML='<span class="scope-l" id="scope-l">Estimate scope</span>'+PN.map(p=>`<label><input type="radio" name="scope" id="scope-${p}" value="${p}" title="${at((p===1?'Part 1':'Parts '+SL(p))+': '+PN.filter(x=>x<=p).map(x=>PARTS[x].name).join(' + '))}"><span>${p===1?'1':'+'+p} · ${PARTS[p].short}</span></label>`).join('');
+  $('#lg-parts').innerHTML=PN.map(chip).join('')+' estimate part (hover a chip for its name)';
+  $('#pcards').innerHTML=PN.map(p=>`<button type="button" class="pcard pt${p}" data-view="${p}" aria-haspopup="dialog" title="${at(PARTS[p].scope)}"><span class="pnm">${chip(p)}Part ${p} · ${PARTS[p].name}${PARTS[p].q?` <i>${PARTS[p].q}</i>`:''}<span class="oos">· not in scope</span><span class="see">${p===1?'See the base':'See what it adds'} (${ITEMS[p].length})</span></span></button>`).join('');
+}
+function fromHash(){
+  let h='';try{h=location.hash.slice(1);}catch(e){}
+  if(h==='index'){st.tab='index';return;}
+  const m=stepAt(h);
+  if(m){st.tab='story';[st.s,st.i]=m;return;}
+  const k=SC.findIndex(x=>x.id===h);
+  if(k>=0){st.tab='story';st.s=k;st.i=visSteps(SC[k])[0]??0;}
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(!t.closest('#lgd'))$('#lgd').open=false;
+  const pv=t.closest('[data-view]');if(pv){openDrawer(+pv.dataset.view);return;}
+  const g=t.closest('[data-goto]');if(g){const [p,j]=g.dataset.goto.split('-');goTo(ITEMS[p][+j]);return;}
+  if(t.closest('#dr-x')||t.id==='drawer'){$('#drawer').close();return;}
+  if(t.closest('#sban-x')){$('#sban').hidden=true;hl=[];render();return;}
+  if(t.closest('#sban-hl')){hl=hl.length?[]:banAdds;render();return;}
+  const sb=t.closest('[data-s]');if(sb){st.s=+sb.dataset.s;st.i=visSteps(SC[st.s])[0];render();return;}
+  const ib=t.closest('[data-i]');if(ib){st.i=+ib.dataset.i;render();return;}
+  if(t.closest('#prev')){go(-1);return;}
+  if(t.closest('#next')){go(1);return;}
+  if(t.closest('[data-go]')){go(1);return;}
+  const j=t.closest('[data-jump]');
+  if(j){const m=stepAt(j.dataset.jump);if(m){[st.s,st.i]=m;st.tab='story';render();window.scrollTo(0,0);}return;}
+  if(t.closest('#tab-story')){st.tab='story';render();return;}
+  if(t.closest('#tab-index')){st.tab='index';render();return;}
+  const a=t.closest('.asm');if(a){showTip(a);}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')$('#lgd').open=false;
+  if(e.target.closest&&e.target.closest('[data-go]')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go(1);return;}
+  if($('#drawer').open||st.tab!=='story'||e.altKey||e.ctrlKey||e.metaKey||(e.target.closest&&e.target.closest('input')))return;
+  if(e.key==='ArrowRight')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+window.addEventListener('hashchange',()=>{navReplace=true;fromHash();render();navReplace=false;});
+/* assumption tooltip */
+const tip=$('#tip');
+function showTip(el){
+  const q=el.dataset.q;
+  tip.innerHTML=q==='legend'?LEGEND_TIP:`<b>${q.startsWith('Dev')?'Developer decision ('+q.slice(4)+')':q} · ${BUILT_FROM}</b>${at(QT[q]||'')}`;
+  tip.hidden=false;
+  const r=el.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
+  let x=Math.min(Math.max(8,r.left),window.innerWidth-w-8),y=r.bottom+6;
+  if(y+h>window.innerHeight-8)y=Math.max(8,r.top-h-6);
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+const hideTip=()=>{tip.hidden=true;};
+document.addEventListener('mouseover',e=>{const a=e.target.closest&&e.target.closest('.asm');if(a)showTip(a);});
+document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('.asm'))hideTip();});
+document.addEventListener('focusin',e=>{const a=e.target.closest&&e.target.closest('.asm');if(a)showTip(a);});
+document.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('.asm'))hideTip();});
+window.addEventListener('scroll',hideTip,{passive:true});
+/* keep the caption panel under the sticky bar */
+const setBar=()=>document.documentElement.style.setProperty('--pbar-h',$('#pbar').offsetHeight+'px');
+window.addEventListener('resize',setBar);
+document.addEventListener('change',e=>{if(e.target.name==='scope')setScope(+e.target.value,true);});
+renderIndex();
+/* a discussion page states its open assumptions on the first screen: the distinct A() keys the page draws that have a QT entry */
+if(STAGE==='discussion'){
+  const t=document.createElement('template');
+  t.innerHTML=SC.flatMap(sc=>sc.steps.map(x=>x.page()+x.news.map(n=>n[0]).join(''))).join('')+$('#ix').innerHTML;
+  const n=new Set([...t.content.querySelectorAll('.asm[data-q]')].map(e=>e.dataset.q).filter(q=>q in QT)).size;
+  $('#badge').textContent+=`: ${n} assumption${n===1?'':'s'} open, not priced, not approved`;
+}
+buildItems();
+renderParts();
+fromHash();
+let savedScope=PN.at(-1);
+try{const v=+localStorage.getItem(SCOPE_KEY);if(PN.includes(v))savedScope=v;}catch(e){}
+setScope(savedScope,false);
+navReplace=false;
+</script>
