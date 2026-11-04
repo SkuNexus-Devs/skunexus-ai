@@ -160,6 +160,8 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 **You get:** `backend-plan.md` — a Task Manifest (IDs, `depends_on`, which requirement each task satisfies), execution waves showing what can run in parallel, and per-task flat checkbox steps with exact files/classes named inline, self-contained enough that an implementation agent never has to ask what was meant. Plus `decisions.md` — but only if planning produced a genuine fork worth recording.
 
+**With subagents (opt-in):** ask for it (*"fan out to subagents to build the plan"*) and drafters write the tasks in parallel from saved code maps and one shared brief; `scripts/check-plan.py` assembles them into the same `backend-plan.md` and checks dependencies, waves and criterion coverage. It buys wall-clock time and is never switched on by plan size alone.
+
 **It will not** write code, and it won't plan against an unapproved (Draft) PRD without your explicit say-so.
 
 ### 4. `skunexus-backend-implement` — plan → working code

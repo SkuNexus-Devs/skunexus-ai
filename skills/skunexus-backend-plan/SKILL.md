@@ -8,7 +8,8 @@ description: >-
   it right-sizes the requirements itself (a lightweight inline spec). Use it whenever the developer wants to
   plan, break down, scope, or "turn into tasks" backend work, or says things like "plan the backend for
   TICKET-123", "break this into tasks", "create the implementation plan", "how should we build the backend
-  for X", "skip the PRD, just plan this", or "make the build plan". Trigger even when they don't say
+  for X", "skip the PRD, just plan this", or "make the build plan"; asked to build the plan with subagents
+  ("fan out to subagents to build the plan"), it drafts in parallel. Trigger even when they don't say
   "backend" if they're planning server-side work (API, domain/commands/handlers, DB/migrations, jobs,
   services, GraphQL). Also trigger to RESUME an in-progress plan — "continue the plan for TICKET-123",
   "let's finish reviewing the backend plan", or any mention of an existing backend-plan.md draft, even in a
@@ -121,6 +122,8 @@ These are the soul of the skill. The mechanics below serve them.
 
 ### Step 0 — Resume check
 
+A parallel draft in progress (a `plan-parts/` folder with no `backend-plan.md`, or a `backend-plan.md` that still holds the `<!-- TASKS -->` marker) resumes from `references/parallel-drafting.md` instead; skip the rest of this step and Step 1.
+
 If `.ai/<TICKET>/backend-plan.md` already exists, **default to continuing from disk — don't re-map the
 codebase.** Re-read `prd.md` (if present), `backend-plan.md`, and `decisions.md`, then give a one-line state
 recap (e.g. "plan is a Draft with 8 tasks, 2 Open Questions"). Then:
@@ -188,6 +191,14 @@ all, ask for a short slug to name the `.ai/<slug>/` folder.
 > source available, one predictable lookup order.
 
 ### Step 2 — Map the codebase (subagents, separate context)
+
+**Drafting with subagents is opt-in.** When the developer asks for it ("orchestrate with subagents", "fan
+out", "in parallel"), a calling skill hands the plan over with that ask, or `.ai/<TICKET>/run.md`
+says `plan-fan-out: on`, read `references/parallel-drafting.md` now and follow it for Steps 2–3: the maps are saved to
+`.ai/<TICKET>/plan-parts/`, subagents draft the tasks from a shared brief, and a script assembles and checks
+them into the same `backend-plan.md`. It buys wall-clock time and keeps this session small and restartable;
+plan size alone is not a reason, so never switch it on yourself. Steps 0–1 and 4–6 don't change. A
+`plan-parts/` folder with no `backend-plan.md` is a draft in progress: resume it from the reference.
 
 You cannot write grounded tasks without knowing the real code. Spawn **Explore/general-purpose subagent(s)**
 to map the surfaces the requirements touch. This runs in separate context windows on purpose: the relevant
