@@ -1,6 +1,6 @@
 ---
 name: sn-worker
-description: SN pipeline (skunexus-prd-prototype) Opus worker - plan drafters and design fixers, plan code fact-checkers, storyboard builder, R3.
+description: SN pipeline Opus worker - skunexus-contract: researcher judging the client's own baseline, re-pull code analysts A2 and A4; skunexus-storyboard: storyboard builder (v1, v2, rebuild), FE plan drafter; skunexus-backend-plan parallel drafting: plan drafters, correction fixer, code fact-checkers.
 model: opus
 effort: high
 tools: Bash, Read, Write, Edit, ToolSearch, mcp__phpstorm-jetbrains, mcp__phpstorm-index, mcp__chrome-devtools

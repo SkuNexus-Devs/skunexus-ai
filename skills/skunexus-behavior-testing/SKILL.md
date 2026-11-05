@@ -89,6 +89,7 @@ Placement is by what the test **needs**, enforced by base class — `tests/Unit`
 | the container, the DB, a domain factory, or a bus dispatch | `tests/Feature/` | `SkuNexus\Core\Tests\TestCase` | middleware → plugins → handler → sub-commands → events |
 | a GraphQL endpoint | `tests/Feature/GraphQL/` | `Feature\GraphQL\TestCase` (never the root one) | controller → schema → resolver → bus → DB; response shape |
 | a multi-command business pipeline | `tests/Integrations/` | `Integrations\TestCase`, composing scenario traits | pull → decide → pick → pack → … end state |
+| a `workflows.md` scenario whose steps have backend effects (one test per scenario) | `tests/Integrations/` | `Integrations\TestCase`, composing scenario traits | the scenario's steps in order, each step's "after" state and outcome |
 | real HTTP middleware (auth, CSRF, throttle, CORS) | outside this suite — an HTTP-level test against the real kernel | — | Feature tests bypass middleware via global `WithoutMiddleware` |
 | cross-process scenarios (live queue worker, real connector sandbox) | outside this suite — HTTP-level test against a deployed/dev environment | — | end-to-end with side systems |
 
@@ -111,6 +112,11 @@ In Pest repos the base classes bind folder-wide in `tests/Pest.php` (`pest()->ex
 | Auth/CSRF/throttle behavior | HTTP integration, outside this suite | HTTP-level test against the real kernel |
 | Cross-process scenario (real worker, connector sandbox) | HTTP integration, outside this suite | deployed/dev environment |
 | Pure algorithm / value object | Unit (raw `PHPUnit\Framework\TestCase`) | direct call, plain AAA — no container, no ceremony |
+| A `workflows.md` scenario (`s<n>`) with backend steps | Integrations scenario test (one step: Feature) | Given = the first step's "before"; one `when*` per step, each followed by its Then |
+
+### When the ticket has use cases
+
+When `.ai/<TICKET>/workflows.md` exists, each live scenario whose steps have backend effects gets **one scenario test** in `tests/Integrations/`: the backend end-to-end. The Given is the first step's "before" state; then one act per step, in step order, each followed by that step's Then (its "after" state and outcome). The name states the scenario's end outcome; the docblock or Pest description cites `s<n>` and its step ids, and the plan's `Tests:` trailer cites `s<n>` (a step id alone doesn't count the scenario as tested). The rest stays where it is: a one-step scenario is a Feature test; each criterion (`R4.b`) keeps its own test at the layer above; pure logic inside a step is a Unit test; a step that needs real middleware, a live worker or a sandbox is out of the suite; a display-only step is `out-of-suite: s1.2 — UI only` (FE and QA cover it), and `out-of-suite: s<n> — <why>` covers a whole scenario.
 
 ## Before Writing a Test — Ask First
 
@@ -316,6 +322,7 @@ For sync sub-commands inside a handler: dispatch the outer command through the r
 ### The body — one act, one clause
 
 - **NEVER dispatch the command under test in `setUp` / `beforeEach`.** They are the shared Given — state only. The When is one visible line in every test body.
+- **The one scoped exception: a scenario test** (When the ticket has use cases) has one act per `workflows.md` step, each act's Then visible in the body right after it, and no assertions in helpers. Every other rule holds.
 - **NEVER assert inside a `when*` helper.** It dispatches and returns; the body states the Then. A clause decided inside the When is invisible in the test that owns it — the same leak as a `the*` helper that can fail.
 - **NEVER assert on internal sub-command dispatch as the test's primary purpose.** If a refactor that splits or merges sub-commands breaks the test without changing observable behavior, the test was wrong. Assert the observable outcome instead.
 - **NEVER inline a domain-gap raw write in a test body.** It lives in exactly one named scenario builder in `tests/Behavior/`, marked `// DOMAIN GAP`, and gets filed upstream.

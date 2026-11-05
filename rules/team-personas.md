@@ -29,7 +29,7 @@ Profiles live in `~/.claude/people/`; the roster is `README.md` there. They exis
 - **Start from now.** Don't back-mine history unless the user asks.
 
 ## Use
-- **Persona reviewer prompts.** When a review panel includes a rostered person (e.g. the `skunexus-prd-prototype` panel), read their profile into the persona prompt. Give it their role, Review lens, positions, and the 10 most recent log entries.
+- **Persona reviewer prompts.** When a review panel includes a rostered person (e.g. the `skunexus-contract` panel), read their profile into the persona prompt. Give it their role, Review lens, positions, and the 10 most recent log entries.
 - **Thin profiles.** If a profile is thin, say so in the review output, and lean on their documented role.
 - **Label the output** "simulated <name> review". It is never that person's actual opinion. Never use a profile to impersonate the person in anything sent to others.
 

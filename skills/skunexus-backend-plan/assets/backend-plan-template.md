@@ -2,6 +2,7 @@
 
 > Status: Draft  <!-- flip to "Approved" ONLY after the developer explicitly accepts -->
 > Contract: .ai/<TICKET-KEY>/prd.md   <!-- or: "inline (see Goal & Acceptance below)" when there's no PRD -->
+> Built from: contract v<N> (<DATE>)  <!-- only when prd.md has a "> Versions:" block -->
 > Tests: behavior  <!-- or: "none — <why>". Decided with the developer in Step 1, read by the self-review and the implement skill. A plan without this line reads as none -->
 > Scope: Backend only. See "Frontend-facing surface (intended)" for the public seam; the as-built FE handoff (exact request/response/error shapes) is a later step, produced post-implementation from the real diff.
 
