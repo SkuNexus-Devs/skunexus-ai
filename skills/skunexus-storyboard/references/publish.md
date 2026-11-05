@@ -8,6 +8,7 @@ You publish; the build agent never does. The local file is the only publish sour
 |---|---|---|
 | Discovery build from a frozen contract | v1; fixes v1.1, v1.2 | "Internal draft v1" |
 | Rebuild after the developer's triage (`STAGE='discussion'`) | the next v1 minor (v1 → v1.1) | "Draft for discussion <DATE>", plus the engine's open-assumption count |
+| A share before the triage: a call booked, the PO asks (`STAGE='discussion'`) | the next v1 minor | "Draft for discussion <DATE>, not reviewed", plus the count |
 | First PO-facing build from an approved contract | v2 (a ticket that skipped discovery still starts at v2) | "Draft v2" |
 | A rebuild from a new contract version, or a new scenario | next major (v2 → v3) | "Draft v3" |
 | Text and chrome fixes | next minor (v3 → v3.1) | "Draft v3.1" |
@@ -35,7 +36,11 @@ The badge, the publish `label` ("Storyboard v3") and the `artifact.md` row carry
 
 ## Sharing v1.x
 
-A v1.x page is shared with the PO and the FE developer at the same time, unpriced. Its `BUILT_FROM` names the version the triage cut, and `run.md` has `triaged v<N>` with that same `N`. Its `artifact.md` row's Trigger reads `triaged v<N>`. After `check-storyboard.py` passes, draft `review/share-<DATE>.md` for the developer to post (model.md §8, "Triage"):
+A v1.x page is shared with the PO and the FE developer at the same time, unpriced (model.md §8, "Sharing").
+- **Reviewed:** its `BUILT_FROM` names the version the triage cut, `run.md` has `triaged v<N>` with that same `N`, and its `artifact.md` row's Trigger reads `triaged v<N>`.
+- **Not reviewed** (a call or the PO comes first): the badge reads "Draft for discussion <DATE>, not reviewed" and the Trigger reads `share before triage: <why>`. The flip from v1 takes minutes: `STAGE`, badge, check, publish, sheet.
+
+After `check-storyboard.py` passes, draft `review/share-<DATE>.md` for the developer to post:
 - the v1.x link;
 - a 3-line summary: what the ticket adds, what is still assumed, what happens next;
 - at most about 7 lettered plain questions, each deep-linked to its step (`<URL>#s1.3`), with no ids or file names in the wording;
@@ -43,6 +48,16 @@ A v1.x page is shared with the PO and the FE developer at the same time, unprice
 - the date the estimate follows.
 
 Cross-check any client summary the PO writes against the decision list. The PO's answers go in as `CHANGE` entries, source `PO <DATE>`, through `skunexus-contract`'s rulings door.
+
+**Presenter sheet**, with every v1.x share: `review/presenter-<DATE>.md`, one page for whoever walks the client through it, written from the checks' output and the contract, never from memory:
+- the link, and whether it is reviewed;
+- **the live path:** about 15 steps that carry the flow, each linked (`<URL>#s1.3`); the rest is offline reference;
+- **assumed on screen:** each `A()` chip by step, one line each (`QT`, and the open `FB` entries);
+- **assumed without a chip:** the contract's assumptions the page doesn't mark (prd.md §4 markers and §7 `Assumed` lines; `check-contract.py` lists those that live steps cite);
+- **not drawn:** the `NOT_DRAWN` steps (`check-storyboard.py` lists them) and behaviour the contract doesn't settle;
+- **the rule:** not drawn, or not on the card: say "not drawn yet, noted" and write it down. Never narrate behaviour the contract doesn't hold. On RL-47, about half the statements corrected after the call came from narration.
+
+**Errata within 48 hours** of the call: hand `skunexus-contract` every statement the contract contradicts (`WRONG`) and every client decision (`CHANGE`), source `call <DATE>`. Its rulings door applies them and drafts `review/errata-<DATE>.md` for the developer to send (its `references/rulings.md`, "Errata after a share"). Then rebuild: the next minor, or v2 once the contract is approved.
 
 ## Publishing
 

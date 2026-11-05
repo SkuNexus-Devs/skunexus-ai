@@ -4,7 +4,7 @@ The shared reference for `skunexus-contract`, `skunexus-storyboard` and `skunexu
 
 ## Why
 
-A storyboard is cheap to draw, but on its own it looks finished while it rests on guesses, so a picture can mislead the people who see it. Everything in this model exists so that nothing is shared, priced or built on a guess nobody can see.
+A storyboard is cheap to draw, but on its own it looks finished while it rests on guesses, so a picture can mislead the people who see it. Everything in this model exists so that no guess goes unseen: a draft can be shared early with its guesses marked, but nothing is priced, approved or built on a guess (§8, "Sharing").
 
 - **Foundation: what a prototype needs before anyone else sees it.**
   - The evidence on disk: a fresh pull of the ticket.
@@ -12,15 +12,16 @@ A storyboard is cheap to draw, but on its own it looks finished while it rests o
   - Stock pages captured from the app, not guessed.
   - Render-ready pages (§1): every element decided, assumed with a chip, or stock.
   - Parts in the PO's shape only.
-  - A recorded triage of every guess that moves scope or price (§8).
+  - Every guess visible: chipped on screen, or on the presenter sheet. A recorded triage of every guess that moves scope or price comes before anything is priced or approved, and before the "not reviewed" badge comes off (§8).
 - **Why the investigation is heavier than on the regular route.** It is where the errors were caught, and it costs little next to the rest of a run:
   - the stock-page capture caught FFD-14's "next to the packing slip" line, which two panel reviewers repeated as written;
   - capture plus build is 6–10% of a measured run's tokens;
   - none of 28 regular-route PRDs on disk records a default for an open item, and drawing needs one for every element;
   - the PO has asked for the storyboard format on every FFD ticket since FFD-14, and changed FFD-14's scope by pointing at its storyboard.
-- **Why unattended runs plus triage.** The run researches the ticket, captures the stock pages, drafts the contract with every guess marked, draws an internal storyboard and stops at a ranked decision list, with no plan and no hours. The developer then confirms or flips every guess that changes scope or price in a short, recorded triage. Only the triaged version is shared, as a draft for discussion with its open questions counted and no price. The PO and the FE developer see it together and answer a short list of plain questions, so polish questions can come up before the estimate rather than in QA, and the estimate follows their answers.
+- **Why unattended runs plus triage.** The run researches the ticket, captures the stock pages, drafts the contract with every guess marked, draws an internal storyboard and stops at a ranked decision list, with no plan and no hours. The developer then confirms or flips every guess that changes scope or price in a short, recorded triage. The triaged version is shared as a reviewed draft for discussion, with its open questions counted and no price; when a call comes before the triage, the draft is shared anyway, badged "not reviewed" (§8, "Sharing"). The PO and the FE developer see it together and answer a short list of plain questions, so polish questions can come up before the estimate rather than in QA, and the estimate follows their answers.
   - **What the evidence supports:** the PO values the format (6 of 6 FFD tickets asked for it), and it is cheap.
-  - **What the pilots must still show:** that an early share without hours is acted on (every storyboard so far went out with its estimate); that the unattended defaults hold (1 of the 2 reviewed so far was overturned, which is why the triage is required); that the triage fits in 15–30 minutes; and that QA and UAT rounds shrink (1 plausible catch in about 35 late items on four regular-route tickets).
+  - **What RL-47 showed** (pilot 1, 2026-11-05: attended, `storyboard-only`, shared untriaged an hour before the client call): the share was acted on in the call itself, with 8 contract decisions and a dated v2 and approval request; by the developer's estimate, a call without it would have covered 20–40% of the material, with approval weeks later. About 9 expectation items surfaced before QA, through the drawing rather than its chips. The cost was about 10 statements corrected in writing: half came from narration, and the decisions that moved were contract rules with no chip, which a triage would not have caught. Hence: share early, bind late (§8, "Sharing").
+  - **What the pilots must still show:** that the unattended defaults hold (FFD-17: 1 of 2 reviewed overturned; RL-47, attended: 2 of 7 touched assumptions overturned); that the triage fits in 15–30 minutes; and that QA and UAT rounds shrink.
 
 ## 1. Contract, views, rules
 
@@ -302,13 +303,13 @@ A run's behaviour depends on a named **workflow**, never on the tone of an ask. 
 | B | `prd-storyboard` | PRD + storyboard | evidence → seeded interview → harden + panel → rulings (G1, G2) → storyboard v2; no BE plan (only A passes G3) | storyboard v2 shared for scope (no hours) | attended, whole |
 | C | `lite-storyboard` | lite + storyboard | lite contract → storyboard v1 | storyboard v1, internal only | lite, whole |
 | D | `lite` | lite only | lite `prd.md` + `workflows.md` | the lite contract | lite, stage |
-| E | `unattended` | unattended draft, then triage | evidence → draft with defaults → harden (lighter panel) → storyboard v1 + ranked decision list | the decision list; nothing shared until `triage` | unattended, whole |
+| E | `unattended` | unattended draft, then triage | evidence → draft with defaults → harden (lighter panel) → storyboard v1 + ranked decision list | the decision list; shared after `triage`, or before it badged "not reviewed" | unattended, whole |
 | F | `storyboard-only` | just the storyboard (PRD exists) | adoption + harden (one approval) → storyboard v2; the estimate too when a plan exists | storyboard v2 | attended, stage |
 | — | `triage` | (follow-up, offered only after E has stopped) | rulings on the triage set → v1.x "Draft for discussion" | the discussion draft and the drafted share | keeps `mode` |
 | — | `re-pull` | (offered only when `jira/` exists) | re-pull → diff → rulings | the ruled contract | keeps `mode` |
 
 - "let's start X" stays with `skunexus-jira-prd`: no workflow, and nothing is written to `run.md`. `/skunexus-jira-prd <TICKET>` is the regular route's front door; its closing line offers `skunexus-contract` when the PO must see and price the feature first, and the contract then adopts the approved PRD (workflow B or F).
-- **No prototype needed** (the developer says so, or the ticket is BE-only or integration): `skunexus-contract` says so in one line, "No prototype needed: use `/skunexus-jira-prd <TICKET>`, the regular route.", and writes nothing. The regular route is not a menu option.
+- **No prototype needed** (the developer says so, or the ticket is BE-only or a data contract with no flow anyone walks): `skunexus-contract` says so in one line, "No prototype needed: use `/skunexus-jira-prd <TICKET>`, the regular route.", and writes nothing. The regular route is not a menu option.
 - A plain `/skunexus-storyboard <TICKET>` with no `run.md` asks the same question (the same menu) and hands the steps before the drawing to `skunexus-contract` by the chain rule.
 - "continue X" resumes the workflow recorded in `run.md`: echo it, then go to the next owner (the ownership table above).
 - `triage` and `re-pull` are follow-ups: picking one switches the `workflow` row and keeps `mode` and `chain` as they are.
@@ -332,7 +333,7 @@ FFD-17: which workflow? A and B interview you and wait at every gate; C and D as
 (B) PRD + storyboard: stops at storyboard v2, shared for scope (no hours)
 (C) lite + storyboard: stops at storyboard v1, internal only
 (D) lite only: stops at the lite contract
-(E) unattended draft, then triage: stops at a ranked decision list; nothing shared until the triage
+(E) unattended draft, then triage: stops at a ranked decision list; shared after the triage, or before it badged "not reviewed"
 (F) just the storyboard (PRD exists): stops at storyboard v2
 needs input: one letter
 ```
@@ -394,8 +395,14 @@ needs input: one letter
 
 **Triage** ("triage X"): a later, attended pass by the developer on a stopped run, through the rulings door. It is the follow-up workflow `triage`, not a mode: it keeps `mode` and `chain` and changes nothing a run does before its stop.
 - **The triage set:** every scope-bearing `Q` (it names a `Part`, is tagged `expansion`, or is `Assumed` naming an owner but no `Evidence:`) and every v1 `CHOICE` chip on a drawn page. Each is ruled, or a chip is re-keyed to a plain `Q`; a cosmetic label becomes caption "proposal" text. The 15–30 minutes this takes is assumed, not measured.
-- **Then:** the rulings door cuts a `frozen` version, `run.md` gets its `triaged v<N>` line, and the storyboard is rebuilt from that version as v1.x, "Draft for discussion" (`skunexus-storyboard` `references/build.md` §1). `N` in `triaged v<N>` must equal the version in the v1.x page's `BUILT_FROM`. `check-storyboard.py` refuses `STAGE='discussion'` unless it runs with `--contract`, the page has a `BUILT_FROM` base, and, for that version, `run.md` has the `triaged v<N>` line, `prototype/sn-baseline.md` exists, every scope-bearing `Q` has a `Decided` line and no `A('FB<n>')` chip remains.
+- **Then:** the rulings door cuts a `frozen` version, `run.md` gets its `triaged v<N>` line, and the storyboard is rebuilt from that version as v1.x, "Draft for discussion" (`skunexus-storyboard` `references/build.md` §1). `N` in `triaged v<N>` must equal the version in the v1.x page's `BUILT_FROM`. For a reviewed share, `check-storyboard.py` needs `--contract`, a `BUILT_FROM` base and `prototype/sn-baseline.md`, and, for that version, `run.md`'s `triaged v<N>` line, a `Decided` line on every scope-bearing `Q` and no `A('FB<n>')` chip left. Without the `triaged` line it is an early share (below).
 - **The share:** after the rebuild, the developer posts the v1.x link, a 3-line summary, at most about 7 lettered plain questions each deep-linked to its step, a paste-ready "Open questions for the client" block, and the date the estimate follows. The skill drafts it as `review/share-<DATE>.md`; the developer posts it. The PO and the FE developer get the link at the same time.
+
+**Sharing: early and labelled; binding only at v2.** A booked call or the PO's ask outranks the triage: the drawing exists to be discussed, and waiting costs weeks ("Why", RL-47).
+- **Before the triage:** rebuild as v1.x with `STAGE='discussion'` and the badge "Draft for discussion <DATE>, not reviewed". Its `A('FB<n>')` chips stay, so its guesses stay visible. The flip takes minutes, so it never delays the call. `check-storyboard.py` requires the badge and warns without a presenter sheet.
+- **A presenter sheet with every v1.x share** (`review/presenter-<DATE>.md`, `skunexus-storyboard` `references/publish.md`): the live path of about 15 steps, the open assumptions by step, the assumed contract rules that have no chip, the steps not drawn, and one rule for whoever presents: not drawn or not on the card, say "not drawn yet, noted" and write it down; never narrate behaviour the contract doesn't hold.
+- **Errata within 48 hours:** every statement from the call that the contract contradicts becomes a `WRONG` entry and every client decision a `CHANGE` entry (source `call <DATE>`); the rulings door applies them and drafts `review/errata-<DATE>.md` for the developer to send (`references/rulings.md`).
+- **The hard gate is binding, not sharing:** nothing is priced (G5), approved to build (G6) or coded against, by the client's developers too, before an approved (G2) contract and its v2. Below `STAGE='approved'`, an API call panel says "draft: confirm before coding against it" (`skunexus-storyboard` `references/build.md`).
 
 **Routing by ticket kind.**
 
@@ -403,7 +410,8 @@ needs input: one letter
 |---|---|
 | UI change, small or medium, with a clear ask (the FFD-27 kind) | `unattended` → `triage` → v1.x share |
 | UI change with Core-vs-client, concurrency or entry-path decisions | the same, with those items ruled in the triage; if they can't be ruled within its time box, `prd-storyboard-estimate` |
-| BE-only, integration or data contract (the RL-47 kind) | the regular route, not this skill: `skunexus-jira-prd` → `skunexus-backend-plan`, no storyboard |
+| Integration whose flow another team walks: calls, webhooks, syncs (the RL-47 kind) | this skill, with API call panels on the integration steps (`skunexus-storyboard` `references/build.md`): RL-47's client team worked through its 56 steps in one call |
+| BE-only, or a data contract with no flow anyone walks | the regular route, not this skill: `skunexus-jira-prd` → `skunexus-backend-plan`, no storyboard |
 | "A quick look" | `lite-storyboard` or `lite`, internal only, never shared |
 
 Full attended (`prd-storyboard-estimate`) is required when any one of these holds: the first share must carry an estimate, because the PO will price options in front of the client; after the triage, more than about 7 PO-owned questions remain, or scope-bearing items remain unruled after the 30-minute box; the ticket is large.

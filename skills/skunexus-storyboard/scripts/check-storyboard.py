@@ -20,10 +20,11 @@ A v2 page (const BUILT_FROM='contract v<N> (<DATE>)') adds, per model.md section
     NOT_DRAWN={'s2.3':'why'} lists it; PARTS keys, names and scopes match workflows.md "Parts";
   - stale pages through ../../skunexus-contract/scripts/check-contract.py --stale (skipped when not installed).
 const STAGE (a page without it is legacy): 'internal' (v1), 'approved' (v2), or 'discussion' (v1.x, shared with the PO
-and the FE developer), which needs --contract and, for the BUILT_FROM version: a run.md History line
-"- <DATE> triaged v<N>: …"; prototype/sn-baseline.md; a Decided line for every scope-bearing Q (it names a Part, has an
-option tagged expansion, or is Assumed naming an owner but no Evidence:); and no A('FB<n>') chip. Any other value is an
-error.
+and the FE developer), which needs --contract and prototype/sn-baseline.md. Reviewed (run.md has a History line
+"- <DATE> triaged v<N>: …" for the BUILT_FROM version): a Decided line for every scope-bearing Q (it names a Part, has an
+option tagged expansion, or is Assumed naming an owner but no Evidence:) and no A('FB<n>') chip. Not reviewed (no such
+line, a share before the triage): the .draft badge says 'not reviewed', and a missing review/presenter-*.md is a
+warning. Any other value is an error.
 Prints summary counts. Exit 1 on any error.
 """
 import argparse
@@ -507,7 +508,7 @@ def check(text, prd=None, forbid=(), contract=None, view=None, script=CONTRACT_S
         calls['NEW'], calls['CHG'], len(a_calls), len(a_keys), len(qt)))
     info.append('R-ids cited: %d distinct%s' % (len(cited), (' (' + ', '.join(sorted(cited, key=nat)) + ')') if cited else ''))
 
-    check_stage(code, base, a_keys, c, err, info)
+    check_stage(code, markup, base, a_keys, c, err, warn, info)
     if v2:
         used = set(tags) | set(part_steps) | {int(n) for n in re.findall(r'(?<![\w$.])(?:PT|chip)\(\s*(\d+)', code)}
         check_v2(code, markup, scn, qt, a_keys, used, c, view, script, err, warn, info)
@@ -529,8 +530,9 @@ def q_entries(prd):
     return out
 
 
-def check_stage(code, base, a_keys, c, err, info):
-    """const STAGE: 'discussion' (v1.x, shared) only once the BUILT_FROM version is triaged (model.md 8)."""
+def check_stage(code, markup, base, a_keys, c, err, warn, info):
+    """const STAGE: 'discussion' (v1.x, shared): reviewed once the BUILT_FROM version is triaged, else badged
+    'not reviewed' with a presenter sheet (model.md 8, "Sharing")."""
     m = re.search(r'''\b(?:const|let|var)\s+STAGE\s*=\s*(['"`])(.*?)\1''', code)
     if not m:
         return
@@ -546,10 +548,18 @@ def check_stage(code, base, a_keys, c, err, info):
         return
     run = os.path.join(c['dir'], 'run.md')
     runs = open(run, encoding='utf-8').read() if os.path.isfile(run) else ''
-    if not re.search(r'(?m)^\s*[-*]\s+\d{4}-\d{2}-\d{2}\s+triaged v%s:' % re.escape(base[0]), runs):
-        err.append(('STAGE', "discussion: run.md has no '- <DATE> triaged v%s: …' History line" % base[0]))
     if not os.path.isfile(os.path.join(c['dir'], 'prototype', 'sn-baseline.md')):
         err.append(('STAGE', 'discussion: no prototype/sn-baseline.md (stock pages captured, not guessed)'))
+    if not re.search(r'(?m)^\s*[-*]\s+\d{4}-\d{2}-\d{2}\s+triaged v%s:' % re.escape(base[0]), runs):
+        info.append('share: not reviewed (run.md has no triaged v%s line)' % base[0])
+        badge = re.search(r'<[^>]*\bid=["\']badge["\'][^>]*>([^<]*)<', markup)
+        if not badge or 'not reviewed' not in badge.group(1):
+            err.append(('STAGE', "discussion: not triaged, so the .draft badge must say 'not reviewed' "
+                                 "(or triage v%s first)" % base[0]))
+        rev = os.path.join(c['dir'], 'review')
+        if not any(f.startswith('presenter-') for f in (os.listdir(rev) if os.path.isdir(rev) else ())):
+            warn.append(('STAGE', 'discussion: no review/presenter-<DATE>.md for the person presenting it'))
+        return
     for q, text in sorted(q_entries(c['prd']).items(), key=lambda kv: nat(kv[0])):
         scope = (re.search(r'\bParts? \d+', text) or re.search(r'\bexpansion\b', text, re.I)
                  or re.search(r'\bAssumed\b', text) and not re.search(r'(?i)\bEvidence:', text)
@@ -606,8 +616,9 @@ def check_v2(code, markup, scn, qt, a_keys, used, c, view, script, err, warn, in
     text = no_foreign(code) + '\n' + no_foreign(markup)
     page_ids = {x: set(re.findall('|'.join((RID, QID, FBID)), no_foreign(src))) | {x, 'Part %d' % step_low[x]}
                 for x, src in step_src.items()}
-    info.append('steps drawn: %d (%s); not drawn: %d' % (
-        len(step_src), ', '.join(sorted(step_src, key=nat)) or '-', len(nd)))
+    info.append('steps drawn: %d (%s); not drawn: %d%s' % (
+        len(step_src), ', '.join(sorted(step_src, key=nat)) or '-', len(nd),
+        ' (%s)' % ', '.join(sorted(nd, key=nat)) if nd else ''))
 
     # the contract, at the page's base version
     if c is None:
@@ -922,18 +933,37 @@ def selftest():
         disc = V2_PAGE.replace("'use strict';", "'use strict'; const STAGE='discussion';").replace("+A('FB1')", '')
         disc = disc.replace(",FB1:'The Hold for review button sits in the Order Details header.'", '')
         e, _, _ = check(disc, contract=d)
-        assert sorted(m.split(':')[1].split()[0] for k, m in e if k == 'STAGE') == ['no', 'run.md'], e
+        assert sorted(m.split(':')[1].split()[0] for k, m in e if k == 'STAGE') == ['no', 'not'], e
         with open(os.path.join(d, 'run.md'), 'w', encoding='utf-8') as f:
             f.write('# Run settings: TKT-1\n\n## History\n- 2026-11-04 triaged v1: 3 items ruled (developer)\n')
         with open(os.path.join(d, 'prototype', 'sn-baseline.md'), 'w', encoding='utf-8') as f:
             f.write('# Baseline\n')
         e, _, i = check(disc, contract=d)
         assert not e and 'stage: discussion' in i, e
+        # a share before the triage: badged 'not reviewed', its FB chip stays, a presenter sheet is expected
+        early = V2_PAGE.replace("'use strict';", "'use strict'; const STAGE='discussion';").replace(
+            '<title>T</title>', '<title>T</title><span class="draft" id="badge">Draft for discussion 2026-11-05, not reviewed</span>')
+        with open(os.path.join(d, 'run.md'), 'w', encoding='utf-8') as f:
+            f.write('# Run settings: TKT-1\n\n## History\n')
+        e, w, i = check(early, contract=d)
+        assert not [m for k, m in e if k == 'STAGE'] and any('presenter' in m for k, m in w), (e, w)
+        assert 'share: not reviewed (run.md has no triaged v1 line)' in i, i
+        sheet = os.path.join(d, 'review', 'presenter-2026-11-05.md')
+        with open(sheet, 'w', encoding='utf-8') as f:
+            f.write('# Presenter sheet\n')
+        e, w, _ = check(early, contract=d)
+        assert not [m for k, m in e if k == 'STAGE'] and not any('presenter' in m for k, m in w), (e, w)
+        e, _, _ = check(early.replace(', not reviewed', ''), contract=d)
+        assert any(k == 'STAGE' and "must say 'not reviewed'" in m for k, m in e), e
+        os.remove(sheet)
+        with open(os.path.join(d, 'run.md'), 'w', encoding='utf-8') as f:
+            f.write('# Run settings: TKT-1\n\n## History\n- 2026-11-04 triaged v1: 3 items ruled (developer)\n')
+        n += 3
         snap = os.path.join(d, 'review', 'prd-v1-2026-11-03.md')
         plants = [
             ('STAGE=', lambda h: h.replace("STAGE='discussion'", "STAGE='triage'"), None),
             ('needs a BUILT_FROM', lambda h: h, 'no contract'),
-            ('triaged v2', lambda h: h.replace("contract v1 (2026-11-03)", "contract v2 (2026-11-03)"), None),
+            ('not reviewed', lambda h: h.replace("contract v1 (2026-11-03)", "contract v2 (2026-11-03)"), None),
             ("A('FB1')", lambda h: h.replace("A('Q1')", "A('Q1')+A('FB1')"), None),
             ('scope-bearing Q2', lambda h: h, '- **Q2** Email too? Options: (A) no [PO decided] · (B) yes [expansion, M].\n'),
             ('scope-bearing Q3', lambda h: h, '- **Q3** Which list? Assumed: the short one.\n  Confirm with the PO.\n'),

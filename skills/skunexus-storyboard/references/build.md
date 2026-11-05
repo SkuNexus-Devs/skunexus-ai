@@ -1,6 +1,6 @@
 # Build: storyboard v1, v2 and stale rebuilds
 
-Contents: §1 Three states · §2 Inputs and the run · §3 Render-ready prepass · §4 Format · §5 Anatomy · §6 Markers · §7 Parts · §8 Feedback · §9 Verify · §10 Rebuild stale · §11 Checklist
+Contents: §1 Three states · §2 Inputs and the run · §3 Render-ready prepass · §4 Format · §5 Anatomy (API call panels) · §6 Markers · §7 Parts · §8 Feedback · §9 Verify · §10 Rebuild stale · §11 Checklist
 
 ## §1 Three states
 
@@ -8,14 +8,14 @@ One single-file HTML page, built on `assets/storyboard-skeleton.html`, published
 
 | | v1: internal | v1.x: discussion | v2: approved |
 |---|---|---|---|
-| Built from | a `frozen` contract version | the `frozen` version a triage cut: `run.md` has `triaged v<N>` with the `N` of its `BUILT_FROM` | an `approved` version (G2), no `open` feedback |
+| Built from | a `frozen` contract version | a `frozen` version; reviewed when a triage cut it (`run.md` has `triaged v<N>` with the `N` of its `BUILT_FROM`), else "not reviewed" | an `approved` version (G2), no `open` feedback |
 | `STAGE` | `const STAGE='internal';` | `const STAGE='discussion';` | `const STAGE='approved';` |
-| A gap in the contract (§3) | drawn with the simplest option, filed as a `CHOICE` entry, chipped `A('FB<n>')` | **stops the build**, as in v2; no `A('FB<n>')` chip may remain | **stops the build**: filed in `feedback.md`, nothing drawn until a ruling |
-| Badge · version | "Internal draft v1" (fixes: v1.1, v1.2) | "Draft for discussion <DATE>"; the engine appends ": <N> assumptions open, not priced, not approved". The next minor of v1 (v1.1, v1.2 …) | "Draft v2", then v3, v3.1 … (`references/publish.md`) |
-| Who sees it | the developer only | the PO and the FE developer together, when the developer shares it with no price (`references/publish.md` "Sharing v1.x") | the PO, when the developer shares it (G6, with the estimate) |
+| A gap in the contract (§3) | drawn with the simplest option, filed as a `CHOICE` entry, chipped `A('FB<n>')` | reviewed: **stops the build**, as in v2, no `A('FB<n>')` chip may remain; not reviewed: as in v1, the chips stay visible | **stops the build**: filed in `feedback.md`, nothing drawn until a ruling |
+| Badge · version | "Internal draft v1" (fixes: v1.1, v1.2) | "Draft for discussion <DATE>" (before the triage: "Draft for discussion <DATE>, not reviewed"); the engine appends ": <N> assumptions open, not priced, not approved". The next minor of v1 (v1.1, v1.2 …) | "Draft v2", then v3, v3.1 … (`references/publish.md`) |
+| Who sees it | the developer only | the PO and the FE developer together, when the developer shares it with no price and a presenter sheet (`references/publish.md` "Sharing v1.x") | the PO, when the developer shares it (G6, with the estimate) |
 | Its job | find what the contract doesn't settle: FFD-13's nine drawing decisions and FFD-17's stale-page case came out of drawing | let the PO and the FE developer discuss a researched draft early, before the estimate | show the agreed scope, in parts |
 
-The PO and the FE developer see v1 only once it is triaged. `check-storyboard.py` refuses `STAGE='discussion'` unless it runs with `--contract` on a page with a `BUILT_FROM` base, and, for that version, `run.md` has the `triaged v<N>` line, `prototype/sn-baseline.md` exists, every scope-bearing `Q` has a `Decided` line, and no `A('FB<n>')` chip remains (model.md §8, "Triage"). Any other `STAGE` value is an error; a page with no `STAGE` is legacy. The engine counts the open assumptions from the page's own `A()` chips that have a `QT` entry, so the count is never typed by hand.
+Others see v1 only as v1.x. `check-storyboard.py` checks `STAGE='discussion'` with `--contract` on a page with a `BUILT_FROM` base and `prototype/sn-baseline.md`. With `run.md`'s `triaged v<N>` line for that version it is a reviewed share: every scope-bearing `Q` has a `Decided` line and no `A('FB<n>')` chip remains. Without it, it is an early share: the badge must say "not reviewed", and a missing `review/presenter-<DATE>.md` is a warning (model.md §8, "Sharing"). Any other `STAGE` value is an error; a page with no `STAGE` is legacy. The engine counts the open assumptions from the page's own `A()` chips that have a `QT` entry, so the count is never typed by hand.
 
 **The bar:** an experienced SN user sees at a glance what is stock and what is new, and how the page will really look. On FFD-14 two things failed it: putting several dimensions on one page behind global toggles, and guessing the look from built CSS. One page per step on captured stock pages fixed both; build in that format from the first version.
 
@@ -40,7 +40,7 @@ Nothing is drawn unless each element is **decided** (contract text: a requiremen
 | s1.3 | | Cancel Order, Auto Decide Order | stock |
 | s4.3 | Order details: page loaded before tagging | what the refusal says here | **gap** → FB4 (CHOICE in v1) |
 
-- Every live step of the snapshot has rows; a retired step has none and is not drawn. A live step with nothing to show (a system step with no screen) is listed in the page's `NOT_DRAWN` with its reason, e.g. `const NOT_DRAWN={'s2.3':'queued job, nothing on screen'};`; every other live step needs a page. Coverage is every live step, plus every assumed `Q` a drawn step cites (model.md §1).
+- Every live step of the snapshot has rows; a retired step has none and is not drawn. A live step with nothing to show (a system step with no screen and no call to another system; a call gets an API call panel, §5) is listed in the page's `NOT_DRAWN` with its reason, e.g. `const NOT_DRAWN={'s2.3':'queued job, nothing on screen'};`; every other live step needs a page. Coverage is every live step, plus every assumed `Q` a drawn step cites (model.md §1).
 - An element whose source is an id must match that id's text. An element no requirement asks for (a label, a placement) is a **proposal**: allowed when it adds no behaviour, labelled "proposal" in the caption. A confirmation, an extra state, a new rule or a message wording that decides something is behaviour: it is a gap. An "Are you sure?" step drawn before Create Fulfillment would be a gap, never a proposal.
 - **v1:** each gap is drawn with the simplest option that contradicts nothing, filed as a `CHOICE` entry (the page chose; §8), and chipped `A('FB<n>')`. A `WRONG` the page can draw around is filed without a chip.
 - **v1.x and v2:** any gap stops the build. The agent files every gap (§8), writes the page plan, and replies `STOPPED: <n> gaps` without drawing. You take the entries to `skunexus-contract`'s rulings door and rebuild from the version it cuts.
@@ -71,6 +71,17 @@ Nothing is drawn unless each element is **decided** (contract text: a requiremen
 - **Before / after index:** one row per stock page the flow uses (name, path, jump buttons by step id, a change list with ids, two panes "Stock SN today" | "<TICKET>"); a new screen gets one pane. Skip the "before" of a stock page the client doesn't use today.
 
 One step is one recreated page in one state: sidebar with the active item, page header (History, H1, breadcrumb, user · role), cards, grids, modals and toasts as in `sn-baseline.md`. Only what that step needs; no global toggles. Put new things where SN would (a card header action, a new card, a grid column, a modal); don't invent layouts SN doesn't use.
+
+### API call panels
+
+A step whose trigger or effect is a call between SkuNexus and another system (an API call, a webhook, a sync, a details read) has no screen of its own. Draw the SN page the call starts from or lands on, and under it one dark panel per call: the other system left, SkuNexus right, the arrow from caller to callee, then the request and the response. The component is RL-47's Django ⇄ SkuNexus cards, look and colours unchanged (the skeleton's `apiPanel`, example step `s1.4`).
+- **Data** (TICKET CONTENT): `SYS` names each other system, `{shop:{name:'Shop',bg:'#0c4b33',accent:'#44b78b'}}` (colours optional, default green; SkuNexus is always purple and cyan). Each call is one object, passed as `shell({…, api:[call]})`:
+  `{from:'sn', to:'shop', kind:'event', event:'order.review_hold', part:1, req:{line:'POST https://<shop-host>/webhooks/skunexus', headers:[…], body:{…}, note}, res:{line:'200 OK'}, other:[['non-2xx','sent again','same event_id']], then, flag}`.
+  `kind` is `call`, `event` or `read` (kicker: API call · Webhook · Details read); the status chip colours by code (2xx green, 4xx amber, 5xx red); `then` is what the other system does next, `flag` the orange "Watch out" note, `part` the part pill (hidden on a one-part page). `note`, `then`, `flag` and `other` are HTML.
+- **One panel per call,** in call order. Error answers and retries of the same call go in `other`, not in a second panel.
+- **Values come from the contract** (the `prd.md` and `workflows.md` snapshots), never invented. A field the contract leaves open keeps a placeholder value, and its column's `note` names it with its chip (the §7 `Q`, or in v1 the gap's `FB` id, §3): `` note:`<code>carrier</code> ${A('Q4')}` ``.
+- **Draft gate:** until `STAGE='approved'`, every panel's top bar says "draft: confirm before coding against it". The other system's developers code against these panels, and only an approved (v2) contract is binding.
+- Such a step is drawn, not listed in `NOT_DRAWN`: the call is what it shows.
 
 ## §6 Markers
 

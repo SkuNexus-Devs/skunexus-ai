@@ -41,12 +41,16 @@ On the explicit yes, door 7 cuts `v<N> <DATE> approved: …` with its snapshots,
 
 ## Triage ("triage X")
 
-A later, attended pass on a stopped unattended run, so that a version can be shared as a draft for discussion (model.md §8, "Triage"). `run.md` switches its `workflow` row to `triage` (with its History line) and keeps `mode` and `chain`.
+A later, attended pass on a stopped unattended run, so that a version can be shared as a reviewed draft for discussion (model.md §8, "Triage"; a share before it is badged "not reviewed", §8 "Sharing"). `run.md` switches its `workflow` row to `triage` (with its History line) and keeps `mode` and `chain`.
 
 1. **The triage set:** from the decision list, every scope-bearing `Q` (it names a `Part`, is tagged `expansion`, or is `Assumed` naming an owner but no `Evidence:`) and every `CHOICE` entry storyboard v1 chipped on a drawn page (`A('FB<n>')`). Send them as one lettered list, as in §1 step 3; the rest stay `Assumed`.
 2. **Rule** as in §2: a chip's entry is ruled into contract text or an assumed `Q`, or re-keyed to a plain `Q` for the PO; a cosmetic label becomes caption "proposal" text.
 3. **Rewrite** as in §3, then cut the next version `frozen` (`references/versions.md`; the status stays Draft, no G2), and append `- <DATE> triaged v<N>: <n> items ruled (developer)` to `run.md`'s History. `v<N>` is that frozen version, the one the v1.x page's `BUILT_FROM` will name; `check-storyboard.py` matches them.
 4. **Next:** `skunexus-storyboard` rebuilds the storyboard from that version as v1.x, "Draft for discussion", and drafts the share (model.md §8). The developer posts it.
+
+## Errata after a share
+
+Within 48 hours of a v1.x share (model.md §8, "Sharing"): file every statement made on the call that the contract contradicts as `WRONG` and every client decision as `CHANGE`, source `call <DATE>`. Rule on them as in §1–§4, then draft `review/errata-<DATE>.md` for the developer to send: per item, what was said, what holds, and the step link (`<URL>#s3.2`). `skunexus-storyboard` then rebuilds the changed steps.
 
 ## Re-pull and diff
 

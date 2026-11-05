@@ -87,7 +87,8 @@ Two front doors for tickets, chosen by whether the PO must see and price it firs
 | Client ticket the PO must see and price first: a clickable mock-up plus an hours estimate | `skunexus-contract`, workflow `prd-storyboard-estimate`: then `skunexus-backend-plan` and `skunexus-storyboard`, chained — *"PRD, storyboard and estimate for FFD-40"* |
 | The same, while you're away (a small or medium UI ticket with a clear ask) | `skunexus-contract`, workflow `unattended`: it stops at a Draft, an internal storyboard and a ranked decision list, with no plan and no hours — *"I'm away: run FFD-17 without stopping"* |
 | An unattended run has stopped; you want a draft to discuss with the PO and the FE developer | `skunexus-contract`, workflow `triage`, then `skunexus-storyboard`: you rule the guesses that move scope or price, and the storyboard is rebuilt as "Draft for discussion" — *"triage FFD-17"* |
-| A BE-only, integration or data-contract ticket | `skunexus-jira-prd`, the regular route (then `skunexus-backend-plan`), no storyboard — *"let's start RL-47"* |
+| An integration whose flow another team walks (calls, webhooks, syncs) | `skunexus-contract`, then `skunexus-storyboard` with API call panels on the integration steps — *"PRD and storyboard for RL-47"* |
+| A BE-only or data-contract ticket with no flow anyone walks | `skunexus-jira-prd`, the regular route (then `skunexus-backend-plan`), no storyboard — *"let's start <TICKET>"* |
 | The ticket changed under a contract | `skunexus-contract`, workflow `re-pull` — *"re-pull FFD-14 and diff it"* |
 | A mock-up fast, no full PRD | `skunexus-contract`, workflow `lite-storyboard` (a lite contract), then `skunexus-storyboard` — *"a quick storyboard, no PRD"* |
 | PRD and plan exist; the PO needs the storyboard, FE plan or estimate | `skunexus-storyboard`, workflow `storyboard-only` — *"PRD and plan are done, just build the storyboard"* |
@@ -115,7 +116,7 @@ Full attended (workflow `prd-storyboard-estimate`, *"PRD, storyboard and estimat
 | B | `prd-storyboard` | PRD + storyboard | storyboard v2 shared for scope (no BE plan, no hours) |
 | C | `lite-storyboard` | lite + storyboard | storyboard v1, internal only |
 | D | `lite` | lite only | the lite contract |
-| E | `unattended` | unattended draft, then triage | a ranked decision list; nothing shared until you triage |
+| E | `unattended` | unattended draft, then triage | a ranked decision list; shared after your triage, or before it badged "not reviewed" |
 | F | `storyboard-only` | just the storyboard (PRD exists; offered only then) | storyboard v2 |
 
 Follow-ups, offered only when they apply: `triage` (after an unattended run has stopped: you rule the guesses that move scope or price, and the storyboard is rebuilt as "Draft for discussion") and `re-pull` (re-pull the ticket, diff it, rule on the changes).
@@ -298,13 +299,13 @@ At the gates, you rule on the decision list (G1) and approve the contract (G2), 
 
 **When:** the PO has to approve scope and price together. *"PRD and plan are done, just build the storyboard"*, *"build the storyboard, similar to the RMA one"*, *"republish the storyboard"*, *"the FE plan for FFD-40"*, *"the estimate for FFD-40"*. It needs a contract from `skunexus-contract` (a missing piece sends you there) and, for the FE plan and the estimate, `backend-plan.md`.
 
-**Why:** the PO has asked for this storyboard format on every FFD ticket since FFD-14, and changed FFD-14's scope by pointing at it. An unattended run plus your triage gives the PO and the FE developer an early, researched draft to discuss together, so polish questions can come up before the estimate instead of in QA. What is shown so far: the format is wanted and cheap. What the pilots must still show: that an early, unpriced share is acted on, that the unattended defaults hold (1 of the 2 reviewed so far was overturned, hence the triage), that the triage fits in 15–30 minutes, and that QA rounds shrink. Details: `model.md` "Why".
+**Why:** the PO has asked for this storyboard format on every FFD ticket since FFD-14, and changed FFD-14's scope by pointing at it. An unattended run plus your triage gives the PO and the FE developer an early, researched draft to discuss together, so polish questions can come up before the estimate instead of in QA. What is shown so far: the format is wanted and cheap, and on RL-47 an untriaged share an hour before the client call was acted on in the call itself (8 contract decisions; about 10 statements corrected in writing afterwards). What the pilots must still show: that the unattended defaults hold, that the triage fits in 15–30 minutes, and that QA rounds shrink. Details: `model.md` "Why".
 
 **What happens:** each output is a view of the contract: it adds pages, components or hours, never behaviour. Whatever the contract doesn't settle goes to `feedback.md` for `skunexus-contract` to rule on. The doors:
 
 - **v1** (internal, discovery): drawn from a frozen contract; its gaps become feedback entries.
-- **v1.x** ("Draft for discussion"): rebuilt after your triage, with its open assumptions counted on the first screen and no price; you share it with the PO and the FE developer together, with a short list of plain questions and the date the estimate follows.
-- **v2** (PO-facing): the stock pages it needs captured as text from your **local** app, redrawn with fake data, one page per use-case step, every addition marked NEW or CHANGED.
+- **v1.x** ("Draft for discussion"): rebuilt after your triage, or before it badged "not reviewed" when a call comes first; its open assumptions are counted on the first screen, with no price. You share it with the PO and the FE developer together, with a short list of plain questions, a presenter sheet, and written errata within 48 hours of the call. Nothing is priced, approved or coded against before v2.
+- **v2** (PO-facing): the stock pages it needs captured as text from your **local** app, redrawn with fake data, one page per use-case step, every addition marked NEW or CHANGED, and calls to other systems drawn as API call panels.
 - **FE plan:** each storyboard page bound to components, the plan's API calls, validation and FE hours.
 - **Estimate:** hours per part: BE from the plan's size (`check-plan.py`), FE from the FE plan.
 - **Rebuild stale:** after a contract change, only the pages and rows whose ids changed.
