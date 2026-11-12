@@ -15,15 +15,31 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
    ln -s "$PWD"/skills/skunexus-* ~/.claude/skills/
    ```
 
+   `skunexus-prd-prototype` also spawns four subagent types (`agents/sn-*.md`: model, effort and a lean tool list per role). Install them the same way:
+
+   ```bash
+   mkdir -p ~/.claude/agents && ln -s "$PWD"/agents/sn-*.md ~/.claude/agents/
+   ```
+
+   Optional: the rule that keeps the teammate profiles its simulated reviewers read (`rules/team-personas.md`; it applies in every project, so Claude logs review observations while you work):
+
+   ```bash
+   mkdir -p ~/.claude/rules && ln -s "$PWD"/rules/team-personas.md ~/.claude/rules/
+   ```
+
 2. **Prerequisites** the skills rely on:
 
    | Dependency | Needed by | For |
    |---|---|---|
-   | **Atlassian MCP** (Jira) | `skunexus-jira-prd`, `skunexus-bug-hunt` | Fetching and distilling tickets |
+   | **[Atlassian Rovo MCP Server](https://github.com/atlassian/atlassian-mcp-server)** (Jira): `claude mcp add --transport http --scope user atlassian https://mcp.atlassian.com/v2/mcp`, then `/mcp` to sign in | `skunexus-jira-prd`, `skunexus-bug-hunt`, `skunexus-prd-prototype` | Fetching and distilling tickets |
    | **Context7 MCP** + the `skunexus-docs-c7` skill | nearly every skill | Building the platform mental model (command bus, plugins, state machines) before touching code. ⚠️ `skunexus-docs-c7` is **not in this repo yet** — get it from a teammate until it's added. |
    | **`gh` CLI**, authenticated | `skunexus-backend-pr` | Pushing the branch and opening the draft PR |
    | **Pest** (client repos) | `skunexus-behavior-testing` | Decides the authoring syntax: Pest where installed, PHPUnit otherwise (core). One-time install: `references/pest-style-guide.md` §0.1 |
    | **A PHP runner** — host PHP or Docker (`docker compose exec <app>`, `sail`) | `skunexus-backend-implement`, `skunexus-behavior-testing` | Running the tests Claude writes. Detected per repo — name it in the repo's `CLAUDE.md` and every test command gets the right prefix |
+   | **SN docs checkout** in the client repo's `.ai/skunexus-docs/`: from the client repo, `git clone git@github.com:SkuNexus-Devs/skunexus-docs-tryout.git .ai/skunexus-docs` | `skunexus-prd-prototype` and its `sn-*` agents | The platform model its researchers, code mappers and plan drafters read |
+   | **[Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp)**: `claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest` (Node 20.19+, current Chrome; use this command, not the vendor's plugin install, which prefixes the tool names the agents call) + your **local SN app** running, logged in once in the browser it opens | `skunexus-prd-prototype` | Capturing the stock pages the storyboard redraws, and clicking through the storyboard. With no browser it ships marked "unclicked" |
+   | **[Claude Code artifacts](https://code.claude.com/docs/en/artifacts)**: a Pro, Max, Team or Enterprise plan, Claude Code signed in with `/login` (a claude.ai account, not an API key), v2.1.281+ | `skunexus-prd-prototype` | Publishing the storyboard as a private artifact |
+   | **`~/.claude/CLAUDE.md` Projects/People tables, `~/.claude/people/` profiles** (optional), kept by Anthropic's [productivity plugin](https://github.com/anthropics/knowledge-work-plugins/tree/main/productivity): `claude plugin marketplace add anthropics/knowledge-work-plugins`, `claude plugin install productivity@knowledge-work-plugins`, then `/productivity:start` from `~/.claude` and `ln -s ~/.claude/memory/people ~/.claude/people`; the profiles' persona sections come from the `rules/team-personas.md` rule (step 1) | `skunexus-prd-prototype` | Who the PO, tech lead and FE developer are, and the grounding for the panel's simulated reviews. Without them the skill asks for the names and runs each persona from its documented role |
 
 3. **Run Claude Code in the repo you're working on** (e.g. `skunexus-client-*`), not in this one. All workflow artifacts land in `.ai/<TICKET>/` inside that working repo.
 
@@ -34,6 +50,9 @@ A *skill* is a markdown instruction set (`SKILL.md`) that Claude Code loads auto
 ```mermaid
 flowchart TD
     F([Feature ticket]) --> PRD["skunexus-jira-prd<br/>→ prd.md"]
+    F -. "PO needs a mock-up<br/>and an estimate" .-> PROTO["skunexus-prd-prototype<br/>→ prd.md · storyboard · backend-plan.md · estimate.md"]
+    PRD -. "approved PRD:<br/>just the storyboard" .-> PROTO
+    PROTO --> IMPL
     B([Bug report / misbehavior]) --> HUNT["skunexus-bug-hunt<br/>→ investigation.md"]
     HUNT -- "verdict: change request<br/>in disguise" --> PRD
     HUNT -- "verdict: bug,<br/>trivial fix" --> IMPL
@@ -55,6 +74,7 @@ Two entry points, one build spine, three wrap-up documents. You don't always sta
 | Situation | Start with |
 |---|---|
 | Feature ticket, requirements not nailed down | `skunexus-jira-prd` — *"let's start PHG-418"* |
+| Client ticket the PO must see and price first: a clickable mock-up plus an hours estimate | `skunexus-prd-prototype` — *"PRD, storyboard and estimate for FFD-40"*, *"PRD and plan are done, just build the storyboard"* |
 | Something is broken, wrong, or regressed (ticket or not) | `skunexus-bug-hunt` — *"investigate PHG-456"*, *"orders are stuck in status X"* |
 | Requirements are agreed, work needs a task breakdown | `skunexus-backend-plan` — *"plan the backend for PHG-418"*, *"skip the PRD, just plan this"* |
 | An approved plan exists | `skunexus-backend-implement` — *"implement the plan"*, *"let's do T3"* |
@@ -71,11 +91,11 @@ Two entry points, one build spine, three wrap-up documents. You don't always sta
 
 These conventions hold across the whole pipeline — internalizing them once is most of the onboarding.
 
-- **You will be interviewed.** The skills never guess: any ambiguous value, boundary, or intent becomes a question to you — usually one focused question at a time, with concrete options to pick from. This is by design; a confident wrong assumption is the most expensive failure mode. Answering "just decide" defeats the point.
+- **You will be interviewed.** The skills never guess: any ambiguous value, boundary, or intent becomes a question to you — usually one focused question at a time, with concrete options to pick from. This is by design; a confident wrong assumption is the most expensive failure mode. Answering "just decide" defeats the point. (`skunexus-prd-prototype` turns what is left after its review panel into marked, visible assumptions instead of more questions; you can overturn any of them.)
 - **Every deliverable is a gate.** Documents start as `Status: Draft` and flip to `Approved` **only when you explicitly say so**. Silence is not approval; approving the code is not approving the PR text. Nothing proceeds downstream, and nothing reaches GitHub, without your explicit go-ahead.
 - **You review documents in your editor, not in chat.** When a draft is ready, the skill points you at the file (e.g. `.ai/PHG-418/backend-plan.md`) and waits. Read it there, come back with issues or approval — chat walkthroughs of a document you can open are deliberately avoided.
 - **Everything resumes from disk.** The `.ai/<TICKET>/` files are the complete state. You can close your laptop, clear context, or open a fresh conversation days later and say *"continue the plan for PHG-418"* — the skill re-reads the folder, recaps where things stand in one line, and picks up.
-- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it". **The one exception is the test suite** — behavior tests run on in-memory SQLite, which isn't your environment, so Claude writes them, runs them — through your repo's PHP runner, host or Docker — and shows you the real output, against a baseline of what was already red before the run and with one full-suite run before hand-off. That exception is the point: it closes the verify loop. A test Claude can run is the one check it can perform on itself, so a regression gets caught and fixed inside the run instead of parked at your review — which is what makes an orchestrated wave of tasks worth trusting. Everything else on that list is still yours.
+- **Claude never verifies against your environment.** No migrations, no tinker, no hitting endpoints, no DB queries. Instead it hands you the exact checks to run (*"run `SELECT … WHERE order_id = 4711`"*, the task's *Sanity-check now* list) and treats your results as evidence. The honest handoff is "here's what I built and how you can confirm it". **The one exception is the test suite** — behavior tests run on in-memory SQLite, which isn't your environment, so Claude writes them, runs them — through your repo's PHP runner, host or Docker — and shows you the real output, against a baseline of what was already red before the run and with one full-suite run before hand-off. That exception is the point: it closes the verify loop. A test Claude can run is the one check it can perform on itself, so a regression gets caught and fixed inside the run instead of parked at your review — which is what makes an orchestrated wave of tasks worth trusting. Everything else on that list is still yours. `skunexus-prd-prototype` is the other exception: to redraw stock pages faithfully it browses your **local** app (writes only on your explicit grant, logged for undo, never queue workers), and it runs **read-only** probes against client sandboxes. It never writes to Jira, Confluence or a client system.
 - **Ceremony is proportional.** A one-line change gets no PRD, no plan file, no decisions log. Skills escalate visibly when a "trivial" change turns out not to be — and *you* decide whether to escalate or continue.
 - **Each skill stops at its boundary.** The PRD skill won't start designing; the plan skill won't start coding; the PR skill won't write testing steps. When a skill finishes, it names the next step and stops — you invoke it when ready.
 
@@ -85,7 +105,7 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 
 | File | Written by | What it is |
 |---|---|---|
-| `jira-summary.md` | jira-prd / bug-hunt | Distilled ticket (a subagent reads the noisy Jira payload so your context doesn't) |
+| `jira-summary.md` | jira-prd / bug-hunt / prd-prototype | Distilled ticket (a subagent reads the noisy Jira payload so your context doesn't) |
 | `prd.md` | jira-prd (or a lite version by backend-plan) | The **contract**: requirements `R1…Rn`, scope, acceptance criteria |
 | `investigation.md` | bug-hunt | Evidence-backed verdict, root cause, proposed fix, acceptance `A1…An` |
 | `backend-plan.md` | backend-plan | The task DAG; live tracker — checkboxes and statuses updated as code lands |
@@ -93,6 +113,13 @@ Every ticket (or ad-hoc slug for ticketless work) gets one folder in the working
 | `pr.md`, `pr2.md`… | backend-pr | The PR title + body, exactly as posted (one file per PR round) |
 | `fe-handoff.md` | fe-handoff | Self-contained API contract for the FE team |
 | `backend-summary.md` | backend-summary | Current-state feature doc of what the ticket implemented |
+| `jira/`, `jira-<DATE>/`, `jira-diff-<DATE>.md` | prd-prototype | The whole ticket pulled as files (description, comments, changelog, attachments); later re-pulls and their diff. The first pull is never overwritten |
+| `input/` | you | Call transcripts, Basecamp posts and attachments the skill asked you for |
+| `research/` | prd-prototype | One file per researcher: evidence and a proposed default for each open question |
+| `review/` | prd-prototype | Frozen PRD snapshots, the PO baseline, the panel's reviewer files (`review/panel/`, git-ignored) and `panel-synthesis.md`, re-evaluations (`reeval-<DATE>/`), and the `*-BRIEF.md` files its agents work from |
+| `prototype/` | prd-prototype | `sn-baseline.md` (text capture of the stock pages), `<slug>-storyboard.html` (+ `-v<N>` backups), `artifact.md` (URL and version table); raw captures in `screens/` are never published |
+| `plan-parts/` | prd-prototype | The plan brief, code maps and per-drafter parts that are assembled into `backend-plan.md` |
+| `estimate.md` | prd-prototype | Part · Hours · Scope: a draft for the Jira estimate you post yourself |
 
 ---
 
@@ -193,6 +220,16 @@ Throughout, the plan's checkboxes and statuses are kept truthful as code lands �
 
 **It will not** plan work, implement production code, or write QA testing steps.
 
+### 9. `skunexus-prd-prototype` — ticket → PRD, storyboard, plan and estimate
+
+**When:** a client ticket the PO has to see and price before it is built. *"PRD, storyboard and estimate for FFD-40"*, *"build the storyboard, similar to the RMA one"*, *"PRD and plan are done, just build the storyboard"*, *"re-pull the ticket and diff it before the daily"*. It is the heavy path: a ticket that only needs requirements goes to `skunexus-jira-prd`.
+
+**What happens:** the jira-prd → backend-plan path, run by subagents, with stages added. The skill reads `.ai/<TICKET>/` and enters at the first stage whose output is missing, so it starts anywhere. The stages: the whole ticket pulled as files, evidence research, a baseline of what the PO actually decided, the interview, then a 4–6 reviewer panel on a frozen PRD (functional checkers plus simulated teammate reviews, labelled as simulated and never quoted). You rule on the panel's decision list; the remaining items become marked assumptions (`assumed, Qn`) instead of more questions, so nothing is decided silently. Then the storyboard: the stock pages it needs are captured as text from your **local** app, redrawn with fake data, and every addition is marked NEW or CHANGED against them. Each version is published as a **private** claude.ai artifact; nobody sees it until you share the link. Last, the plan (backend-plan's template and approval gate) and an estimate. It says real durations up front (panel ~45 min, capture ~30 min).
+
+**You get:** an approved `prd.md`, the storyboard URL in `prototype/artifact.md`, `backend-plan.md`, and `estimate.md` (Part · Hours · Scope, which you adjust and post yourself), plus its working folders `review/`, `prototype/` and `plan-parts/`.
+
+**It will not** write to Jira or Confluence, put hours or real data on the artifact, or write code. It stops at each stage's gate and offers the next one. Once a ticket is in this skill, re-pull it with its re-pull and diff (*"re-pull and diff"*), not jira-prd's refetch, which would overwrite `jira-summary.md`.
+
 ---
 
 ## Worked examples
@@ -242,7 +279,7 @@ claude: (backend-implement) re-reads .ai/PHG-418/ — "Approved plan, 11 tasks:
 - **You own the environment.** Expect every implementation and investigation to end with a checklist of things only you can run. That's not laziness — it's the honesty rule that keeps "done" meaning done.
 - **Don't fear the ceremony — it scales down.** Say *"skip the ceremony"* or *"just plan this, no PRD"* and the skills right-size. They'll tell you when a change has outgrown the shortcut, and continuing anyway is a legitimate answer.
 - **`decisions.md` being absent is normal.** It's created only for genuine forks whose rationale the code can't reveal. Two real entries get read; twenty trivial ones bury them.
-- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions) and the full style guides; an executable helper the skill calls sits next to its `SKILL.md`. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
+- **Repo layout:** each skill lives in `skills/<name>/` — `SKILL.md` is the instruction set; `assets/` holds the document templates; `references/` holds calibration examples (e.g. liked PR descriptions) and the full style guides; an executable helper the skill calls sits next to its `SKILL.md` (or in its `scripts/`); `agents/` holds the subagent definitions a skill spawns by type; `rules/` holds optional user-level rules. Edit those to evolve the workflow, then re-sync your `~/.claude/skills/`.
 
 ## Skill helpers
 
