@@ -1,0 +1,1861 @@
+<title><!--XD:TITLE--></title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* ===== DOM CONTRACT: what build-explainer.py emits into the five slots (TITLE, HEADER, TOC, MAIN, DATA; the slot markers sit in the
+   markup below the style). Ids are written id:x and in-page links href:#x here, so id and link checks skip this comment. check-explainer.py keys on these names.
+ IDS      [a-z0-9-]+ only, unique, never settings|sidebar|customize|upgrade|downloads|comment-*.
+          The shell owns: top (the page) bar bar-id xd-where gate-pill xd-viewed xd-tree-btn xd-prog xd-expand xd-files xd-menu-btn
+          xd-menu xd-stat main xd-pop xd-help xd-help-h xd-live xd-data.
+          The build emits: start ftree ftree-v (ftree-q ftree-hv above --filter-at files) overview map map-h carry carry-<tag>-<n> pieces
+          ch-<n> read-ch-<n> ch-mech read-ch-mech quiz <question ids> deeper asked problem background intuition proven trace
+          trace-<slug> look drift ops files f-<8hex> read-f-<8hex> fd-<8hex> h-<8hex>-<line>[-<k>] refs ref-<slug> src-<origin id>
+          cite-<slug>-<n>.
+          The engine creates: gate gate-msg q-practice q-pp q-first q-reset q-hint q-copy q-line; ff-q ff-ch ff-kind ff-risk ff-unread
+          ff-count (the files table's tools, only when ftree-q exists); tf-q tf-state tf-gap tf-count (with the goals table); xd-key (print).
+ TITLE    text only, 2-4 words ("TOY-7 Shelf cap"), stable across rebuilds; the bar shows it.
+ HEADER   <header class="doc"><h1>heading</h1><p class="lead">glance</p> nav.start id:start <strip> </header>
+          Start here: <nav class="start" id:start aria-label="Start here"><b class="lbl">Start here</b> then the steps, joined by
+          <span class="arr" aria-hidden="true">→</span>; no step numbers (circled numbers belong to pieces):
+            <a class="step" href:#map><span class="st">Look at the map and what to carry</span> <small>· ~2 min</small></a>
+              (no map: "Look at what to carry", href #carry; neither: no step)
+            <span class="step"><a class="step-a" href:#ch-1>Read pieces</a> a.pref.pbl – a.pref.pbl <small>· ~4 min</small></span>
+              (intent-only: <a class="step" href:#asked><span class="st">Read what was asked</span> <small>..</small></a>)
+            <a class="go path-q" href:#quiz><span class="go-t">Answer 5 questions <small>· ~3 min</small></span><i class="path-prog">0/5</i></a>
+          The engine rewrites .go-t ("First try" once done), .path-prog (answered, then first-try score) and adds small.go-x.
+          The strip (not on intent-only): <p class="strip-h"><b>The 17 files, by size.</b> <span class="hv">hover wording</span><span class="tp">tap
+          wording</span></p> <nav class="strip" aria-label=".."> one <a href:#f-<8hex> data-f="f-<8hex>" data-fam="change|tests|harness|gen"
+          style="flex-grow:log"><span>n</span></a> per file (its home piece's number; none on gen) </nav>
+          <ol class="pindex"> <li data-ch="ch-n"><a href:#ch-n>badge <span class="long">title</span><span class="short">name</span></a>
+          <small>4 files[ · under Go deeper]</small></li> .. [<li> Generated files] <li class="all"><a href:#files>All 17 files</a></li></ol>
+          The engine adds the hover/tap card div.tcard (the file link, the piece badges, and on touch ‹ › buttons.tnav).
+ TOC      the file tree (none on intent-only): <nav class="ftree" id:ftree aria-label="Changed files"><div class="ftree-h"><span>Viewed
+          <span id:ftree-v>0</span>/17 files</span><button class="tbtn" data-act="tree">Hide file tree</button></div><p class="tleg">status-mark
+          legend (drawer only)</p>[div.tfil: input id:ftree-q, details.tmenu with input.ftree-ext per extension and id:ftree-hv]<ul class="tree">
+          li.fo (style --d, details open > summary > i.chev i.fol span.nm, ul) and li.fi (style --d, data-f data-path data-ext [data-gen]):
+          <a href:#f-<8hex>><i class="ic"></i><span class="nm">name</span></a><span class="bs">piece badges (a.pref.pbl) | i.sw</span>
+          <span class="vt">✓</span><span class="fst" data-st="A|M|D|R|..">. Folders first; single-child folder chains in one row.
+          The engine adds the width handle div.ftree-rz (from 1100px), the drawer's Close button and div.ftree-scrim (below 1100px).
+ MAIN     section.sec.brief id:overview, the main flow, in order (each block ends with <p class="next"><a href:#..>Next: .. ↓</a></p>):
+            The map: <section class="mapframe" id:map aria-labelledby="map-h"><header><h2 id:map-h>The map</h2><p>purpose</p></header>
+              rule-shaped: <div class="map"><div class="col"><h3>heading <small>· sub</small></h3> a.box.asker ..</div>
+                <div class="wire bus" aria-hidden="true"><em>ask</em><span></span></div><div class="col"><h3>..</h3>
+                <a class="box rule"><b>title<i class="new">new</i></b><ul class="cond"><li>..</li><li class="ex">..</li></ul><small>sub</small></a></div>
+                <div class="wire plain" aria-hidden="true"><em>so</em><span></span></div><div class="col"><h3>..</h3> a.box.out ..</div></div>
+              flow-shaped (no rule): <div class="map two"> col (askers) · div.wire.bus · col (outcomes) </div>
+              A box: <a class="box asker|rule|out" href:#target title="Go to ..">[span.pb when the target is a piece]<b>label</b>..</a>
+              (an outcome adds <span class="gtag" data-state="tested">tested, 2 tests</span>); a box with a bad target is a div.
+              Then <p class="skips"><b>Two places don't ask badge name:</b> <a class="skip" href:#carry-..>..</a> .. [<a class="to" href:#carry>..</a>]</p>
+              and <p class="legend"> only the marks the map shows </p>. The engine fits the wires (stacked below 900px: CSS arrows).
+            To carry into the review: <h2 class="blk" id:carry>To carry into the review</h2><ul class="carry"><li id:carry-<tag>-<n>><b class="tag"
+              data-tag="inherits|bypasses|ask|data|not here" title="meaning">tag</b> text [file link] [chip | a.pref]</li></ul>
+            intent-only: <section class="sec" id:asked><h2 class="blk">What was asked</h2> asked.html [p.trace-status] </section>
+            The pieces: <h2 class="blk" id:pieces>The N pieces (number word: "The four pieces")</h2> then per main-flow piece:
+              <section class="ch piece" id:ch-1 data-hash="12 hex" data-read="must"><div class="hunk"><div class="note"><h3>badge Title</h3>
+              note [ol.lnotes] [<details class="leaf"><summary>More on this</summary> the rest, [<p class="flist-h">Files in this piece (2)</p>
+              ul.flist], [p.proof]</details>] (no leaf when it would be empty) [div.checks > fieldset.q] (checkpoints: open, never in the leaf)
+              </div><div class="figs">figure.code .. [div.more-figs]</div></div>
+              <label class="read"><input type="checkbox" class="read-ch" id:read-ch-1> I've read this piece</label> p.next</section>
+          section.sec id:quiz: <h2>Check yourself</h2><p>5 questions. ..</p><p class="quiz-note">..</p> fieldset.q × n. The engine adds
+            the gate, the practice banner, div.qnext (after all are answered) and div.q-actions (Practice reset, Copy result, the result line).
+          section.sec.deeper id:deeper: <h2 class="lbl">Go deeper</h2> then <details class="row"><summary><span class="sm">..</span></summary>
+            sections</details> × n; each summary's text equals the heading it opens. Inside rows, sections are <section class="sec" id:..><h3>..
+            and a deep piece is <section class="ch" id:ch-5 data-read="skim"><header class="ch-head"><h3>badge Title</h3><p class="gist">..</p>
+            </header> fragment, Files in this piece, [checks], [p.proof], label.read</section>; #ch-mech is the same with div.mgroup per group.
+            Section headings: asked What was asked · problem The problem, and what happens now · background Background · intuition Intuition ·
+            proven How it's proven · trace The goals and their state · look Where to look hardest · drift Where the code differs from
+            earlier plans · ops Deploy and merge notes · ch-mech Generated files · files All 17 files · refs Sources.
+          The engine adds the "#" link after each section's heading (aria-hidden, out of the tab order; hidden on touch).
+ GOALS    the table (>= 4 rows or any state but tested): section id:trace > h3 + p + div.tablebox > table.ft.tt; thead buttons
+          data-sort="id|proven|state"; rows <tr id:trace-<slug> data-id data-state data-proven="n"><td class="c">text</td><td class="chips">
+          built</td><td class="chips">proven</td><td><span class="state" data-state="S">Label</span> [span.tnote]</td></tr>; an empty cell holds
+          span.none. Otherwise <p class="trace-status">2 goals: <span class="state" data-state="tested">2 tested</span></p> ends #asked.
+ STATE    <span class="state" data-state="S">Label</span>, the label always written: tested Tested · built Built, test not run · untested
+          Built, no test · not-built Not built · drift Drift · non-goal Non-goal · deferred Deferred. Sort order (gaps first): drift
+          not-built untested built tested deferred non-goal.
+ PIECES   the badge: <span class="pb[ deep]" data-fam="change|tests|harness">n</span> (filled = main flow, hollow .deep = under Go deeper,
+          colour = family); the only circled-number device on the page. A reference: <a class="pref" href:#ch-n title="Go to (n) name">badge name</a>;
+          a bare badge link: <a class="pref pbl" href:#ch-n aria-label="(n) name">badge</a>. Never nested in another link.
+ CODE     <figure class="code" id:h-<8hex>-<start> data-side="diff|head|base"><figcaption><a class="ref file loc" href:#f-<8hex>><span class="dir">
+          src/<wbr></span><b>File.php</b> lines 120–160</a> [<a class="gh" href="forge" target="_blank" rel="noopener">GitHub ↗</a>] [span.note]
+          [span.lang] [span.stat] <button class="copy">Copy</button></figcaption> (a file outside the change: span.loc)<pre><code class="language-diff-php diff-highlight"><span class="l hd|ctx|add|del">
+          line\n</span>..</code>[<i class="lmark" style="--i:row">n</i>]</pre></figure>; with line notes: <div class="noted"><ol class="lnotes">..</ol>
+          figure</div>. Over 30 lines: <details class="toggle more"><summary>Show 64 lines</summary><pre>..</pre></details>. Copy writes the head side.
+ FILES    section id:files > p + div.tablebox > table.ft; thead buttons data-sort="path|ch|risk|chg" and a Viewed column; per file:
+          <tr id:f-<8hex> data-path data-ch data-kind data-tier data-risk="0-3" data-add data-del data-chg data-st data-h><td class="p"><span class="st">M</span>
+          [span.old] <button class="fx" aria-controls="fd-<8hex>">dir/name</button></td><td>badges</td><td class="k">kind</td><td>span.risk</td>
+          <td class="n">+n −m span.dst</td><td class="vw"><label><input class="read-f" id:read-f-<8hex>> Viewed</label></td></tr>
+          <tr class="fd"><td colspan="6"><details class="fdx" id:fd-<8hex>><summary>path</summary><div class="fdw">the whole diff + p.fgo "Explained in .."
+          | p.fgen (generated, binary or empty)</div></details></td></tr>. Search and filters (the engine's div.ftools) only above --filter-at files.
+ REFS     a chip: <a class="ref" id:cite-<slug>-<n> href:#src-<origin> data-ref="ID">text [span.rid]</a> [a.sb-link]; a file chip:
+          <a class="ref file" href:#f-<8hex> data-ref="file:PATH:LINE">name</a> (outside the change: span.ref.file, a preview only).
+          Sources: section id:refs > h3 Sources, then per group (Jira, GitHub, Shared pages, From the author, other groups) <h4>group</h4>
+          [p.src-note] <ul class="srcs"><li id:src-<origin>>(a link ↗ | span.sl) <span class="cited">Cited in: a.cite ..</span></li></ul>; the
+          preview store <ol class="refs" hidden><li id:ref-<slug> data-ref="ID" [data-entry="src-<origin>"]><span class="rk">Kind</span> <b>title</b>
+          <blockquote>quote</blockquote><span class="src">group · label</span></li></ol> (previews read #refs [data-ref]); <h4>Glossary</h4>
+          dl.gloss. Then div.about-b: <h3>About this page</h3> p + dl.props (Ticket · Repository · Stage · Contract · Branch · Base → Head · Files ·
+          Lines · Built from · Generated; intent-only has no Base → Head, Files or Lines). No local path in any text, title or aria.
+ QUIZ     <fieldset class="q" id:q1><legend><span class="qn">q1</span> stem</legend><div class="opts"><button type="button" class="opt" data-i="0">..</button>
+          ×4</div></fieldset>: no key, feedback, evidence, piece or kind in the markup. The engine adds the feedback after the first pick.
+          After all are answered, one wording for every reader: misses -> "Explain your misses to Claude" (Copy result, the
+          /skunexus-understand <ticket> command, "Re-read first:" links); none -> "Done: .." + "Go deeper ↓".
+          Result line: "understand quiz <built_from>: first try n/N · q1 b ✓ · q2 a ✗ (key c) · ..".
+ VOCAB    fragment vocabulary: aside.callout[data-kind=concept|edge|risk|decision|drift|verified|question|next|summary|nongoal|ran|fact] (the
+          label comes from this CSS); figure > figcaption + div.fig.flow (.node, .edge) | .fig.ba (.pane > h3) | .fig.cards (.card > h3);
+          table.toy (td.chg, span.chg); ol.stepper[data-title] > li > h3 + p (the engine turns it into a walkthrough); details.toggle;
+          details.th > summary > h3. Headings never skip a level.
+ DATA     {"meta":{"repo","ticket","head","head7","base","base7","generated","mode","stage","forge","contract","inputs":{"name":"hash8"},"build","filter_at"},
+          "chapters":[{"id","hash"}],"quiz":<quiz.json>,"pieces":{"ch-1":{"n","title","name","fam","deep"}},"rows":{"asked":"What was asked",..,
+          "files":"All 17 files"},"figs":{"path":[[start,end,"figure id"]]}}. JSON escapes "<". Storage prefix "xd:<repo>:<ticket>:"; keys
+          ch:<id>:<hash> (read ticks), f:<path>:<data-h> (Viewed), quiz:<built_from>:<qh> (first picks), qkey, last, sent:.., wipe:.., opt.
+ UNITS    all type is rem and body is 1rem: the reader's own root size scales text and layout together; the shell never sets the root size.
+ RUNTIME  optional capabilities (db, user, comments); absent on a local file, and the page never needs them. When every question has a first
+          pick, the engine merges one doc results/<userId> with {<built_from>: {line, correct, total, at}}; Reset quiz drops that entry.
+ LOCAL    the shell CSS repeats the artifact skeleton's reset ([hidden], body margin), so the local copy behaves like the artifact.
+ ===== */
+
+/* Palette: slate-leaning neutrals and one blue-pencil accent, kept for what asks something of the reader (links, the current place,
+   questions, the main flow). Light and dark through these tokens only. */
+:root{
+  --bg:#fbfcfd;--fg:#1d2230;--muted:#586072;--faint:#626a7c;--line:#e1e5ec;--line-2:#c9d0db;
+  --surface:#f3f5f8;--surface-2:#e8ecf2;--raise:#ffffff;
+  --accent:#2b54c9;--accent-bg:#eaf0fd;
+  --chip-fg:#9e2f55;--chip-bg:#f4edf1;
+  --add-bg:#e3f3e8;--add-fg:#1b6a37;--del-bg:#fbe8e8;--del-fg:#a3262c;
+  --ok:#1d7443;--ok-bg:#e4f3ea;--warn:#8a5700;--warn-bg:#fbf0d9;--bad:#b0281f;--bad-bg:#fbe7e4;
+  --c-concept:#f3f5f8;--c-concept-line:#dce1e9;
+  --c-edge:#eaf5f6;--c-edge-line:#c3e0e4;
+  --c-risk:#fcecea;--c-risk-line:#efc3be;
+  --c-decision:#f1effa;--c-decision-line:#d7d1ef;
+  --c-drift:#fcf3e1;--c-drift-line:#ead3a3;
+  --c-verified:#f1f6f2;--c-verified-line:#d5e6da;
+  --c-question:#eaf0fd;--c-question-line:#a3b8ec;
+  --c-next:#f8f9fb;--c-next-line:#c9d0db;
+  --tk-kw:#7a3fb0;--tk-str:#1d6a5a;--tk-com:#606878;--tk-num:#a24d14;--tk-fn:#2b54c9;--tk-var:#9e2f55;--tk-punc:#586072;
+  --shadow:0 10px 30px rgb(20 28 45 / .14),0 1px 3px rgb(20 28 45 / .08);
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --display:var(--serif);
+  --bar-h:48px;
+  --col:40rem;   /* the reading column, about 70-75ch of body text: all type is rem and body is 1rem, so layout and text scale together */
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171d;--fg:#e2e6ee;--muted:#a2aab9;--faint:#8a93a4;--line:#272c36;--line-2:#3a404d;
+  --surface:#1b1f27;--surface-2:#242934;--raise:#1e222b;
+  --accent:#8fadff;--accent-bg:#1c2640;
+  --chip-fg:#f09cbb;--chip-bg:#2a1f27;
+  --add-bg:#13301f;--add-fg:#7bd59b;--del-bg:#3b1a1d;--del-fg:#ff9c97;
+  --ok:#6fd49a;--ok-bg:#15301f;--warn:#e8b65c;--warn-bg:#33270f;--bad:#ff8f86;--bad-bg:#3a1b1b;
+  --c-concept:#1b1f27;--c-concept-line:#2d333f;
+  --c-edge:#13292c;--c-edge-line:#21484e;
+  --c-risk:#2e1b1b;--c-risk-line:#5a2d2a;
+  --c-decision:#201f33;--c-decision-line:#3d3768;
+  --c-drift:#2c2413;--c-drift-line:#5a4520;
+  --c-verified:#17221b;--c-verified-line:#2a3f31;
+  --c-question:#1a2440;--c-question-line:#3e5696;
+  --c-next:#181b22;--c-next-line:#3a404d;
+  --tk-kw:#c8a2ff;--tk-str:#80d3be;--tk-com:#8d96a8;--tk-num:#f0a776;--tk-fn:#8fadff;--tk-var:#f09cbb;--tk-punc:#a2aab9;
+  --shadow:0 10px 30px rgb(0 0 0 / .5),0 1px 3px rgb(0 0 0 / .4);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14171d;--fg:#e2e6ee;--muted:#a2aab9;--faint:#8a93a4;--line:#272c36;--line-2:#3a404d;
+  --surface:#1b1f27;--surface-2:#242934;--raise:#1e222b;
+  --accent:#8fadff;--accent-bg:#1c2640;
+  --chip-fg:#f09cbb;--chip-bg:#2a1f27;
+  --add-bg:#13301f;--add-fg:#7bd59b;--del-bg:#3b1a1d;--del-fg:#ff9c97;
+  --ok:#6fd49a;--ok-bg:#15301f;--warn:#e8b65c;--warn-bg:#33270f;--bad:#ff8f86;--bad-bg:#3a1b1b;
+  --c-concept:#1b1f27;--c-concept-line:#2d333f;
+  --c-edge:#13292c;--c-edge-line:#21484e;
+  --c-risk:#2e1b1b;--c-risk-line:#5a2d2a;
+  --c-decision:#201f33;--c-decision-line:#3d3768;
+  --c-drift:#2c2413;--c-drift-line:#5a4520;
+  --c-verified:#17221b;--c-verified-line:#2a3f31;
+  --c-question:#1a2440;--c-question-line:#3e5696;
+  --c-next:#181b22;--c-next-line:#3a404d;
+  --tk-kw:#c8a2ff;--tk-str:#80d3be;--tk-com:#8d96a8;--tk-num:#f0a776;--tk-fn:#8fadff;--tk-var:#f09cbb;--tk-punc:#a2aab9;
+  --shadow:0 10px 30px rgb(0 0 0 / .5),0 1px 3px rgb(0 0 0 / .4);
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.65 var(--font);-webkit-text-size-adjust:100%;overflow-wrap:break-word}
+body[data-font="serif"]{--font:var(--serif)}
+body[data-font="mono"]{--font:var(--mono);font-size:1rem}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+*,*::before,*::after{box-sizing:border-box}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+:not(pre)>code{font:1em/1.4 var(--mono);color:var(--chip-fg);background:var(--chip-bg);padding:.12em .36em;border-radius:4px;overflow-wrap:anywhere}
+pre{white-space:pre;overflow-x:auto;tab-size:4;font:1rem/1.6 var(--mono);background:var(--surface);color:var(--fg);margin:0;padding:12px 0;border-radius:6px}
+pre>code{display:block;width:max-content;min-width:100%;padding:0 16px;font:inherit;color:inherit;background:none}
+/* Markdown is prose: its lines wrap; other code wraps when the reader picks "Wrap code lines" (Options) */
+pre>code:is(.language-markdown,.language-diff-markdown),body.wrap pre>code{width:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+kbd{font:600 1rem var(--mono);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface);color:var(--fg)}
+.btn{font:500 1rem/1.3 var(--font);padding:6px 11px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer}
+.btn:hover{background:var(--surface)}
+.btn[disabled]{opacity:.45;cursor:default}
+.plus{color:var(--add-fg)}
+.minus{color:var(--del-fg)}
+
+/* bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:12px;height:var(--bar-h);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg);border-bottom:1px solid var(--line)}
+.bar-id{font:600 1rem/1 var(--mono);color:var(--fg);text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:auto}
+.bar-id code{color:var(--muted);background:none;padding:0;font-size:inherit}
+.bar progress{flex:0 0 72px}
+progress{appearance:none;-webkit-appearance:none;height:4px;border:0;border-radius:2px;background:var(--surface-2);color:var(--accent);overflow:hidden}
+progress::-webkit-progress-bar{background:var(--surface-2)}
+progress::-webkit-progress-value{background:var(--accent)}
+progress::-moz-progress-bar{background:var(--accent)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 1rem/1 var(--mono);padding:5px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);background:var(--bg);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+a.pill:hover{border-color:var(--accent)}
+.pill::before{content:"";flex:0 0 7px;height:7px;border-radius:50%;background:currentColor}
+.pill[data-state="pass"]{color:var(--ok);background:var(--ok-bg);border-color:var(--ok)}
+.pill[data-state="fail"],.pill[data-state="stale"]{color:var(--warn);background:var(--warn-bg);border-color:var(--warn)}
+.bar .pill{max-width:40vw}
+@media (max-width:480px){.bar progress{display:none}.bar .pill{max-width:52vw}}
+.menu{position:fixed;z-index:40;top:calc(var(--bar-h) + env(safe-area-inset-top,0px) + 4px);right:max(16px,env(safe-area-inset-right,0px));width:16.5rem;max-width:calc(100vw - 32px);
+  display:grid;gap:2px;padding:6px;background:var(--raise);color:var(--fg);border:1px solid var(--line-2);border-radius:8px;box-shadow:var(--shadow);font-size:1rem}
+.menu button{font:inherit;text-align:left;color:var(--fg);background:none;border:0;border-radius:5px;padding:7px 10px;cursor:pointer}
+.menu button:hover{background:var(--surface)}
+.menu button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent)}
+.menu .row{display:flex;gap:2px;align-items:center}
+.menu .row>span{font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 8px 0 10px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+.menu .stat{margin:0;padding:6px 10px 4px;font:1rem/1.4 var(--mono);color:var(--muted)}
+.menu [data-act="reset"][data-armed],.menu [data-act="wipe"][data-armed]{color:var(--bad);background:var(--bad-bg)}
+.help{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:19rem;max-width:calc(100vw - 32px);
+  padding:14px 16px;background:var(--raise);color:var(--fg);border:1px solid var(--line-2);border-radius:8px;box-shadow:var(--shadow);font-size:1rem}
+.help h2{font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.help dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0 0 12px}
+.help dd{margin:0}
+.help p{margin:0 0 12px;color:var(--muted);font-size:1rem}
+.pop{position:fixed;z-index:40;left:0;top:0;max-width:min(26rem,calc(100vw - 32px));max-height:50vh;overflow:auto;padding:10px 12px;background:var(--raise);color:var(--fg);
+  border:1px solid var(--line-2);border-radius:8px;box-shadow:var(--shadow);font-size:1rem;line-height:1.5;pointer-events:none}
+.pop blockquote{margin:6px 0}
+
+/* page grid: the "toc" area holds the file tree from 1100px; below that the tree is a fixed drawer and the row stays empty */
+.page{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "toc" "main";row-gap:28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 96px}
+.doc{grid-area:head;min-width:0}
+main{grid-area:main;min-width:0;display:flex;flex-direction:column;gap:56px}
+main [id],.doc [id]{scroll-margin-top:calc(var(--bar-h) + 16px)}
+@media (max-width:560px){.page{row-gap:16px;padding-top:20px}}   /* phone: the title, Start here and the map start on the first screen */
+
+/* document head */
+h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;color:var(--fg)}
+h1{font-size:clamp(1.75rem,1.15rem + 2.2vw,2.45rem);line-height:1.15;letter-spacing:-.01em;margin:10px 0 0}
+h2{font-size:1.5rem;line-height:1.25;margin:0}
+h3{font:600 1.12rem/1.35 var(--font);margin:28px 0 0;text-wrap:balance}
+h4{font:600 1rem/1.4 var(--font);margin:20px 0 0}
+.props{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:7px 22px;margin:22px 0 0;padding:16px 0;border-block:1px solid var(--line);font-size:1rem;line-height:1.5}
+.props>div{display:contents}
+.props dt{font:500 1rem/1.95 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+.props dd{margin:0;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.props code{color:var(--fg);background:var(--surface)}
+.sizebar{display:inline-flex;gap:2px;vertical-align:middle;margin-left:8px}
+.sizebar i{width:9px;height:9px;border-radius:1.5px;background:var(--surface-2)}
+.sizebar i.a{background:var(--add-fg)}
+.sizebar i.d{background:var(--del-fg)}
+.rel{color:var(--faint)}
+
+/* a piece under Go deeper: its one-line gist under the heading */
+.gist{color:var(--fg)}
+.gist::before{content:"In short";margin-right:.6em;font:600 1rem var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+
+/* sections and prose */
+.sec>*+*,.ch>*+*,.mgroup>*+*,.pane>*+*,.card>*+*,aside.callout>*+*,ol.stepper>li>*+*,details>*+*{margin-top:14px}
+.sec>h2+*,.ch>.ch-head+*{margin-top:18px}
+p{margin:0}
+ul,ol{margin:0;padding-left:1.4em}
+li+li{margin-top:4px}
+strong,b{font-weight:600}
+blockquote{margin:0;padding:2px 0 2px 12px;border-left:2px solid var(--line-2);color:var(--muted)}
+hr{border:0;border-top:1px solid var(--line)}
+main table:not(.ft){display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;font-size:1rem}
+main table:not(.ft) th,main table:not(.ft) td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+main table:not(.ft) th{background:var(--surface);font-weight:600}
+.anchor{font:400 1em var(--mono);color:var(--faint);text-decoration:none;margin-left:.35em;opacity:0}
+h2:hover .anchor{opacity:1}
+.ch{padding-top:40px;border-top:1px solid var(--line)}
+.ch-head{display:grid;gap:10px}
+.risk[data-risk="3"]{color:var(--bad);background:var(--bad-bg);border-color:var(--bad-bg)}
+.risk[data-risk="2"]{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bg)}
+.cmt{margin-left:auto;font:500 1rem/1.5 var(--font);padding:2px 9px;border:1px solid var(--line-2);border-radius:999px;background:var(--bg);color:var(--muted);cursor:pointer}
+.cmt:hover{color:var(--accent);border-color:var(--accent)}
+#quiz>.cmt{display:block;margin-top:8px;margin-left:0}
+label.read{display:flex;gap:10px;align-items:center;width:max-content;max-width:100%;margin-top:28px;padding:9px 14px;border:1px solid var(--line-2);border-radius:6px;font-weight:500;cursor:pointer}
+label.read:has(input:checked){border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:var(--accent);flex:0 0 auto}
+.mgroup{padding-top:16px;border-top:1px dashed var(--line-2)}
+.how{color:var(--muted);font-size:1rem}
+ul.flist{list-style:none;padding:0;font:1rem/1.6 var(--mono)}
+ul.flist li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+ul.flist li+li{margin-top:2px}
+/* details */
+details>summary{cursor:pointer;list-style:none;display:flex;gap:8px;align-items:baseline;color:var(--muted);font-weight:500}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"▸";flex:0 0 auto;width:.8em;color:var(--faint);font-size:1em}
+details[open]>summary::before{content:"▾"}
+details>summary:hover{color:var(--fg)}
+details.toggle>:not(summary){margin-left:1.3em}
+details.th>summary{color:var(--fg)}
+details.th>summary h3{margin:0}
+details.th{margin-top:28px}
+
+/* callouts: tint + hairline, the kind named in text */
+aside.callout{--cb:var(--c-concept);--cl:var(--c-concept-line);--ck:var(--muted);display:block;padding:12px 16px 14px;background:var(--cb);border:1px solid var(--cl);border-radius:6px}
+aside.callout::before{display:block;margin-bottom:4px;font:600 1rem/1.4 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ck);content:"Note"}
+aside.callout>*+*{margin-top:8px}
+aside.callout ul,aside.callout ol{padding-left:1.2em}
+aside.callout[data-kind="concept"]::before{content:"Concept"}
+aside.callout[data-kind="summary"]{--cb:var(--surface);--cl:var(--line-2);--ck:var(--fg)}
+aside.callout[data-kind="summary"]::before{content:"In short"}
+aside.callout[data-kind="edge"]{--cb:var(--c-edge);--cl:var(--c-edge-line)}
+aside.callout[data-kind="edge"]::before{content:"Edge case"}
+aside.callout[data-kind="risk"]{--cb:var(--c-risk);--cl:var(--c-risk-line);--ck:var(--bad)}
+aside.callout[data-kind="risk"]::before{content:"Risk"}
+aside.callout[data-kind="decision"]{--cb:var(--c-decision);--cl:var(--c-decision-line)}
+aside.callout[data-kind="decision"]::before{content:"Decision"}
+aside.callout[data-kind="drift"]{--cb:var(--c-drift);--cl:var(--c-drift-line);--ck:var(--warn)}
+aside.callout[data-kind="drift"]::before{content:"Drift · plan vs code"}
+aside.callout[data-kind="verified"]{--cb:var(--c-verified);--cl:var(--c-verified-line);--ck:var(--ok);color:var(--muted);font-size:1rem}
+aside.callout[data-kind="verified"]::before{content:"Backed by a test"}
+aside.callout[data-kind="question"]{--cb:var(--c-question);--cl:var(--c-question-line);--ck:var(--accent)}
+aside.callout[data-kind="question"]::before{content:"Ask the author"}
+aside.callout[data-kind="next"]{--cb:var(--c-next);--cl:var(--c-next-line);border-style:dashed}
+aside.callout[data-kind="next"]::before{content:"Next idea"}
+aside.callout[data-kind="nongoal"]{--cb:var(--surface);--cl:var(--line-2);--ck:var(--warn)}
+aside.callout[data-kind="nongoal"]::before{content:"Not in scope"}
+aside.callout[data-kind="ran"]{--cb:var(--c-verified);--cl:var(--c-verified-line);--ck:var(--ok)}
+aside.callout[data-kind="ran"]::before{content:"What ran"}
+/* Go deeper: drift from earlier plans and the deploy and merge notes, quiet boxes under their section's heading */
+.drift-list,.ops-list{padding:12px 16px 14px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface)}
+.drift-list{background:var(--c-drift);border-color:var(--c-drift-line)}
+.drift-list>*+*,.ops-list>*+*{margin-top:8px}
+.drift-list ul,.ops-list ul{padding-left:1.2em}
+
+/* goals: state badges (a text label plus a token colour), the one-line status in What was asked */
+.state{display:inline-block;font:600 1rem/1.5 var(--mono);padding:0 7px;border:1px solid var(--line-2);border-radius:4px;color:var(--muted);background:var(--surface);white-space:nowrap;text-decoration:none}
+.state[data-state="tested"]{color:var(--ok);background:var(--ok-bg);border-color:var(--ok)}
+.state[data-state="built"]{color:var(--accent);background:var(--accent-bg);border-color:var(--accent);border-style:dashed}
+.state[data-state="untested"],.state[data-state="not-built"]{color:var(--warn);background:var(--warn-bg);border-color:var(--warn)}
+.state[data-state="drift"]{color:var(--bad);background:var(--bad-bg);border-color:var(--bad)}
+.state[data-state="non-goal"],.state[data-state="deferred"]{border-style:dashed}
+.trace-status{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:baseline}
+.sb-link{font:600 1rem var(--mono);padding:0 4px;text-decoration:none}
+.sb-link:hover{text-decoration:underline}
+
+/* reference chips and their previews (the hidden store in #refs) */
+/* a chip is a link, not code: accent text with a dotted underline (code is tinted mono) */
+.ref{font:500 1em/1.35 var(--font);color:var(--accent);text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer;overflow-wrap:anywhere}
+.ref.file{font-family:var(--mono);font-size:1em}
+.ref:hover,.ref:focus-visible{text-decoration-style:solid}
+.ref .rid{color:var(--faint);font-size:1em;margin-left:.15em}
+figcaption .ref{font-size:1rem}
+figcaption .loc{overflow-wrap:break-word}
+figcaption .dir{color:var(--faint);font-weight:400}
+.rk{font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-right:4px}
+.src{display:block;margin-top:4px;font:1rem var(--mono);color:var(--faint)}
+.src,.pop blockquote,.tnote,.flist li{overflow-wrap:anywhere}   /* a URL or path in a grid or flex item must not widen the page */
+.opts,.checks,.fb,.ch-head{grid-template-columns:minmax(0,1fr)}   /* an implicit auto column grows to its longest word */
+/* Sources lists the places a reader can open, grouped by origin; each entry links back to the chips that cite it */
+ul.srcs{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+ul.srcs>li{margin:0;padding:8px 0 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.src-note{color:var(--muted);margin:0 0 6px}
+.cited{display:block;color:var(--muted);margin-top:2px}
+a.cite .pb{margin-right:.025em}
+a.cite.n{margin-left:.35em}
+dl.gloss{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 18px;margin:0}
+dl.gloss dt{font-weight:600}
+dl.gloss dd{margin:0;color:var(--muted)}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)}dl.gloss dd{margin-bottom:6px}}
+
+/* code figures */
+figure{margin:0}
+figure.code{border:1px solid var(--line);border-radius:6px;overflow:hidden;min-width:0}
+/* wide screens: a code figure grows into the empty right margin, never past the viewport (17px for a scrollbar, 8px of air) */
+@media (min-width:1300px){body:not(.wide) :is(.sec,.ch)>figure.code{width:max(100%,min(70rem,calc(100vw - 97px - max(14rem,(100vw - 129px - var(--col)) / 2))))}}
+figure.code>figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 10px 7px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);font:1rem/1.4 var(--mono);color:var(--muted)}
+figure.code>figcaption .note{color:var(--muted);font-family:var(--font);font-size:1rem}
+figure.code>figcaption .lang{margin-left:auto;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;font-size:1rem}
+figure.code[data-side="base"]>figcaption::before{content:"Before";font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--del-fg)}
+figure.code[data-side="head"]>figcaption::before{content:"At head";font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+.copy{font:500 1rem/1.4 var(--font);padding:2px 9px;border:1px solid var(--line-2);border-radius:5px;background:var(--bg);color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--fg)}
+figure.code pre{border-radius:0}
+figure.code details.more>summary{padding:8px 14px;background:var(--surface);font:1rem var(--mono)}
+figure.code details.more>pre{margin:0;border-top:1px solid var(--line)}
+.l{display:block;margin:0 -16px;padding:0 16px}
+.l.add{background:var(--add-bg)}
+.l.del{background:var(--del-bg)}
+.l.hd{color:var(--muted);background:var(--surface-2)}
+/* Prism tokens, themed; diff-highlight line backgrounds */
+code .token.inserted:not(.prefix){display:block;margin:0 -16px;padding:0 16px;background:var(--add-bg)}
+code .token.deleted:not(.prefix){display:block;margin:0 -16px;padding:0 16px;background:var(--del-bg)}
+code .token.prefix.inserted{color:var(--add-fg)}
+code .token.prefix.deleted{color:var(--del-fg)}
+code .token.coord{color:var(--muted)}
+code .token.coord.hd{display:block;margin:0 -16px;padding:0 16px;background:var(--surface-2)}
+code .token.comment,code .token.prolog,code .token.doctype{color:var(--tk-com);font-style:italic}
+code .token.keyword,code .token.important,code .token.atrule,code .token.boolean{color:var(--tk-kw)}
+code .token.string,code .token.char,code .token.attr-value,code .token.regex{color:var(--tk-str)}
+code .token.number,code .token.constant,code .token.symbol{color:var(--tk-num)}
+code .token.function,code .token.class-name{color:var(--tk-fn)}
+code .token.variable,code .token.property,code .token.tag{color:var(--tk-var)}
+code .token.punctuation,code .token.operator,code .token.delimiter{color:var(--tk-punc)}
+
+/* diagram families */
+main figure:not(.code){border:1px solid var(--line);border-radius:6px;padding:12px 14px 14px;min-width:0}
+main figure:not(.code)>figcaption{font:600 1rem/1.4 var(--mono);color:var(--muted);margin-bottom:12px}
+.fig{min-width:0}
+.fig.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.flow .node{min-width:0;padding:8px 11px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg);font-size:1rem;line-height:1.4}
+.flow .node>strong,.flow .node>b{display:block}
+.flow .edge{display:flex;align-items:center;gap:6px;min-width:0;font:1rem/1.4 var(--mono);color:var(--muted)}
+.flow .edge::before{content:"→";color:var(--faint);font-size:1rem}
+.fig.ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ba .pane{min-width:0}
+.ba .pane>h3,.ba .pane>h4{margin:0;font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+.fig.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:10px}
+.cards .card{min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:1rem}
+.cards .card>h3,.cards .card>h4{margin:0;font:600 1rem/1.4 var(--font)}
+@media (max-width:640px){.fig.flow{flex-direction:column;align-items:stretch}.flow .edge::before{content:"↓"}.fig.ba{grid-template-columns:minmax(0,1fr)}}
+main table.toy{font:1rem/1.45 var(--mono);font-variant-numeric:tabular-nums}
+main table.toy th{color:var(--muted);font-weight:600}
+td.chg,th.chg{background:var(--accent-bg)}
+td.chg::after,th.chg::after{content:"changed";margin-left:6px;font:600 1rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);vertical-align:1px}
+span.chg{background:var(--accent-bg);border-radius:3px;padding:0 .2em;text-decoration:underline dotted var(--accent);text-underline-offset:3px}
+
+/* stepper: static numbered list, enhanced into list | state card | step strip */
+ol.stepper{padding-left:1.4em}
+ol.stepper>li+li{margin-top:22px}
+ol.stepper>li>h3,ol.stepper>li>h4{margin:0;font:600 1rem/1.4 var(--font)}
+.stp{border:1px solid var(--line);border-radius:6px;min-width:0}
+.stp-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font:600 1rem/1.4 var(--mono);color:var(--muted)}
+.stp-n{color:var(--fg);font-variant-numeric:tabular-nums}
+.stp-main{display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr)}
+.stp-list{list-style:none;margin:0;padding:8px;display:grid;gap:2px;align-content:start;border-right:1px solid var(--line)}
+.stp-list li{margin:0}
+.stp-list button{display:block;width:100%;text-align:left;font:inherit;font-size:1rem;line-height:1.35;padding:6px 8px;border:0;border-radius:5px;background:none;color:var(--muted);cursor:pointer}
+.stp-list button:hover{background:var(--surface)}
+.stp-list button[aria-current]{background:var(--accent-bg);color:var(--fg);font-weight:600}
+.stp ol.stepper.on{list-style:none;margin:0;padding:14px 16px;min-width:0}
+.stp ol.stepper.on>li{margin:0}
+.stp ol.stepper.on>li:not(.cur){display:none}
+.stp-strip{display:flex;gap:4px;padding:14px 12px 10px;border-top:1px solid var(--line)}
+.stp-strip button{position:relative;flex:1 1 0;height:10px;padding:0;border:0;border-radius:2px;background:var(--surface-2);cursor:pointer}
+.stp-strip button.seen{background:var(--line-2)}
+.stp-strip button.cur{background:var(--accent)}
+.stp-strip button.chg-cell::after{content:"";position:absolute;top:-7px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--warn)}
+.stp-nav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 12px 12px}
+.stp-nav .hint{margin-left:auto;font:1rem var(--mono);color:var(--faint)}
+@media (max-width:700px){.stp-main{grid-template-columns:minmax(0,1fr)}.stp-list{display:none}.stp-nav .hint{display:none}}
+
+/* files table */
+.ftools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftools input[type="search"],.ftools select{font:1rem/1.3 var(--font);padding:6px 9px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0}
+.ftools input[type="search"]{flex:1 1 14rem}
+.ftools label.chk{display:inline-flex;gap:6px;align-items:center;font-size:1rem;color:var(--muted)}
+.fcount{font:1rem var(--mono);color:var(--muted);margin-left:auto}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table.ft{border-collapse:collapse;width:100%;font-size:1rem;line-height:1.4;font-variant-numeric:tabular-nums}
+.ft th,.ft td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:baseline}
+.ft tbody tr:last-child td{border-bottom:0}
+.ft thead th{background:var(--surface);font:600 1rem/1.4 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+.ft th button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.ft th button:hover{color:var(--fg)}
+.ft th[aria-sort="ascending"] button::after{content:" ↑"}
+.ft th[aria-sort="descending"] button::after{content:" ↓"}
+.ft .n{text-align:right;white-space:nowrap}
+.ft td.p{font:1rem/1.45 var(--mono);overflow-wrap:anywhere;min-width:14rem}
+.ft td.p a{color:var(--fg);text-decoration:none}
+.ft td.p a:hover{color:var(--accent);text-decoration:underline}
+.ft .dir,.ft .old{color:var(--faint)}
+.ft .st{display:inline-block;width:1.5em;text-align:center;font-weight:600;color:var(--faint);border-radius:3px}
+.ft tr[data-st="A"] .st{color:var(--add-fg)}
+.ft tr[data-st="D"] .st{color:var(--del-fg)}
+.ft tr.done td.p :is(a,button.fx){color:var(--faint);text-decoration:line-through;text-decoration-color:var(--line-2)}
+/* a file's whole diff opens under its row, as wide as the box around the table */
+.tablebox{container-type:inline-size}
+.ft button.fx{font:inherit;color:var(--fg);background:none;border:0;padding:0;cursor:pointer;text-align:left;overflow-wrap:anywhere}
+.ft button.fx:hover{color:var(--accent);text-decoration:underline}
+.ft button.fx::before{content:"▸ ";color:var(--faint)}
+.ft button.fx[aria-expanded="true"]::before{content:"▾ "}
+.ft tr.fd:has(>td>details:not([open])),.ft tr[data-path][hidden]+tr.fd{display:none}
+.ft tr.fd>td{padding:0 0 12px}
+.ft details.fdx>summary{display:none}
+.ft .fdw{position:sticky;left:0;width:100cqw;box-sizing:border-box;padding:0 10px}
+.ft .fdw figure.code{margin:0}
+.ft .fdw p{margin:8px 0 0}
+.ft td.k{color:var(--muted)}
+.ft .risk{font:500 1rem var(--mono);padding:1px 6px;border-radius:4px;color:var(--muted)}
+.tt td.c{min-width:13rem}
+.tt td.chips{min-width:8rem}
+.tnote{display:block;margin-top:4px;font-size:1rem;color:var(--muted)}
+.ft .none{font:1rem var(--mono);color:var(--faint)}
+@media (max-width:560px){.ft .k{display:none}.ft td.p{min-width:11rem}}
+
+/* quiz */
+.checks{display:grid;gap:22px;margin-top:28px}
+fieldset.q{border:0;padding:0;margin:0;min-width:0}
+.checks fieldset.q{padding:14px 16px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.checks fieldset.q::before{content:"Checkpoint";display:block;margin-bottom:4px;font:600 1rem var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+#quiz fieldset.q+fieldset.q{margin-top:30px}
+fieldset.q legend{float:left;width:100%;padding:0;margin:0 0 12px;font-weight:600;line-height:1.5}
+fieldset.q legend+*{clear:both}
+.qn{font-family:var(--mono);color:var(--faint);margin-right:.3em}
+.opts{display:grid;gap:8px}
+button.opt{position:relative;display:block;width:100%;text-align:left;font:inherit;line-height:1.5;color:var(--fg);background:var(--bg);border:1px solid var(--line-2);border-radius:6px;padding:10px 14px 10px 42px;cursor:pointer}
+button.opt::before{content:"";position:absolute;left:14px;top:13px;width:16px;height:16px;border:1.5px solid var(--line-2);border-radius:50%;background:var(--bg)}
+fieldset.q:not(.done) button.opt:hover{border-color:var(--accent);background:var(--surface)}
+fieldset.q.done button.opt{cursor:default}
+fieldset.q.done button.opt:not(.picked):not(.key){color:var(--muted)}
+button.opt.key{border-color:var(--ok);background:var(--ok-bg)}
+button.opt.key::before{border-color:var(--ok);background:var(--ok)}
+button.opt.miss{border-color:var(--bad);background:var(--bad-bg)}
+button.opt.miss::before{border-color:var(--bad);background:var(--bad)}
+.mk{display:block;margin-top:4px;font:600 1rem/1.4 var(--mono)}
+.key .mk{color:var(--ok)}
+.miss .mk{color:var(--bad)}
+.fb{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:1rem;display:grid;gap:8px}
+.checks .fb{background:var(--raise)}
+.fb .res{font-weight:600}
+.fb .res.ok{color:var(--ok)}
+.fb .res.no{color:var(--bad)}
+.fb .ev{font-size:1rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.fb details>:not(summary){margin-top:8px}
+.fb ul{padding-left:1.2em}
+.gate{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+#gate-msg{font:1rem/1.4 var(--mono);color:var(--muted)}
+.quiz-note{font-size:1rem;color:var(--muted)}
+.q-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:30px}
+.q-hint{flex:1 1 20rem;font-size:1rem;color:var(--muted)}   /* what Practice reset does, before the click */
+.q-practice{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:12px 0;padding:10px 14px;border:1px solid var(--warn);border-left-width:5px;border-radius:8px;background:var(--warn-bg)}
+.q-practice[hidden]{display:none}
+.q-practice{scroll-margin-top:calc(var(--bar-h) + 12px)}
+.q-practice p{margin:0;flex:1 1 28rem}
+.q-practice .q-pp{font:600 1rem var(--mono);color:var(--muted)}
+.q-line{display:block;flex-basis:100%;margin-top:4px;padding:8px 10px;border:1px dashed var(--line-2);border-radius:6px;font:1rem/1.5 var(--mono);color:var(--muted);overflow-wrap:anywhere;user-select:all}
+
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* print: the local copy only (the artifact frame cannot print) */
+@media print{
+  :root:root:root{--bg:#fff;--fg:#111;--muted:#3a3a3a;--faint:#555;--line:#b5b5b5;--line-2:#8a8a8a;--surface:#f3f3f3;--surface-2:#e9e9e9;--raise:#fff;
+    --accent:#111;--accent-bg:#ececec;--chip-fg:#111;--chip-bg:#efefef;--add-bg:#e6f2e9;--add-fg:#1b5e31;--del-bg:#f6e6e6;--del-fg:#8e1f24;
+    --ok:#1b5e31;--ok-bg:#fff;--warn:#6b4500;--warn-bg:#fff;--bad:#8e1f24;--bad-bg:#fff;--mark:var(--line-2);color-scheme:light}
+  @page{margin:16mm}
+  body{font-size:10.5pt;line-height:1.5}
+  body::before,.bar,.ftools,.pop,.help,.menu,.copy,.anchor,.cmt,.q-actions,.gate,.stp-list,.stp-strip,.stp-nav,label.read,#files .ft td.vw,#files .ft thead th:last-child{display:none!important}
+  .page{display:block;padding:0}
+  main{display:block}
+  main>*+*{margin-top:28px}
+  .ch,#files{break-before:page;border-top:0;padding-top:0}
+  pre{white-space:pre-wrap;break-inside:avoid;overflow:visible}
+  pre>code{width:auto;min-width:0}
+  figure,aside.callout,fieldset.q,.stp,tr{break-inside:avoid}
+  aside.callout{background:none;border-color:var(--line)}
+  code .token{color:var(--fg)!important;font-style:normal!important}
+  a{color:var(--fg);text-decoration:none}
+  .props::after{content:"Reviewer ______________________        Quiz first try ____ / ____";grid-column:1/-1;margin-top:14px;font:11pt var(--mono)}
+  .stp ol.stepper.on>li{display:block!important}
+  .stp ol.stepper.on>li+li{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+  .tablebox{overflow:visible;border:0}
+  fieldset.q{counter-reset:opt}
+  button.opt{counter-increment:opt;padding-left:40px;background:none!important;color:var(--fg)!important}
+  button.opt::before{content:counter(opt,lower-alpha);width:18px;height:18px;top:10px;font:600 .625rem/1rem var(--mono);text-align:center;border:1px solid var(--fg);background:none!important;color:var(--fg)}
+  .mk,.fb{display:none!important}
+  .print-key{break-before:page}
+  .print-key li{margin-top:8px}
+}
+/* ===== The page: the head (h1, lead, Start here, the strip), the main flow (section.brief#overview), the quiz and the
+   closed Go deeper rows (details.row), each opening in place. Sizes are rem off the reader's own root; nothing under 1rem. ===== */
+.doc h1{font-size:clamp(1.6rem,1.15rem + 1.5vw,2.1rem);margin:0}
+.doc .lead{margin:10px 0 0;font-size:1.15rem;line-height:1.45;color:var(--fg)}
+main{gap:20px}
+.brief,.deeper{font-size:1rem}
+.brief>*+*,.deeper>*+*{margin-top:6px}
+h2.lbl{margin-top:10px;font:600 1rem/1.4 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+main table.bt{display:table;width:100%;font-size:1rem}
+main table.bt th,main table.bt td{padding:3px 8px}
+main table.bt td:nth-child(2){white-space:nowrap}
+@media (min-width:561px){.page{padding-top:20px!important;row-gap:14px!important}}
+main table.bt td.chg{font-weight:600;color:var(--fg);background:var(--accent-bg)}
+@media (max-width:560px){main table.bt{display:block}}
+details.row{border-top:1px solid var(--line);scroll-margin-top:calc(var(--bar-h) + 16px)}
+details.row+:not(details.row){margin-top:12px}
+details.row>summary{padding:6px 0;color:var(--fg);font-weight:400}
+details.row>summary .sm{flex:1 1 auto;min-width:0}
+details.row[open]>summary{font-weight:600}
+details.row>:not(summary){margin:4px 0 28px}
+details.row .ch{padding-top:0;border-top:0}
+.btn.pri{background:var(--accent);color:var(--on-fam);border-color:var(--accent)}
+.btn.pri:hover{background:var(--accent);filter:brightness(1.1)}
+.proof{font-size:1rem;color:var(--muted)}
+.flist-h{font:600 1rem/1.4 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+.about-b{font-size:1rem}
+.about-b>p{color:var(--muted)}
+/* the families' and the tree's colours */
+:root{--test:#1f7a4d;--test-bg:#e6f4ec;--ghost:#8a93a6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--test:#7fd3a3;--test-bg:#163325;--ghost:#6f788c}}
+:root[data-theme="dark"]{--test:#7fd3a3;--test-bg:#163325;--ghost:#6f788c}
+@media (min-width:1100px){.page,body.wide .page{grid-template-columns:minmax(0,78rem);grid-template-areas:"head" "main";justify-content:center;column-gap:0}}
+main :is(p,li,dd,h3,dl):not(.map *):not(.mapframe *):not(.next):not(.carry li):not(.legend):not(.note *){max-width:50rem}
+.brief>*+*{margin-top:0}
+.doc .lead{max-width:60ch}
+/* the map's rule conditions: pills 9px apart (the gap, not a li+li margin, so the first pill is as tall as its row);
+   the exception wraps, so it is a block with corners */
+ul.cond{list-style:none;padding:0;margin:6px 0;display:flex;flex-wrap:wrap;gap:9px 5px}
+ul.cond li{background:var(--raise);border:1px solid var(--accent);border-radius:999px;padding:1px 9px;font-size:1rem;margin:0}
+ul.cond li.ex{border-style:dashed;border-radius:.75rem;padding:3px 9px}
+.gtag{display:inline-block;margin-top:3px;font-size:1rem;border-radius:3px;padding:0 5px;color:var(--warn);background:var(--warn-bg)}
+.gtag[data-state="tested"]{color:var(--test);background:var(--test-bg)}
+/* the carry list */
+ul.carry{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));gap:8px 12px}
+ul.carry li{margin:0;font-size:1rem;border:1px solid var(--line);border-radius:8px;padding:8px 11px;background:var(--raise)}
+b.tag{display:inline-block;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:0 5px;margin-right:6px;vertical-align:1px;background:var(--surface-2);color:var(--muted)}
+b.tag:is([data-tag="inherits"],[data-tag="bypasses"],[data-tag="ask"]){background:var(--warn-bg);color:var(--warn)}
+/* the pieces: deciding hunks with their notes beside them */
+.ch.piece{padding:0;border:0;margin:16px 0 8px;scroll-margin-top:calc(var(--bar-h) + 12px)}
+.piece .hunk{display:grid;grid-template-columns:minmax(16rem,1fr) minmax(0,1.6fr);gap:12px 24px}
+.piece .note{font-size:1rem;grid-column:1;grid-row:1}
+.piece .figs{grid-column:2;grid-row:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.piece .note p{margin:0 0 8px}
+@media (max-width:1100px){.piece .hunk{grid-template-columns:minmax(0,1fr)}.piece .note,.piece .figs{grid-column:1;grid-row:auto}}
+aside.callout[data-kind="fact"]{background:none;border:0;border-left:2px solid var(--line-2);border-radius:0;padding:0 0 0 8px;font-size:1rem;color:var(--muted)}
+aside.callout[data-kind="fact"]::before{content:none}
+ol.lnotes{list-style:none;margin:8px 0 0;padding:0;font-size:1rem;color:var(--muted)}
+ol.lnotes li{counter-increment:ln;margin:2px 0}
+ol.lnotes li::before{content:counter(ln);display:inline-block;min-width:1.05rem;margin-right:6px;font:600 1rem/1.05rem var(--mono);text-align:center;border-radius:3px;background:var(--warn-bg);color:var(--warn)}
+figure.code pre{position:relative}
+i.lmark{position:absolute;left:1px;top:calc(12px + var(--i) * 1.3rem + .1rem);min-width:.9rem;font:normal 600 1rem/1.05rem var(--mono);text-align:center;border-radius:3px;background:var(--warn-bg);color:var(--warn);pointer-events:none}
+details.leaf{margin:6px 0 0;border-top:1px dashed var(--line)}
+details.leaf>summary{padding:6px 0;font-size:1rem;color:var(--accent)}
+details.leaf[open]>summary{color:var(--fg);font-weight:600}
+.piece>label.read{font-size:1rem}
+.flash{outline:3px solid var(--accent);outline-offset:3px;transition:outline-color 1.2s}
+@media print{.flash{outline:0}}
+.piece .more-figs{display:flex;flex-direction:column;gap:8px}.piece:has(details.leaf:not([open])) .more-figs{display:none}
+/* ===== One visible spine of numbered pieces: the badge, piece references, the strip and its index ===== */
+:root{--fam-change:var(--accent);--fam-tests:var(--test);--fam-harness:#5f6a80;--on-fam:#fff;--mark:var(--line-2)}
+/* --on-fam: text on an accent or family fill (4.5:1); --mark: a UI mark's line, the map's outcome borders and the
+   generated-file hatch (3:1 on the page in dark mode, where --line-2 gives 1.5) */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fam-harness:#8a93a6;--on-fam:var(--bg);--mark:#6f788c}}
+:root[data-theme="dark"]{--fam-harness:#8a93a6;--on-fam:var(--bg);--mark:#6f788c}
+small,sub,sup{font-size:1em}
+/* the one badge: a disc with the piece's number; filled = main flow, hollow = under Go deeper; colour = family */
+.pb{--f:var(--fam-change);display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:1.65em;height:1.65em;padding:0 .25em;
+  border-radius:999px;border:2px solid var(--f);background:var(--f);color:var(--on-fam);font:700 1rem/1 var(--font);font-variant-numeric:tabular-nums;vertical-align:-.4em;flex:none}
+.pb[data-fam="tests"]{--f:var(--fam-tests)}.pb[data-fam="harness"]{--f:var(--fam-harness)}
+.pb.deep{background:transparent;color:var(--f)}
+a.pref{color:inherit;text-decoration:none;border-bottom:1px dotted var(--line-2);white-space:nowrap}
+a.pref:hover{border-bottom-color:var(--accent)}
+a.pref .pb{margin-right:.3em}
+a.pref:not(.pbl) .pb{margin-right:.025em}    /* a real space follows the badge before a name (a copy reads "1 the rule"); .025em + the space ≈ .3em */
+td a.pref{border-bottom:0}
+.also{color:var(--muted);margin-left:.35em;white-space:nowrap}
+/* block headings: words, at body size and up */
+h2.blk,#quiz>h2,.deeper>h2.lbl{margin:30px 0 10px;font:600 1.2rem/1.3 var(--font);letter-spacing:0;text-transform:none;color:var(--fg)}
+.brief>h2.blk:first-child{margin-top:6px}
+details.row>summary{font-size:1rem}
+details.row>summary .pb{margin-right:.35em}
+.sec>h3:first-child,.ch-head>h3{margin:0;display:flex;align-items:center;gap:.4em;font:600 1.1rem/1.35 var(--font)}
+.sec>h3+*{margin-top:12px}
+/* a piece: its h3 carries the badge */
+.piece .note h3{margin:0 0 6px;display:flex;align-items:center;gap:.45em;font:600 1rem/1.4 var(--font)}
+/* the strip: each tile a file, linked to its home piece, numbered when wide enough */
+p.strip-h{margin:14px 0 4px;color:var(--muted)}
+nav.strip{display:flex;gap:2px;height:1.45rem;margin:0 0 6px}
+nav.strip>a{flex-basis:0;flex-shrink:1;min-width:3px;border-radius:2px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  text-decoration:none;background:var(--fam-change);color:var(--on-fam);font:700 1rem/1 var(--font)}
+nav.strip>a[data-fam="tests"]{background:var(--fam-tests)}nav.strip>a[data-fam="harness"]{background:var(--fam-harness)}
+nav.strip>a[data-fam="gen"]{background:repeating-linear-gradient(45deg,var(--mark) 0 3px,var(--surface) 3px 6px)}
+nav.strip>a.tiny>span{display:none}
+nav.strip>a:hover,nav.strip>a:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
+/* the piece index: the strip's legend */
+ol.pindex{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 18px}
+ol.pindex>li{margin:0;max-width:none}
+ol.pindex a{color:inherit;text-decoration:none}
+ol.pindex a:hover{text-decoration:underline}
+ol.pindex .pb{margin-right:.35em;vertical-align:top}   /* centred on its label (baseline put it half a line low) */
+ol.pindex small{color:var(--muted)}
+ol.pindex .short{display:none}
+ol.pindex .all{margin-left:auto}
+ol.pindex i.sw{display:inline-block;width:1.65em;height:1em;border-radius:2px;vertical-align:-.15em;background:repeating-linear-gradient(45deg,var(--mark) 0 3px,var(--surface) 3px 6px)}
+@media (max-width:600px){ol.pindex .long,ol.pindex small{display:none}ol.pindex .short{display:inline}ol.pindex{gap:4px 12px}}
+/* code: the line markers follow the 1rem/1.6 code lines */
+i.lmark{top:calc(12px + var(--i) * 1.6rem + .27rem);min-width:1.1rem}
+/* the quiz: the deciding piece first */
+.fb .dec{margin:0;font-weight:600}
+.fb details.toggle>summary{color:var(--muted)}
+/* ===== GitHub classic's file tree, sticky file headers, Viewed per file. Re-implemented from measurements of
+   github.com's Files changed (Primer, MIT): tree 281 px = 17.5rem, rows 6px 8px padding with 8 px a level and 32 px for files,
+   radius 6 px; px converted at 16 px a rem, but no text under 1rem (the reader's root may be 12 px). Our colour tokens.
+   Credits: GitHub's CSS is Primer (https://github.com/primer/css, MIT) and its icons are Octicons
+   (https://github.com/primer/octicons, MIT); the tree's chevron, folder, file and status marks are CSS shapes drawn after
+   them, not copies. ===== */
+.ftree{display:none}
+.ftree-rz{display:none}
+@media (min-width:1100px){
+  body:not(.notree) .page{grid-template-columns:var(--tree-w,17.5rem) minmax(0,78rem);grid-template-areas:"toc head" "toc main";column-gap:1.5rem;justify-content:center}
+  .ftree{display:block;grid-area:toc;grid-row:1/span 2;position:sticky;top:calc(var(--bar-h) + 12px);align-self:start;min-width:0;
+    max-height:calc(100vh - var(--bar-h) - 24px);overflow-y:auto;overscroll-behavior:contain;font:1rem/1.5 var(--font);color:var(--fg)}
+  body.notree .ftree{display:none}
+  /* the width handle: a 1px line mid-gap with a 5px hit area (GitHub new view's pane splitter, Primer PageLayout, MIT;
+     re-implemented from its measurements): a muted band on hover, the accent while dragged or focused */
+  .ftree-rz{display:block;grid-area:toc;grid-row:1/span 2;justify-self:end;align-self:start;position:sticky;top:calc(var(--bar-h) + 12px);z-index:4;
+    width:1px;height:calc(100vh - var(--bar-h) - 24px);margin-right:-.75rem;background:var(--line);cursor:col-resize;touch-action:none;user-select:none}
+  body.notree .ftree-rz{display:none}
+}
+.ftree-rz::before{content:"";position:absolute;inset:0 -2px;border-radius:2px;background:var(--line-2);opacity:0;transition:opacity .15s ease}
+.ftree-rz:hover::before{opacity:1}
+.ftree-rz.drag,.ftree-rz:focus-visible{background:var(--accent);outline:0}
+.ftree-rz.drag::before,.ftree-rz:focus-visible::before{opacity:1;background:var(--accent)}
+body.rz{user-select:none;cursor:col-resize}
+@media print{.ftree-rz{display:none!important}}
+.ftree-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:0 .5rem .5rem;color:var(--muted);white-space:nowrap}
+.ftree .tbtn{font:inherit;color:var(--muted);background:none;border:1px solid var(--line-2);border-radius:.375rem;padding:.125rem .5rem;cursor:pointer}
+.ftree .tbtn:hover{color:var(--fg);border-color:var(--accent)}
+.ftree ul{list-style:none;margin:0;padding:0}
+.ftree li{margin:0;position:relative}
+.ftree ul ul{position:relative}
+.ftree ul ul::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--d) * .5rem + .45rem);width:1px;background:var(--line)}
+.ftree summary,.ftree li.fi{display:flex;align-items:center;gap:.5rem;min-width:0;padding:.375rem .5rem .375rem calc(var(--d) * .5rem);border-radius:.375rem;list-style:none}
+.ftree summary::-webkit-details-marker{display:none}
+.ftree li.fi{padding-left:calc(var(--d) * .5rem + 1.5rem)}
+.ftree summary:hover,.ftree li.fi>a:hover{background:var(--surface)}   /* a file row's hover covers only its name link */
+.ftree .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftree li.fi>a{display:flex;align-items:center;gap:.5rem;flex:1 1 auto;min-width:0;color:inherit;text-decoration:none;border-radius:.375rem;padding:.125rem .25rem;margin:-.125rem -.25rem}
+.ftree i{flex:none;display:inline-block}
+.ftree i.chev{width:.45rem;height:.45rem;margin:0 .275rem;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:translateY(-25%) rotate(45deg);transition:transform .12s linear}
+.ftree details:not([open])>summary i.chev{transform:rotate(-45deg)}
+.ftree i.fol{width:1rem;height:.8rem;border-radius:2px;background:var(--ghost);position:relative;margin-top:.15rem}
+.ftree i.fol::before{content:"";position:absolute;left:0;top:-.15rem;width:.45rem;height:.25rem;border-radius:2px 2px 0 0;background:var(--ghost)}
+.ftree i.ic{width:.75rem;height:.95rem;border:1.5px solid var(--faint);border-radius:2px 5px 2px 2px;box-sizing:border-box}
+.ftree .bs{flex:none;display:inline-flex;align-items:center;gap:.25rem;white-space:nowrap;color:var(--muted)}
+.ftree .bs .pb{min-width:1.45em;height:1.45em;vertical-align:0}
+/* each badge is its own link to its piece, a separate target from the file name: an accent ring on hover and focus */
+.ftree a.pref{border-bottom:0;border-radius:999px}
+.ftree a.pref .pb{margin-right:0}
+.ftree a.pref:hover .pb,.ftree a.pref:focus-visible .pb{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--accent)}
+.ftree a.pref:focus-visible{outline:0}
+.ftree i.sw{width:1.45em;height:1em;border-radius:2px;background:repeating-linear-gradient(45deg,var(--mark) 0 3px,var(--surface) 3px 6px)}
+.ftree li.fi[data-gen]{color:var(--muted)}
+.ftree li.fi[data-gen] i.ic{border-style:dashed}
+.ftree .vt{display:none;flex:none;color:var(--ok);font-weight:700}
+.ftree li.fi.done .vt{display:inline}
+.ftree li.fi.done .nm{color:var(--muted)}
+.ftree .fst{flex:none;position:relative;width:1rem;height:1rem;box-sizing:border-box;border:1.5px solid currentColor;border-radius:3px;color:var(--warn)}
+.ftree .fst::after{content:"";position:absolute;left:50%;top:50%;width:.3rem;height:.3rem;border-radius:50%;background:currentColor;transform:translate(-50%,-50%)}
+.ftree .fst[data-st="A"]{color:var(--add-fg)}
+.ftree .fst[data-st="D"]{color:var(--del-fg)}
+.ftree .fst[data-st="R"]{color:var(--accent)}
+.ftree .fst[data-st="A"]::after,.ftree .fst[data-st="D"]::after{border-radius:0;width:.5rem;height:1.5px}
+.ftree .fst[data-st="A"]::before{content:"";position:absolute;left:50%;top:50%;width:1.5px;height:.5rem;background:currentColor;transform:translate(-50%,-50%)}
+.ftree .fst[data-st="R"]::after{border-radius:0;width:.45rem;height:.45rem;background:none;border:solid currentColor;border-width:1.5px 1.5px 0 0;transform:translate(-65%,-50%) rotate(45deg)}
+.ftree li.fi.cur{background:var(--surface-2)}
+.ftree li.fi.cur .nm{font-weight:600}
+.ftree li.fi.cur::after{content:"";position:absolute;left:0;top:calc(50% - .75rem);width:.25rem;height:1.5rem;border-radius:.375rem;background:var(--accent)}
+.ftree li[hidden]{display:none}
+.ftree .tfil{padding:0 .25rem .5rem}
+.ftree .tfil input[type="search"]{width:100%;box-sizing:border-box;font:inherit;padding:.25rem .5rem;border:1px solid var(--line-2);border-radius:.375rem;background:var(--bg);color:var(--fg)}
+.ftree .tmenu{margin-top:.375rem}
+.ftree .tmenu>summary{padding:.125rem .5rem;color:var(--muted)}
+.ftree .tmenu-b{padding:.25rem .5rem;display:grid;gap:.125rem}
+.ftree .tmenu-b p{margin:.25rem 0 0;color:var(--muted)}
+.ftree .tmenu-b label{display:flex;gap:.375rem;align-items:center;cursor:pointer}
+#xd-tree-btn[hidden]{display:none}
+@media (max-width:1099px){#xd-tree-btn{display:none}}
+@media print{.ftree,#xd-tree-btn,#xd-viewed{display:none!important}}
+/* file headers: pinned under the bar while their diff scrolls. A sticky cell is bound to the whole table, so only the current
+   file's header (spyFile's .cur) is sticky: it lets go once its diff has passed, as GitHub's does */
+#files .tablebox{overflow:clip}
+#files tr[data-path]>td{position:relative;background:var(--surface);vertical-align:middle;padding-block:.25rem}
+#files tr[data-path].cur:has(+tr.fd>td>details[open])>td{position:sticky;top:var(--bar-h);z-index:3}
+#files tr[data-path]>td:first-child{border-top-left-radius:.375rem}
+#files tr[data-path]>td:last-child{border-top-right-radius:.375rem}
+#files tr[data-path].cur>td{box-shadow:inset 0 -2px 0 var(--accent)}
+.ft td.n .dst{display:inline-flex;gap:1px;margin-left:.375rem;vertical-align:middle}
+.dst i{width:.5rem;height:.5rem;background:var(--surface-2);outline:1px solid var(--line-2);outline-offset:-1px}
+.dst i.a{background:var(--add-fg);outline:0}
+.dst i.d{background:var(--del-fg);outline:0}
+.ft td.vw{white-space:nowrap}
+.ft td.vw label{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .5rem;border:1px solid var(--line-2);border-radius:.375rem;color:var(--muted);background:var(--bg);cursor:pointer}
+.ft tr.done td.vw label{color:var(--fg);border-color:var(--ok);background:var(--ok-bg)}
+/* ===== "Start here", "The map", the carry list, Next links, landing, the bar's place name, after the quiz: one destination
+   per look. Sizes stay rem, nothing under 1rem. ===== */
+:root{--wire:#7d8aa5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wire:#6f7c98}}
+:root[data-theme="dark"]{--wire:#6f7c98}
+/* heading scale: h1 > section h2 1.5rem > piece and Go-deeper section h3 1.25rem > sub-heading 1.05rem > body 1rem */
+h3{font:600 1.05rem/1.35 var(--font)}
+h2.blk,#quiz>h2,.deeper>h2.lbl,.mapframe h2{font:700 1.5rem/1.25 var(--font);letter-spacing:0;text-transform:none;color:var(--fg)}
+.piece .note h3,.sec>h3:first-child,.ch-head>h3{font:700 1.25rem/1.3 var(--font)}
+.about-b>h3{font:600 1.05rem/1.35 var(--font);margin-top:20px}
+:is(h2,h3):hover>.anchor,.anchor:focus-visible{opacity:1}
+/* Start here: the first instruction is the strongest thing after the title */
+.start{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:16px 0 14px;padding:10px 14px;border:1px solid var(--accent);border-left-width:5px;
+  border-radius:8px;background:var(--accent-bg);font-size:1rem;line-height:1.4}
+.start b.lbl{font-size:1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.start :is(a.step .st,a.step-a){color:var(--fg);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.start a.step{text-decoration:none}   /* only the words are underlined, not "· ~2 min" */
+.start .step{color:var(--fg);font-weight:600}
+.start small{font-weight:400;font-size:1rem;color:var(--muted)}
+.start .arr{color:var(--muted)}
+.start a.pbl,.next .pb{font-size:1rem}
+.start a.pbl{text-decoration:none;vertical-align:middle}
+.start .go{padding:6px 12px;border-radius:6px;background:var(--accent);color:var(--on-fam);font-weight:600;text-decoration:none}
+.start .go small{color:inherit;opacity:.85}
+.start .go:hover{filter:brightness(1.1)}
+.start .go .path-prog{font-style:normal;margin-left:6px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--on-fam) 22%,transparent);font:600 1rem var(--mono)}
+a.pbl{text-decoration:none;border:0;border-radius:999px;display:inline-flex}
+a.pbl:hover,a.pbl:focus-visible{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--accent);outline:0}
+p.strip-h b{color:var(--fg)}
+/* the strip: a tile is a file, at least 1rem wide to hit; its card names the file and its piece, each a link */
+nav.strip{position:relative}
+nav.strip>a{min-width:1rem}
+.tcard{position:absolute;top:calc(100% + 4px);z-index:15;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;max-width:36rem;padding:6px 10px;
+  border:1px solid var(--line-2);border-radius:8px;background:var(--raise);box-shadow:0 4px 14px rgb(0 0 0 / .12);white-space:nowrap}
+.tcard[hidden]{display:none}
+.tcard::before{content:"";position:absolute;left:-1px;right:-1px;bottom:100%;height:8px}   /* bridges the gap to the strip, so the pointer never leaves on the way in */
+.tcard a.ref{font-weight:600}
+.tcard .pm{color:var(--muted)}
+/* the piece index: "N files" is plain text; a read piece's badge gets a tick */
+ol.pindex>li>small{color:var(--muted)}
+ol.pindex li.read>a>.pb,.mapframe a.read>.pb{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--ok)}
+ol.pindex li.read>a::after,.mapframe a.read>b::after{content:" ✓";color:var(--ok);font-weight:700}
+/* The map: a framed section with real wires. Rule-shaped: three columns (who asks → the rule → what happens);
+   flow-shaped (.two): entries → outcomes. Stacked below 900px */
+.mapframe{border:1px solid var(--line-2);border-radius:10px;background:var(--raise);scroll-margin-top:calc(var(--bar-h) + 12px);margin-top:4px}
+.mapframe>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface);border-radius:10px 10px 0 0}
+.mapframe>header p{margin:0;color:var(--muted)}
+.mapframe .map{display:grid;grid-template-columns:1.1fr 52px 1fr 52px .9fr;gap:0;padding:14px 16px 12px;align-items:stretch}
+.mapframe .map.two{grid-template-columns:1.2fr 52px 1fr}
+.mapframe .map .col{display:flex;flex-direction:column;gap:8px;min-width:0;justify-content:flex-start}
+.mapframe .col>h3{margin:0 0 2px;font:700 1.05rem/1.35 var(--font)}
+.mapframe .col>h3 small{font-weight:400;font-size:1rem;color:var(--muted)}
+.mapframe .box{position:relative;display:block;border:1px solid var(--accent);border-radius:8px;padding:8px 2.6rem 8px 11px;background:var(--bg);line-height:1.35;font-size:1rem;color:inherit;text-decoration:none}
+.mapframe .box b{display:block}
+.mapframe .box small{display:block;font-size:1rem;color:var(--muted)}
+.mapframe .box>.pb{position:absolute;right:8px;top:8px}
+.mapframe a.box:hover{background:var(--accent-bg);border-color:var(--accent)}
+.mapframe a.box:hover b{text-decoration:underline}
+.mapframe .rule{border-width:2px;border-radius:10px;background:var(--accent-bg);padding:12px 2.6rem 12px 14px}
+.mapframe .out,.mapframe .out+.out{border-color:var(--mark);border-left:4px solid var(--fam-tests)}
+i.new,b.new{font-style:normal;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--on-fam);padding:0 5px;border-radius:3px;margin-left:6px}
+.asker::after{content:"";position:absolute;left:100%;top:50%;width:27px;border-top:2px solid var(--wire)}
+.wire{position:relative;align-self:stretch}
+.wire.bus::before{content:"";position:absolute;left:26px;top:var(--t,22%);bottom:var(--b,22%);border-left:2px solid var(--wire)}
+.wire::after{content:"";position:absolute;left:26px;right:2px;top:var(--y,50%);border-top:2px solid var(--wire)}
+.wire.plain::after{left:0}
+.wire span{position:absolute;right:-1px;top:calc(var(--y,50%) - 5px);border:6px solid transparent;border-left-color:var(--wire);border-right:0}
+.wire em{position:absolute;left:30px;top:calc(var(--y,50%) - 1.6rem);font-style:normal;color:var(--muted);background:var(--raise);padding:0 2px}
+.wire.plain em{left:8px}
+.skips{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 16px;padding:9px 0;border-top:1px dashed var(--line-2);color:var(--muted)}
+.skips>b{color:var(--fg)}
+.skips .skip{border:1px dashed var(--line-2);border-radius:6px;padding:2px 8px;color:var(--muted);text-decoration:none}
+.skips .skip b{color:var(--fg);font-weight:600}
+.skips a.skip:hover{border-color:var(--accent)}
+.skips a.skip:hover b{text-decoration:underline}
+.skips a.to{margin-left:auto}
+.mapframe .legend{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0;padding:8px 16px;border-top:1px solid var(--line);background:var(--surface);border-radius:0 0 10px 10px;color:var(--muted)}
+.mapframe .legend .gtag{margin:0}
+i.sw-dash{display:inline-block;width:1.6em;height:.95em;border:1px dashed var(--line-2);border-radius:3px;vertical-align:-.1em}
+@media (max-width:900px){.mapframe .map,.mapframe .map.two{grid-template-columns:minmax(0,1fr)}.mapframe .wire,.asker::after{display:none}}
+/* every block ends by naming where the path goes next */
+p.next{margin:10px 0 0;text-align:right}
+p.next a{font-weight:600;text-decoration:none}
+p.next a:hover{text-decoration:underline}
+p.next .pb{margin:0 .025em 0 .15em}
+.piece>p.next{margin-top:4px}
+/* the carry list: each line a landing target */
+ul.carry li{scroll-margin-top:calc(var(--bar-h) + 12px)}
+b.tag[title]{cursor:help}
+/* the bar names where you are */
+.bar-id{margin-right:0;flex:0 1 auto}
+.where{min-width:0;margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);text-decoration:none}
+.where:not(:empty)::before{content:"› ";color:var(--faint)}
+/* landing: every in-page jump flashes its target; a file row flashes its cells */
+tr.flash{outline:0}
+tr.flash>td{box-shadow:inset 0 3px 0 var(--accent),inset 0 -3px 0 var(--accent)}
+/* after the quiz */
+.qnext{margin-top:24px;padding:12px 14px;border:1px solid var(--accent);border-left-width:5px;border-radius:8px;background:var(--accent-bg)}
+.qnext[hidden]{display:none}
+.qnext p{margin:0}
+.qnext p+p{margin-top:6px}
+.qnext .qn-h{font-size:1.2rem;font-weight:700}
+.qnext .q-copy{margin:0 .15em}
+.qnext .qn-db{color:var(--muted)}
+.start .go .go-x{margin-left:6px}
+.start .go .go-x[hidden]{display:none}
+@media print{.tcard,.where,.qnext{display:none!important}}
+/* ===== Phones and touch. Every rule below is behind a narrow-width, (pointer:coarse) or (hover:none) query, or hides
+   something that only those queries show, so a desktop with a mouse is unaffected. ===== */
+:root{--scrim:rgb(20 28 45 / .42)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--scrim:rgb(0 0 0 / .6)}}
+:root[data-theme="dark"]{--scrim:rgb(0 0 0 / .6)}
+#xd-files,.ftree-scrim,.ftree .tleg,.menu .m-exp,.menu .mh,.tipx,p.strip-h .tp,.ftree .tclose{display:none}
+.ftree details>summary::before,.ftree details[open]>summary::before{content:none}   /* the page's ▸/▾ details marker would double the tree's own chevron */
+.tcard .tnav-w{display:inline-flex;gap:6px;margin-left:auto}   /* only a touch-opened card has these */
+.tcard .tnav{padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg);color:var(--fg);font:600 1.2rem/1 var(--font);cursor:pointer}
+.tcard .tnav[disabled]{opacity:.4;cursor:default}
+/* the file tree below 1100px: a drawer over the page, opened from the bar's "Files" (no width handle, no "Hide file tree") */
+@media (max-width:1099px){
+  #xd-files:not([hidden]){display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .bar .btn,.bar #gate-pill{flex:none;white-space:nowrap}   /* the title, the place and Viewed give way first */
+  .ftree{display:block;position:fixed;z-index:45;top:0;bottom:0;left:0;width:min(22rem,86vw);overflow-y:auto;overscroll-behavior:contain;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 8px calc(12px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+    background:var(--raise);border-right:1px solid var(--line-2);box-shadow:var(--shadow);font:1rem/1.5 var(--font);color:var(--fg);
+    transform:translateX(-105%);visibility:hidden;transition:transform .2s ease,visibility 0s .2s}
+  body.tree-open .ftree{transform:none;visibility:visible;transition-delay:0s}   /* visible at once on open, so focus can move in */
+  body.tree-open{overflow:hidden}
+  .ftree-scrim:not([hidden]){display:block;position:fixed;inset:0;z-index:44;background:var(--scrim)}
+  .ftree .tbtn{display:none}
+  .ftree .tbtn.tclose{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}   /* a phone has no Esc: a visible way out */
+  .ftree-h{padding-top:.25rem}
+  .ftree .tleg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:0 .5rem .5rem;color:var(--muted)}
+  .ftree .tleg>span{display:inline-flex;align-items:center;gap:.375rem}
+  .ftree .tleg .vt{display:inline}
+  .ftree summary,.ftree li.fi{min-height:44px}
+  .ftree li.fi{padding-block:0}   /* the name link stretches over the whole 44 px row */
+  .ftree li.fi>a{align-self:stretch}
+}
+@media (pointer:coarse){.ftree-rz{display:none!important}}
+/* the bar on a phone: one line; Expand all moves into Options (the Viewed count is already Options' status line) */
+@media (max-width:560px){
+  .bar{gap:8px}
+  .bar-id{flex:0 1 auto}
+  .bar .btn{flex:none}
+  .bar:has(#xd-where:not(:empty)) .bar-id{display:none}   /* scrolled in: the section's name takes the title's place */
+  #xd-menu-btn .mb-t{display:none}
+  #xd-menu-btn::before{content:"⋯";font:700 1.25rem/1 var(--font)}
+  #xd-viewed,#xd-expand{display:none}
+  .menu .m-exp{display:block}
+  .bar .pill{flex:none;max-width:none;overflow:visible;position:relative}
+  .bar #gate-pill[data-state="stale"]{flex:0 1 auto;min-width:0;overflow:hidden}   /* the one long label ("Not yet: built from …") */
+  .menu{max-height:calc(100vh - var(--bar-h) - 24px - env(safe-area-inset-top,0px));overflow-y:auto}
+  /* Start here: the steps stack and stay links; the quiz step is a full-width button */
+  .start{flex-direction:column;align-items:stretch;gap:4px}
+  .start .arr{display:none}
+  .start a.step,.start span.step{display:flex;flex-wrap:wrap;align-items:center;gap:0 .4em;min-height:44px}
+  .start a.step-a{display:inline-flex;align-items:center;min-height:44px}
+  .start .go{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 .4em;min-height:44px;text-align:center}
+  .tcard{max-width:100%;white-space:normal}
+  figure.code>figcaption .loc{overflow-wrap:anywhere;min-width:0}   /* a long file name breaks instead of running under the figure's clip */
+}
+/* the map, stacked: the wires become downward arrows between the groups (fitWires leaves them alone) */
+@media (max-width:900px){
+  .mapframe .map>.wire{display:block;height:2.6rem}
+  .mapframe .map>.wire::before{content:none}
+  .mapframe .map>.wire::after{left:50%;right:auto;top:2px;bottom:8px;border-top:0;border-left:2px solid var(--wire)}
+  .mapframe .map>.wire span{left:calc(50% - 5px);right:auto;top:auto;bottom:2px;border:6px solid transparent;border-top-color:var(--wire);border-bottom:0}
+  .mapframe .map>.wire em{left:calc(50% + 10px);top:50%;transform:translateY(-50%)}
+}
+/* All files below 700px: each file a stacked card (name, then piece, risk, changes, Viewed); the current one pins under the bar */
+@media (max-width:700px){
+  #files table.ft,#files table.ft>tbody{display:block}
+  #files table.ft>thead,#files table.ft>thead>tr{display:flex;flex-wrap:wrap;gap:0 14px}
+  #files table.ft>thead th{display:block;border:0;background:none}
+  #files table.ft>thead th:is(.k,:last-child){display:none}
+  #files tr[data-path]{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 10px;background:var(--surface);border-top:1px solid var(--line);border-radius:.375rem .375rem 0 0}
+  #files tr[data-path]>td{display:block}
+  #files tr[data-path]>td,#files tr[data-path].cur:has(+tr.fd>td>details[open])>td{position:static;padding:0;border:0;background:none;box-shadow:none}
+  #files tr[data-path]>td.p{flex:1 1 100%;min-width:0;display:flex;align-items:baseline;gap:.25em}
+  #files .ft button.fx{display:block;flex:1 1 auto;min-width:0}
+  #files .ft button.fx .dir{display:inline-block;max-width:calc(100% - 1.2em);vertical-align:bottom;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* the folder on one line, so a pinned header stays short */
+  #files tr[data-path]>td.k{display:none}
+  #files tr[data-path]>td.vw{margin-left:auto}
+  #files tr[data-path].cur:has(+tr.fd>td>details[open]){position:sticky;top:var(--bar-h);z-index:3}
+  #files tr[data-path].cur{box-shadow:inset 0 -2px 0 var(--accent)}
+  #files tr[data-path].flash{box-shadow:inset 0 0 0 3px var(--accent)}
+  #files tr.fd,#files tr.fd>td{display:block}
+  #files tr.fd:has(>td>details:not([open])),#files tr[data-path][hidden]+tr.fd{display:none}
+}
+/* no hover: the words that name hover say tap; what a title explained is written out */
+@media (hover:none){
+  p.strip-h .hv{display:none}
+  p.strip-h .tp{display:inline}
+  .menu .mh{display:block;margin:-2px 0 6px;padding:0 10px;font-size:1rem;line-height:1.4;color:var(--muted)}
+  .tipx{display:block;margin-top:2px;color:var(--muted)}
+  .anchor{display:none}   /* the "#" links show on hover only (opacity 0 otherwise): on touch they would be invisible targets */
+}
+/* touch: every control gets a 44 px hit area. Boxes grow to it; a small mark keeps its look and gets a transparent ::after
+   44 px square centred on it; an inline text link gets vertical padding (it never moves the line) */
+@media (pointer:coarse){
+  :is(.btn,.copy,.menu button,button.opt,label.read,.ft td.vw label,.ftools select,.ftools input[type="search"],.ftools label.chk,.ft th button,
+    .ft button.fx,details.row>summary,details.leaf>summary,details.toggle>summary,.fb details>summary,.stp-list button,.tcard .tnav){min-height:44px}
+  :is(.btn,.copy,.ft th button,.ft td.vw label,.ftools label.chk,.tcard .tnav){display:inline-flex;align-items:center;justify-content:center;min-width:44px}
+  :is(details.row,details.leaf,details.toggle,.fb details)>summary{align-items:center}
+  .bar-id,.where:not(:empty){line-height:44px;min-width:44px}
+  .bar .btn{flex:none}   /* min-width:44px would otherwise let them shrink under their label */
+  figure.code>figcaption a.gh{display:inline-flex;align-items:center;min-height:44px}   /* the figure clips, so no ::after here */
+  :is(a.pbl,a.pref,.skips a,p.next a,.bar .pill,.mapframe .legend a){position:relative}
+  :is(a.pbl,a.pref,.skips a,p.next a,.bar .pill,.mapframe .legend a)::after{content:"";position:absolute;left:50%;top:50%;
+    width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .cited a.cite{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;vertical-align:middle}
+  :is(a.ref,span.ref,ol.pindex a,.qnext a:not(.pref),main :is(p:not(.next),li,td,dd) a:not([class])){padding-block:calc((44px - 1.2em) / 2 + 1px)}
+  /* the strip: 44 px tall tiles that still look 1.45rem; narrow tiles: the card steps to the neighbours */
+  nav.strip{height:auto}
+  nav.strip>a{height:44px;padding-block:calc((44px - 1.45rem) / 2)}
+  nav.strip>a,nav.strip>a[data-fam]{background-clip:content-box}   /* the family rules reset it with their background shorthand */
+  .stp-strip button{height:44px;padding-block:17px}
+  .stp-strip button,.stp-strip button.seen,.stp-strip button.cur{background-clip:content-box}
+  .stp-strip button.chg-cell::after{top:10px}
+}
+</style>
+<header class="bar" id="bar">
+  <a class="bar-id" id="bar-id" href="#top" title="Back to the top" aria-label="Back to the top">Explainer</a>
+  <a class="where" id="xd-where" href="#top" title="Back to the top" aria-label="Back to the top"></a>
+  <a class="pill" id="gate-pill" href="#quiz" title="Go to the quiz" data-gate data-state="none">Quiz</a>
+  <a class="pill" id="xd-viewed" title="Open All files" hidden>Viewed</a>
+  <button type="button" class="btn" id="xd-tree-btn" data-act="tree" title="Show the file tree again" hidden>Show file tree</button>
+  <progress id="xd-prog" max="1" value="0" aria-label="Reading progress"></progress>
+  <button type="button" class="btn" id="xd-expand" data-act="expand" title="Open every section on the page (file diffs stay closed)">Expand all</button>
+  <button type="button" class="btn" id="xd-files" data-act="files" aria-controls="ftree" aria-expanded="false" hidden>Files</button>
+  <button type="button" class="btn" id="xd-menu-btn" aria-haspopup="true" aria-expanded="false" aria-controls="xd-menu" title="Width, code wrap, font, shortcuts, reset" aria-label="Options"><span class="mb-t">Options</span></button>
+</header>
+<div class="menu" id="xd-menu" role="group" aria-label="Page options" hidden>
+  <button type="button" class="m-exp" data-act="expand">Expand all</button>
+  <button type="button" data-act="wide" aria-pressed="false">Full width</button>
+  <button type="button" data-act="wrap" aria-pressed="false">Wrap code lines</button>
+  <div class="row"><span>Font</span><button type="button" data-act="font" data-font="default" aria-pressed="true">Sans</button><button type="button" data-act="font" data-font="serif" aria-pressed="false">Serif</button><button type="button" data-act="font" data-font="mono" aria-pressed="false">Mono</button></div>
+  <hr>
+  <button type="button" data-act="help">Keyboard shortcuts</button>
+  <button type="button" data-act="reset" title="Erases the “I’ve read this” ticks and the Viewed marks on files. Keeps your quiz answers, your first-try result and your layout.">Reset reading progress</button>
+  <button type="button" data-act="wipe" title="Erases your quiz answers and first-try result, including the copy saved for you, so you can take the quiz fresh. Keeps your Viewed files, read ticks and layout.">Reset quiz</button>
+  <p class="stat" id="xd-stat"></p>
+</div>
+<div class="page" id="top">
+<!--XD:HEADER-->
+<!--XD:TOC-->
+<main id="main">
+<!--XD:MAIN-->
+</main>
+</div>
+<div class="pop" id="xd-pop" role="tooltip" hidden></div>
+<div class="help" id="xd-help" role="dialog" aria-labelledby="xd-help-h" hidden>
+  <h2 id="xd-help-h">Keyboard</h2>
+  <dl><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous piece</dd><dt><kbd>/</kbd></dt><dd>Filter All files (or the goals table)</dd><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Step through a walkthrough</dd><dt><kbd>?</kbd></dt><dd>Show or hide this list</dd><dt><kbd>Esc</kbd></dt><dd>Close a preview, the menu or this list</dd></dl>
+  <p>To print, open the local copy of this page in a browser and press Ctrl+P. The printout adds an answer key.</p>
+  <button type="button" class="btn" data-act="help">Close</button>
+</div>
+<span class="sr" id="xd-live" aria-live="polite"></span>
+<script type="application/json" id="xd-data">/*XD:DATA*/</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js" integrity="sha384-xAgN7OCsK5s0d3G18tqRYrxy8hWsPA14E26TMh7Mi9ZM09vaz4EA0DBTl+80F5yC" crossorigin="anonymous" referrerpolicy="no-referrer" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-diff.min.js" integrity="sha384-5MjMyjeLq48jKCQkz3wbIdVG8+jWbG3Dlh9oy9LkluQL7zDQghWEa+UYZiYi5qRJ" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-markup-templating.min.js" integrity="sha384-LMCbF6eKAywctm2tlnguxYpyYDf0/Z3ecx60ugk8J/pydfawrC24sn2gumP8MWBN" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-php.min.js" integrity="sha384-+grZ1BKjM0uVvu5qwWIjfNJct1eZpnnIv7QAo1Qva9uEWA584H7dSk7sZSgwbvT7" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/diff-highlight/prism-diff-highlight.min.js" integrity="sha384-T/n1az9oONmp4Y0Swrrz4ht74zsN0aUrf2nmhULnQ13QrcgAS+92YnDRB4rNP0zO" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function(){
+'use strict';
+/* ===== ENGINE: never edited per run. Static HTML first; everything below only enhances it. ===== */
+const D=document,W=window,root=D.documentElement;
+const $=(s,r)=>(r||D).querySelector(s),$$=(s,r)=>Array.from((r||D).querySelectorAll(s));
+root.classList.add('xd-js');
+
+/* data and storage */
+let X={};
+try{X=JSON.parse(($('#xd-data')||{}).textContent||'{}')||{};}catch(e){X={};}
+const M=X.meta||{},Q=X.quiz||{},QL=Array.isArray(Q.questions)?Q.questions:[];
+const PC=X.pieces||{},RW=X.rows||{},FG=X.figs||{};   /* the piece registry, the Go-deeper row names, figures by file */
+const BF=String(Q.built_from||M.head7||'build');
+const P='xd:'+(M.repo||'repo')+':'+(M.ticket||M.head7||'page')+':';
+const S={
+  get(k,d){try{const v=localStorage.getItem(P+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{if(v==null||v===false)localStorage.removeItem(P+k);else localStorage.setItem(P+k,JSON.stringify(v));}catch(e){}}
+};
+
+/* helpers */
+function h(tag,attrs,...kids){
+  const el=D.createElement(tag);
+  if(attrs)Object.keys(attrs).forEach(k=>{const v=attrs[k];if(v==null||v===false)return;if(k==='class')el.className=v;else el.setAttribute(k,v===true?'':String(v));});
+  kids.forEach(c=>{if(c!=null&&c!==false)el.append(c);});
+  return el;
+}
+/* JSON text to nodes: a backticked span becomes a code element, the rest stays text nodes */
+function rich(s){
+  const f=D.createDocumentFragment();
+  String(s==null?'':s).split('`').forEach((part,i)=>{if(part)f.append(i%2?h('code',null,part):part);});
+  return f;
+}
+const live=$('#xd-live');
+function say(t){if(!live)return;live.textContent='';setTimeout(()=>{live.textContent=t;},40);}
+const steps=box=>$$('ol.stepper>li',box);
+function reveal(target){
+  const el=typeof target==='string'?D.getElementById(target):target;
+  if(!el)return false;
+  const fd=el.closest('tr.fd'),hr=(fd?fd.previousElementSibling:el).closest('table.ft tr[hidden]');if(hr)resetFilters(TB.find(T=>T.t.contains(hr)));
+  const nx=el.matches('tr[data-path]')&&el.nextElementSibling,fx=nx&&nx.classList.contains('fd')&&$('details.fdx',nx);if(fx)fx.open=true;
+  for(let d=el.closest('details');d;d=d.parentElement&&d.parentElement.closest('details'))d.open=true;
+  const mf=el.closest('.more-figs'),lf=mf&&mf.closest('.piece')&&mf.closest('.piece').querySelector('details.leaf');if(lf)lf.open=true;
+  const li=el.closest('.stp ol.stepper>li');
+  if(li){const box=li.closest('.stp');stepSet(box,steps(box).indexOf(li));}
+  el.scrollIntoView({block:'start'});
+  return true;
+}
+/* every in-page jump flashes where it landed */
+function land(target){
+  const el=typeof target==='string'?D.getElementById(target):target;
+  if(!reveal(el))return false;
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'),1500);
+  return true;
+}
+
+/* page options */
+let opt=S.get('opt',{});if(!opt||typeof opt!=='object')opt={};
+function applyOpt(){
+  D.body.classList.toggle('wide',!!opt.wide);
+  D.body.classList.toggle('wrap',!!opt.wrap);
+  D.body.dataset.font=opt.font||'default';
+  D.body.classList.toggle('notree',!!opt.notree);
+  const tb=$('#xd-tree-btn');if(tb)tb.hidden=!($('#ftree')&&opt.notree);
+  ['wide','wrap'].forEach(k=>$$('#xd-menu [data-act="'+k+'"]').forEach(b=>b.setAttribute('aria-pressed',String(!!opt[k]))));
+  $$('#xd-menu [data-font]').forEach(b=>b.setAttribute('aria-pressed',String((opt.font||'default')===b.dataset.font)));
+}
+applyOpt();
+
+/* header: bar id, relative time, heading links */
+const bid=$('#bar-id');
+if(bid&&(M.ticket||M.repo))bid.textContent=D.title||M.ticket||M.repo;   /* no commit hash on the first screen (About has it) */
+function rel(iso){
+  const t=Date.parse(iso);
+  if(isNaN(t)||!W.Intl||!Intl.RelativeTimeFormat)return '';
+  const s=(t-Date.now())/1000,f=new Intl.RelativeTimeFormat('en',{numeric:'auto'});
+  const units=[ ['year',31536e3],['month',2592e3],['week',604800],['day',86400],['hour',3600],['minute',60]];
+  for(const u of units)if(Math.abs(s)>=u[1])return f.format(Math.round(s/u[1]),u[0]);
+  return f.format(Math.round(s),'second');
+}
+$$('time[data-rel]').forEach(t=>{const r=rel(t.getAttribute('datetime'));if(r)t.after(h('span',{class:'rel'},' · '+r));});
+/* every section and piece heading gets the same hover "#", pointing at its own section (a wrapper like #overview gets none) */
+const anchorOn=(t,id)=>{if(t&&id&&!$('.anchor',t))t.append(' ',h('a',{class:'anchor',href:'#'+id,title:'Link to this section','aria-hidden':'true',tabindex:'-1'},'#'));};
+$$('main section[id]:not(#overview)').forEach(s=>anchorOn($(':scope>h2,:scope>h3,:scope>header>h2,:scope>.ch-head>h3,:scope>.hunk>.note>h3',s),s.id));
+$$('main h2[id]:not(#map-h)').forEach(t=>anchorOn(t,t.id));
+
+/* pieces (section.ch, internally "chapters"): read state keyed by content hash */
+const chs=$$('section.ch');
+/* a piece is named by its number and short name; a row by its name */
+function chTitle(id){
+  if(PC[id])return PC[id].n+' '+PC[id].name;
+  if(id==='ch-mech')return 'Generated files';
+  if(RW[id])return RW[id];
+  const s=D.getElementById(id),t=s&&$('h2,h3',s);
+  return t?t.textContent.replace(/\s*#\s*$/,'').replace(/\s+/g,' ').trim():id;
+}
+const chKey=s=>'ch:'+s.id+':'+(s.dataset.hash||'');
+function markCh(s,on){
+  s.classList.toggle('done',on);
+  const cb=$('input.read-ch',s);if(cb)cb.checked=on;
+  /* a read piece shows a tick on its badge in the piece index and on the map */
+  $$('ol.pindex>li[data-ch="'+s.id+'"],.mapframe a.box[href="#'+s.id+'"]').forEach(x=>x.classList.toggle('read',on));
+}
+chs.forEach(s=>markCh(s,!!S.get(chKey(s),false)));
+
+/* tables: All N files (Viewed keyed by path + blob) and the goals table share one search, filter and sort engine */
+const ft=$('#files table.ft'),tt=$('#trace table.ft');
+const rows=ft?$$('tbody tr[data-path]',ft):[],trows=tt?$$('tbody tr[data-id]',tt):[];
+const fKey=tr=>'f:'+tr.dataset.path+':'+(tr.dataset.h||M.head||'');
+const tree=$('#ftree'),TL=new Map($$('#ftree li.fi').map(li=>[li.dataset.f,li]));   /* the file tree's rows by file id */
+function markRow(tr,on){tr.classList.toggle('done',on);const cb=$('input.read-f',tr);if(cb)cb.checked=on;const li=TL.get(tr.id);if(li)li.classList.toggle('done',on);}
+rows.forEach(tr=>markRow(tr,!!S.get(fKey(tr),false)));
+const RISK={'3':'high','2':'med','1':'low','0':'none'};
+const SR=['drift','not-built','untested','built','tested','deferred','non-goal'],OUT=['non-goal','deferred'];   /* gaps first */
+const chIdx=id=>{const i=chs.findIndex(s=>s.id===id);return i<0?1e6:i;};
+const uniq=a=>Array.from(new Set(a.filter(Boolean)));
+const stLabel=v=>{const r=trows.find(x=>x.dataset.state===v),b=r&&$('.state',r);return b?b.textContent.trim():v;};
+const by=k=>(tr,v)=>tr.dataset[k]===v;
+/* each table: p = id prefix, text = what the search matches, c = selects (opts) and checkboxes, count = the summary */
+const TB=[];
+if(ft&&$('#ftree-q'))TB.push({t:ft,rs:rows,p:'ff',   /* the files table's filter bar follows the tree filter's --filter-at switch; sorting stays */ph:'Filter by path  ( / )',al:'Filter files by path',text:tr=>String(tr.dataset.path||''),
+  c:[{k:'ch',l:'Piece',opts:uniq(rows.map(r=>r.dataset.ch)).sort((a,b)=>chIdx(a)-chIdx(b)),lab:chTitle,ok:by('ch')},
+     {k:'kind',l:'Kind',opts:uniq(rows.map(r=>r.dataset.kind)).sort(),ok:by('kind')},
+     {k:'risk',l:'Risk',opts:uniq(rows.map(r=>r.dataset.risk)).sort().reverse(),lab:v=>RISK[v]||v,ok:by('risk')},
+     {k:'unread',l:'Not viewed only',ok:tr=>!tr.classList.contains('done')}],
+  count:n=>n+' of '+rows.length+' · '+rows.filter(x=>x.classList.contains('done')).length+' viewed'});
+if(tt)TB.push({t:tt,rs:trows,p:'tf',ph:'Filter by id, text or file',al:'Filter the goals',text:tr=>tr.textContent,
+  c:[{k:'state',l:'State',opts:uniq(trows.map(r=>r.dataset.state)).sort((a,b)=>SR.indexOf(a)-SR.indexOf(b)),lab:stLabel,ok:by('state')},
+     {k:'gap',l:'Not tested only',ok:tr=>tr.dataset.proven==='0'&&OUT.indexOf(tr.dataset.state)<0}],
+  count:n=>n+' of '+trows.length+' goals'});
+TB.forEach(T=>{
+  const box=h('div',{class:'ftools'},h('input',{id:T.p+'-q',type:'search',placeholder:T.ph,autocomplete:'off','aria-label':T.al}));
+  T.c.forEach(c=>box.append(c.opts?h('select',{id:T.p+'-'+c.k,'aria-label':c.l},h('option',{value:''},c.l+': all'),...c.opts.map(v=>h('option',{value:v},c.lab?c.lab(v):v)))
+    :h('label',{class:'chk'},h('input',{id:T.p+'-'+c.k,type:'checkbox'}),c.l)));
+  box.append(h('span',{id:T.p+'-count',class:'fcount','aria-live':'polite'}));
+  (T.t.closest('.tablebox')||T.t).before(box);
+});
+const fv=id=>{const e=D.getElementById(id);return !e?'':e.type==='checkbox'?e.checked:e.value;};
+function applyFilter(){
+  TB.forEach(T=>{
+    const q=String(fv(T.p+'-q')).trim().toLowerCase(),vs=T.c.map(c=>fv(T.p+'-'+c.k));
+    let n=0;
+    T.rs.forEach(tr=>{
+      const hide=!!((q&&T.text(tr).toLowerCase().indexOf(q)<0)||T.c.some((c,i)=>vs[i]&&!c.ok(tr,vs[i])));
+      tr.hidden=hide;if(!hide)n++;
+    });
+    const cnt=D.getElementById(T.p+'-count');if(cnt)cnt.textContent=T.count(n);
+  });
+}
+function resetFilters(only){
+  TB.filter(T=>!only||T===only).forEach(T=>[T.p+'-q'].concat(T.c.map(c=>T.p+'-'+c.k)).forEach(id=>{
+    const e=D.getElementById(id);if(e){if(e.type==='checkbox')e.checked=false;else e.value='';}}));
+  applyFilter();
+}
+const COLL=W.Intl&&Intl.Collator?new Intl.Collator('en',{numeric:true,sensitivity:'base'}):null;   /* R2 before R10 */
+const cmp=(x,y)=>typeof x==='number'?x-y:COLL?COLL.compare(x,y):(x<y?-1:x>y?1:0);
+function sortBy(key,th){
+  const t=th.closest('table'),cur=th.getAttribute('aria-sort'),num=['risk','add','del','chg','proven'].indexOf(key)>=0;
+  const dir=cur==='ascending'?'descending':cur==='descending'?'ascending':(num?'descending':'ascending');
+  $$('th[aria-sort]',t).forEach(x=>x.removeAttribute('aria-sort'));
+  th.setAttribute('aria-sort',dir);
+  const sg=dir==='ascending'?1:-1,id=tr=>tr.dataset.path||tr.dataset.id||'';
+  const val=tr=>key==='ch'?chIdx(tr.dataset.ch):key==='state'?SR.indexOf(tr.dataset.state):num?+(tr.dataset[key]||0):String(tr.dataset[key]||'');
+  $$('tbody',t).forEach(tb=>{
+    const rs=$$(':scope>tr:not(.fd)',tb),fd=new Map(rs.map(x=>[x,x.nextElementSibling&&x.nextElementSibling.classList.contains('fd')?x.nextElementSibling:null]));
+    rs.sort((a,b)=>Math.sign(cmp(val(a),val(b)))*sg||cmp(id(a),id(b)));
+    const f=D.createDocumentFragment();rs.forEach(x=>{f.append(x);if(fd.get(x))f.append(fd.get(x));});tb.append(f);
+  });
+  say('Sorted by '+key+', '+dir);
+}
+
+/* progress */
+function progress(){
+  const rc=chs.filter(s=>s.classList.contains('done')).length,rf=rows.filter(r=>r.classList.contains('done')).length;
+  const pcs=chs.filter(s=>PC[s.id]),rp=pcs.filter(s=>s.classList.contains('done')).length;
+  /* one wording for the file count: "Viewed 0/17 files" in the bar, the tree header and Options */
+  const vtxt='Viewed '+rf+'/'+rows.length+' files';
+  const txt=chs.length||rows.length?'Read '+rp+'/'+pcs.length+' pieces · '+vtxt:'No code yet: nothing to tick off';
+  const tv=$('#ftree-v');if(tv)tv.textContent=rf;
+  const vp=$('#xd-viewed');if(vp&&rows.length){vp.hidden=false;vp.href='#files';vp.textContent=vtxt;vp.title=vtxt+': open All '+rows.length+' files';}
+  applyTree();
+  const pg=$('#xd-prog');
+  if(pg){pg.hidden=!chs.length;pg.max=Math.max(chs.length,1);pg.value=rc;pg.title=txt;pg.setAttribute('aria-label','Reading progress: '+txt);}
+  const st=$('#xd-stat');if(st)st.textContent=txt;
+  applyFilter();
+}
+/* the tree's filter (rendered only on a big change): name, extension, hide viewed; a folder with no file left hides */
+function applyTree(){
+  const q=$('#ftree-q');if(!q)return;
+  const t=q.value.trim().toLowerCase(),hv=$('#ftree-hv'),off=new Set($$('#ftree .ftree-ext').filter(c=>!c.checked).map(c=>c.value));
+  TL.forEach(li=>{li.hidden=!!((t&&li.dataset.path.toLowerCase().indexOf(t)<0)||off.has(li.dataset.ext)||(hv&&hv.checked&&li.classList.contains('done')));});
+  $$('#ftree li.fo').forEach(fo=>{fo.hidden=!$('li.fi:not([hidden])',fo);});
+}
+/* the current file is the last one whose header has reached the line a link lands it on (its scroll margin, just under
+   the bar) and whose diff is still on screen. Only its header is pinned (CSS), so the pinned header and the highlight agree */
+function spyFile(){
+  const bh=($('#bar')||{}).offsetHeight||48,r0=ft&&$('tbody tr[data-path]',ft),lim=(r0&&parseFloat(getComputedStyle(r0).scrollMarginTop)||bh)+1;let cur=null;
+  if(ft)$$('tbody tr[data-path]',ft).forEach(tr=>{
+    if(!tr.getClientRects().length)return;
+    const top=tr.getBoundingClientRect().top,nx=tr.nextElementSibling,end=(nx&&nx.classList.contains('fd')&&nx.getClientRects().length?nx:tr).getBoundingClientRect().bottom;
+    if(top<=lim&&end>bh)cur=tr;
+  });
+  rows.forEach(tr=>tr.classList.toggle('cur',tr===cur));
+  TL.forEach((li,id)=>{const on=!!cur&&cur.id===id,a=$('a',li);li.classList.toggle('cur',on);if(on)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');});
+  const li=cur&&TL.get(cur.id);
+  if(li&&tree&&li.getClientRects().length){const r=li.getBoundingClientRect(),b=tree.getBoundingClientRect();if(r.top<b.top||r.bottom>b.bottom)tree.scrollTop+=r.top-b.top-b.height/3;}
+}
+if(tree){let tk=0;W.addEventListener('scroll',()=>{if(!tk)tk=requestAnimationFrame(()=>{tk=0;spyFile();});},{passive:true});
+  tree.addEventListener('input',applyTree);tree.addEventListener('change',applyTree);
+}   /* no row-wide click: the file name and each badge are the row's only targets */
+/* the tree's width, dragged on its edge (or arrows, Home, End; double-click resets): 13-40rem, and never so wide that the main
+   column loses a piece's two columns (the note's 16rem minimum, the code at 1.6x it, their 24px gap: .piece .hunk) */
+const rz=tree&&h('div',{class:'ftree-rz',role:'slider',tabindex:'0','aria-label':'Resize file tree','aria-orientation':'horizontal'});
+if(rz){
+  tree.after(rz);
+  const pg=tree.parentElement,rem=()=>parseFloat(getComputedStyle(D.documentElement).fontSize)||16;
+  const lim=()=>{const cs=getComputedStyle(pg),r=rem(),room=pg.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-(parseFloat(cs.columnGap)||0)-(41.6*r+24);
+    return [Math.round(13*r),Math.round(Math.max(13*r,Math.min(40*r,room)))];};
+  const setW=(px,save)=>{
+    const [lo,hi]=lim(),root=D.documentElement.style;
+    if(px==null){root.removeProperty('--tree-w');px=Math.round(17.5*rem());}
+    else{px=Math.round(Math.min(hi,Math.max(lo,px)));root.setProperty('--tree-w',px+'px');}
+    rz.setAttribute('aria-valuemin',lo);rz.setAttribute('aria-valuemax',hi);rz.setAttribute('aria-valuenow',px);rz.setAttribute('aria-valuetext','File tree width '+px+' pixels');
+    if(save){opt.treew=px;S.set('opt',opt);}
+  };
+  const now=()=>+rz.getAttribute('aria-valuenow');
+  let x0=0,w0=0;
+  rz.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();x0=e.clientX;w0=tree.getBoundingClientRect().width;try{rz.setPointerCapture(e.pointerId);}catch(_){}rz.classList.add('drag');D.body.classList.add('rz');});
+  rz.addEventListener('pointermove',e=>{if(rz.classList.contains('drag'))setW(w0+e.clientX-x0);});
+  const end=()=>{if(!rz.classList.contains('drag'))return;rz.classList.remove('drag');D.body.classList.remove('rz');setW(now(),true);};
+  rz.addEventListener('pointerup',end);rz.addEventListener('pointercancel',end);rz.addEventListener('lostpointercapture',end);
+  rz.addEventListener('keydown',e=>{
+    const r=rem(),[lo,hi]=lim(),k=e.key;
+    const v=k==='ArrowLeft'||k==='ArrowDown'?now()-r:k==='ArrowRight'||k==='ArrowUp'?now()+r:k==='Home'?lo:k==='End'?hi:null;
+    if(v!=null){e.preventDefault();setW(v,true);}
+  });
+  rz.addEventListener('dblclick',()=>{delete opt.treew;S.set('opt',opt);setW(null);});
+  const fit=()=>setW(typeof opt.treew==='number'?opt.treew:null);
+  fit();W.addEventListener('resize',fit);
+}
+/* below 1100px the tree is a drawer: the bar's "Files" opens it; a scrim tap, Esc or picking a file closes it */
+const filesBtn=$('#xd-files'),scrim=tree&&h('div',{class:'ftree-scrim',hidden:true});
+if(filesBtn)filesBtn.hidden=!tree;
+if(scrim)D.body.append(scrim);
+{const th=tree&&$('.ftree-h',tree);if(th)th.append(h('button',{type:'button',class:'tbtn tclose','data-act':'files','aria-label':'Close the file list'},'Close'));}
+function setDrawer(open,back){
+  if(!tree||!filesBtn)return;
+  D.body.classList.toggle('tree-open',open);scrim.hidden=!open;filesBtn.setAttribute('aria-expanded',String(open));
+  if(open){const f=$('li.fi.cur>a',tree)||$('a',tree);if(f)f.focus();}
+  else if(back&&tree.contains(D.activeElement))filesBtn.focus();
+}
+function resetReading(){
+  try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&(k.indexOf(P+'ch:')===0||k.indexOf(P+'f:')===0))localStorage.removeItem(k);}}catch(e){}
+  chs.forEach(s=>markCh(s,false));rows.forEach(tr=>markRow(tr,false));
+  progress();say('Reading progress reset. Quiz first picks stay recorded.');
+}
+
+/* reference previews: hover or keyboard focus; on touch a tap follows the link */
+const pop=$('#xd-pop');
+const canHover=!!(W.matchMedia&&W.matchMedia('(hover:hover)').matches);
+const slug=r=>'ref-'+String(r).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+function refFor(raw){
+  raw=String(raw);
+  for(const li of $$('#refs [data-ref]'))if(li.dataset.ref===raw)return li;
+  const t=D.getElementById(slug(raw));
+  return t&&t.closest('#refs')?t:null;
+}
+const entryOf=li=>li&&D.getElementById(li.dataset.entry||'')||li;   /* a ref's listed source (its origin) */
+function refTarget(el){
+  if(el.dataset.ref)return refFor(el.dataset.ref);
+  const href=el.getAttribute('href')||'';
+  if(href.charAt(0)!=='#')return null;
+  const t=D.getElementById(href.slice(1));
+  return t&&t.closest('#refs')?t:null;
+}
+let popFor=null;
+function placePop(el){
+  const r=el.getBoundingClientRect(),w=pop.offsetWidth,ph=pop.offsetHeight,vw=root.clientWidth,vh=W.innerHeight;
+  let y=r.bottom+6;if(y+ph>vh-8)y=Math.max(8,r.top-ph-6);
+  pop.style.left=Math.max(8,Math.min(r.left,vw-w-8))+'px';pop.style.top=y+'px';
+}
+function showPop(el){
+  if(!pop||popFor===el)return;
+  const t=refTarget(el);if(!t)return;
+  const c=t.cloneNode(true);c.removeAttribute('id');$$('[id]',c).forEach(x=>x.removeAttribute('id'));
+  pop.textContent='';pop.append(...Array.from(c.childNodes));pop.hidden=false;popFor=el;
+  placePop(el);
+}
+function hidePop(){if(pop&&!pop.hidden){pop.hidden=true;pop.textContent='';}popFor=null;}
+/* a source chip (a.ref) opens its entry in Sources; a file outside the change (span.ref.file) is a preview only, reached by focus */
+$$('span.ref.file[data-ref]').forEach(s=>{s.tabIndex=0;});
+if(canHover){
+  D.addEventListener('mouseover',e=>{const r=e.target.closest&&e.target.closest('.ref');if(r)showPop(r);});
+  D.addEventListener('mouseout',e=>{const r=e.target.closest&&e.target.closest('.ref');if(r&&!r.contains(e.relatedTarget))hidePop();});
+  D.addEventListener('focusin',e=>{const r=e.target.closest&&e.target.closest('.ref');if(r)showPop(r);});
+  D.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('.ref'))hidePop();});
+}
+W.addEventListener('scroll',()=>{if(popFor&&popFor===D.activeElement)placePop(popFor);else hidePop();},{passive:true});
+
+/* copy: inside the click handler, with a select-the-text fallback */
+function selectNode(n){try{const r=D.createRange();r.selectNodeContents(n);const s=W.getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}}
+function copy(text,node,btn){
+  const done=ok=>{
+    if(!ok&&node)selectNode(node);
+    say(ok?'Copied':'Selected. Press Ctrl+C to copy');
+    if(btn){btn.dataset.t=btn.dataset.t||btn.textContent;btn.textContent=ok?'Copied':'Selected';setTimeout(()=>{btn.textContent=btn.dataset.t;},1600);}
+  };
+  try{const p=navigator.clipboard&&navigator.clipboard.writeText(text);if(p&&p.then)p.then(()=>done(true),()=>done(false));else done(false);}catch(e){done(false);}
+}
+/* a diff copies its head side: no "-" lines, no hunk headers, the sign column dropped */
+function codeText(fig){
+  const code=$('pre code',fig)||$('pre',fig);if(!code)return '';
+  const t=code.textContent;
+  if(!/\blanguage-diff/.test(code.className))return t;
+  return t.split('\n').filter(l=>!/^(-|@@|\\)/.test(l)).map(l=>l.slice(1)).join('\n');
+}
+
+/* stepper: the static <ol> becomes step list | state card | step strip */
+function stepSet(box,i){
+  const li=steps(box),n=li.length;if(!n)return;
+  i=Math.max(0,Math.min(n-1,i|0));box.dataset.i=String(i);
+  li.forEach((x,j)=>x.classList.toggle('cur',j===i));
+  $$('.stp-list button',box).forEach((b,j)=>{if(j===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  $$('.stp-strip button',box).forEach((b,j)=>{b.classList.toggle('cur',j===i);b.classList.toggle('seen',j<i);});
+  const nn=$('.stp-n',box);if(nn)nn.textContent='Step '+(i+1)+' of '+n;
+  const pv=$('[data-step="prev"]',box),nx=$('[data-step="next"]',box),fo=D.activeElement;
+  if(pv)pv.disabled=i===0;if(nx)nx.disabled=i===n-1;
+  if(fo&&fo.disabled&&(fo===pv||fo===nx))box.focus({preventScroll:true});
+}
+$$('ol.stepper').forEach(ol=>{
+  const li=$$(':scope>li',ol);
+  if(li.length<2||ol.closest('.stp'))return;
+  const title=ol.dataset.title||'Walkthrough';
+  const name=(x,i)=>{const t=$('h3,h4',x);return t?t.textContent.replace(/\s+/g,' ').trim():'Step '+(i+1);};
+  const box=h('div',{class:'stp',role:'group','aria-label':title,tabindex:'-1'});
+  ol.before(box);
+  box.append(
+    h('div',{class:'stp-cap'},h('span',null,title),h('span',{class:'stp-n','aria-live':'polite'})),
+    h('div',{class:'stp-main'},h('ol',{class:'stp-list'},...li.map((x,i)=>h('li',null,h('button',{type:'button','data-step':i},(i+1)+'. '+name(x,i))))),ol),
+    h('div',{class:'stp-strip'},...li.map((x,i)=>{const c=!!$('.chg',x);return h('button',{type:'button','data-step':i,class:c?'chg-cell':null,'aria-label':'Step '+(i+1)+': '+name(x,i)+(c?' (state changes)':'')});})),
+    h('div',{class:'stp-nav'},h('button',{type:'button',class:'btn','data-step':'prev'},'← Prev'),h('button',{type:'button',class:'btn','data-step':'next'},'Next →'),
+      h('button',{type:'button',class:'btn','data-step':'reset'},'Reset'),h('span',{class:'hint'},'← → also step')));
+  ol.classList.add('on');
+  stepSet(box,0);
+});
+
+/* quiz and gate: the first pick on each question is the score; re-clicks are practice */
+const LET='abcd';
+const QM={};QL.forEach(q=>{if(q&&q.id)QM[q.id]=q;});
+const qfs=QL.map(q=>q&&q.id&&D.getElementById(q.id)).filter(f=>f&&f.matches('fieldset.q'));
+/* the questions' fingerprint joins built_from: an intent-only rebuild keeps its head but may change its questions */
+const QH=(t=>{let x=5381;for(let i=0;i<t.length;i++)x=(Math.imul(x,33)^t.charCodeAt(i))>>>0;return x.toString(36);})(JSON.stringify(QL.map(q=>q&&[q.id,q.stem,q.options,q.answer])));
+const QK='quiz:'+BF+':'+QH;
+let first=S.get(QK,{});if(!first||typeof first!=='object')first={};
+const has=id=>Object.prototype.hasOwnProperty.call(first,id);
+/* qkey: the fingerprint this viewer last picked under; picks kept for another one mean the questions changed */
+const QPREV=S.get('qkey',null),anyPick=k=>{const o=S.get(k,null);return !!o&&typeof o==='object'&&Object.keys(o).length>0;};
+const QCHANGED=!Object.keys(first).length&&typeof QPREV==='string'&&QPREV!==QK&&anyPick(QPREV);
+if(Object.keys(first).length)S.set('qkey',QK);
+const keyOf=id=>+QM[id].answer;
+function optText(b){const c=b.cloneNode(true);$$('.mk',c).forEach(x=>x.remove());return c.textContent.replace(/\s+/g,' ').trim();}
+function clearAnswer(fs){
+  fs.classList.remove('done','practice');
+  $$('button.opt',fs).forEach(b=>{b.classList.remove('picked','key','miss');b.removeAttribute('aria-disabled');$$('.mk',b).forEach(x=>x.remove());});
+  $$('.fb',fs).forEach(x=>x.remove());
+}
+function evChip(s){
+  s=String(s).trim();
+  const m=/^(.+?)(?::(\d+(?:[-–]\d+)?))?$/.exec(s),path=m?m[1]:s;
+  /* the file's name, linked to the figure that shows the line (else its Files row); path:line only in the title */
+  const tr=rows.find(r=>r.dataset.path===path),ln=m&&m[2]?parseInt(m[2],10):0;
+  const fg=ln&&(FG[path]||[]).find(x=>x[0]<=ln&&ln<=x[1]);
+  /* a file name opens that file in All N files; only a file outside the table falls back to its figure */
+  const nm=path.split('/').pop();
+  if(tr||fg)return h('a',{class:'ref file',href:'#'+(tr?tr.id:fg[2]),title:tr?'Open '+nm+' in All '+rows.length+' files'+(ln?' (line '+m[2]+')':''):'Go to the code it quotes'},nm+(ln?' (line '+m[2]+')':''));
+  const ref=refFor(s.split(/\s+/).pop());
+  if(ref&&ref.id)return h('a',{class:'ref',href:'#'+entryOf(ref).id,title:s},(($('b',ref)||{}).textContent||s).trim());
+  /* a file only the page builder's checkout has (a local path or a local note) is named in words, never by its name */
+  if(/(?:^|\/)\.(?:ai|tasks)\/|^(?:explainer|review|sources)\/|^(?:\/|~|[A-Za-z]:[\\/])|\.md\b/.test(s))return h('span',null,'local notes (not online)');
+  return h('code',null,s);
+}
+/* a miss names, first, the piece (badge + name) or the row that decides the question */
+function badgeEl(id){const p=PC[id];return h('span',{class:'pb'+(p.deep?' deep':''),'data-fam':p.fam},String(p.n));}
+function decidedIn(id,kind){
+  if(!id||!D.getElementById(id))return null;
+  if(PC[id])return h('p',{class:'dec'},kind==='test'?'See ':'It is decided in ',h('a',{class:'pref',href:'#'+id},badgeEl(id),' '+PC[id].name),'.');
+  return h('p',{class:'dec'},'See ',h('a',{href:'#'+id},RW[id]||chTitle(id)),'.');
+}
+function showAnswer(fs,i,practice){
+  const q=QM[fs.id];if(!q)return;
+  const bs=$$('button.opt',fs),T=bs.map(optText),k=keyOf(fs.id),ok=i===k,fb=Array.isArray(q.feedback)?q.feedback:[];
+  clearAnswer(fs);
+  fs.classList.add('done');fs.classList.toggle('practice',!!practice);
+  bs.forEach(b=>{
+    const n=+b.dataset.i;
+    b.setAttribute('aria-disabled','true');
+    if(n===i)b.classList.add('picked');
+    if(n===k)b.classList.add('key');else if(n===i)b.classList.add('miss');
+    if(n===i||n===k)b.append(h('span',{class:'mk'},n===k?(n===i?'✓ Correct':'✓ The answer'):'✗ Your pick'));
+  });
+  const box=h('div',{class:'fb'});
+  box.append(h('p',{class:'res '+(ok?'ok':'no')},(practice?'Practice pick, not scored. ':'')+(ok?'Correct.':'Not quite.')));
+  const at=decidedIn(q.chapter,q.kind);if(at)box.append(at);
+  if(fb[i]!=null)box.append(h('p',null,h('b',null,LET[i]+'. '),rich(fb[i])));
+  if(!ok&&fb[k]!=null)box.append(h('p',null,h('b',null,'The answer is '+LET[k]+'. '),rich(fb[k])));
+  const rest=bs.map(b=>+b.dataset.i).filter(n=>n!==i&&n!==k);
+  if(rest.length)box.append(h('details',{class:'toggle'},h('summary',null,'Why not the others?'),
+    h('ul',null,...rest.map(n=>h('li',null,h('b',null,LET[n]+'. '),T[n]?'“'+T[n]+'” ':'',rich(fb[n]||''))))));
+  const ev=h('p',{class:'ev'});
+  (Array.isArray(q.evidence)?q.evidence:[]).forEach(s=>ev.append(evChip(s)));
+  if(q.kind)ev.append(h('span',null,'· '+q.kind));
+  box.append(h('details',{class:'toggle'},h('summary',null,'Evidence'),ev));
+  ($('.opts',fs)||bs[bs.length-1]).after(box);
+}
+function score(){
+  const ans=qfs.filter(f=>has(f.id)),miss=ans.filter(f=>first[f.id]!==keyOf(f.id)).map(f=>f.id);
+  return {n:qfs.length,a:ans.length,r:ans.length-miss.length,miss};
+}
+function resultLine(){
+  const s=score();
+  return 'understand quiz '+BF+': first try '+s.r+'/'+s.n+(s.a<s.n?' ('+(s.n-s.a)+' unanswered)':'')+' · '+
+    qfs.map(f=>{if(!has(f.id))return f.id+' –';const p=first[f.id],k=keyOf(f.id);return f.id+' '+LET[p]+(p===k?' ✓':' ✗ (key '+LET[k]+')');}).join(' · ');
+}
+function gate(){
+  const s=score(),last=S.get('last',null),msg=s.a+'/'+s.n+' answered, '+s.r+' first try';
+  let state='none',label;
+  if(!s.n)label='No quiz in this build';
+  else if(s.a<s.n){
+    label='Quiz '+s.a+'/'+s.n;
+    if(!s.a&&last&&last.b&&last.b!==BF){state='stale';label='Not yet: built from '+BF+'; you answered '+last.b;}
+  }else{state=s.miss.length?'fail':'pass';label='First try '+s.r+'/'+s.n;}    /* "First try", so a practice round never reads as the score */
+  const done=s.n>0&&s.a===s.n;
+  practiceNote(s,done);
+  const ask=done&&s.miss.length?' · explain your misses to Claude':'';    /* one wording for every reader, whatever meta.mode says */
+  $$('.pill[data-gate]').forEach(p=>{p.dataset.state=state;p.textContent=label;p.title=(p.tagName==='A'?'Go to the quiz · ':'')+label+(ask||' ('+msg+')');});
+  $$('.path-prog').forEach(x=>{x.textContent=(done?s.r:s.a)+'/'+s.n;});
+  $$('.start .go-t').forEach(x=>{if(!x.dataset.t)x.dataset.t=x.innerHTML;if(done)x.textContent='First try';else x.innerHTML=x.dataset.t;});
+  $$('.start .path-prog').forEach(x=>{let a=x.nextElementSibling;if(!a||!a.classList.contains('go-x'))x.after(a=h('small',{class:'go-x'}));a.textContent=ask;a.hidden=!ask;});
+  const qn=$('#quiz .qnext');
+  if(qn){
+    qn.hidden=!done;qn.textContent='';
+    if(done&&s.miss.length){
+      const by=new Map();s.miss.forEach(id=>{const c=QM[id].chapter||'';if(!by.has(c))by.set(c,[]);by.get(c).push(id);});
+      const back=h('p',null,'Re-read first: ');
+      Array.from(by.keys()).forEach((c,i)=>{
+        if(i)back.append(' · ');
+        const l=c&&PC[c]?h('a',{class:'pref',href:'#'+c,title:'Go to '+String.fromCharCode(0x245F+PC[c].n)+' '+PC[c].name},badgeEl(c),' '+PC[c].name):c&&D.getElementById(c)?h('a',{href:'#'+c},RW[c]||chTitle(c)):null;
+        if(l)back.append(l,' ('+by.get(c).join(', ')+')');else back.append(by.get(c).join(', '));
+      });
+      const m=s.miss.length;
+      qn.append(h('p',{class:'qn-h'},'Explain your misses to Claude'),
+        h('p',null,'First try '+s.r+'/'+s.n+'. To clear '+(m>1?'them':'it')+', paste your result ',
+          h('button',{type:'button',class:'btn q-copy'},'Copy result'),' into a Claude Code session running ',
+          h('code',null,'/skunexus-understand'+(M.ticket?' '+M.ticket:'')),
+          ' and explain, in your own words, '+(m>1?'why each of the '+m+' answers is what it is':'why the answer to '+s.miss[0]+' is what it is')+
+          '. Claude checks each explanation against the code.'),back);
+      if(DB&&UID)qn.append(h('p',{class:'qn-db'},'Your result is also saved privately for you on this page, so Claude can read it without the paste.'));
+    }else if(done)qn.append(h('p',{class:'qn-h'},'Done: you’ve checked your understanding of this change'),
+      h('p',null,'First try '+s.r+'/'+s.n+'. ',$('#deeper')?h('a',{href:'#deeper'},'Go deeper ↓'):''));
+  }
+  const qc=$('#q-copy');if(qc)qc.classList.toggle('pri',done&&s.miss.length>0);
+  const gm=$('#gate-msg');if(gm)gm.textContent=msg;
+  const ln=$('#q-line');if(ln)ln.textContent=resultLine();
+  if(s.n&&s.a===s.n)S.set('last',{b:BF,r:s.r,n:s.n});
+}
+const quiz=$('#quiz');
+if(quiz&&qfs.length){
+  const hd=$(':scope>h2',quiz),nx=hd&&hd.nextElementSibling;
+  const g=h('div',{class:'gate',id:'gate'},h('span',{class:'pill','data-gate':'','data-state':'none'},'Not yet understood'),h('span',{id:'gate-msg'}));
+  let note=$('.quiz-note',quiz);
+  if(!note){
+    note=h('p',{class:'quiz-note'},'Your first picks are saved privately for you; nobody else can read them.');
+    if(nx&&nx.tagName==='P')nx.after(note);else if(hd)hd.after(note);else quiz.prepend(note);
+  }
+  let tail=note;
+  if(QCHANGED){tail=h('p',{class:'quiz-note'},'The questions changed since your last visit; your earlier picks were for the previous version.');note.after(tail);}
+  tail.after(g);
+  g.after(h('div',{class:'q-practice',id:'q-practice',role:'status',hidden:true},h('p'),h('span',{class:'q-pp',id:'q-pp'}),
+    h('button',{type:'button',class:'btn',id:'q-first',title:'Show your recorded first picks again and end the practice round'},'Show my first try')));
+  quiz.append(h('div',{class:'qnext','aria-live':'polite',hidden:true}),h('div',{class:'q-actions'},
+    h('button',{type:'button',class:'btn',id:'q-reset'},'Practice reset'),h('span',{class:'q-hint',id:'q-hint'}),
+    h('button',{type:'button',class:'btn',id:'q-copy'},'Copy result'),
+    h('output',{class:'q-line',id:'q-line','aria-live':'off'})));
+}
+function showFirst(){qfs.forEach(f=>{if(has(f.id))showAnswer(f,+first[f.id],false);else clearAnswer(f);});}
+showFirst();
+
+/* Practice reset hides the answers; re-picks stay in memory only, and the first picks stay the score */
+let inPractice=false;
+function firstTry(s,done){return done?s.r+'/'+s.n:s.a+'/'+s.n+' answered';}
+function practiceNote(s,done){
+  const ht=$('#q-hint'),rb=$('#q-reset'),bn=$('#q-practice');
+  const tip='Practice reset: hides your answers so you can try again. '+(s.a?'Your first try ('+firstTry(s,done)+') stays your score; reloading the page shows it again. To erase your first try, use Options → Reset quiz.':'Your first pick on each question is your score.');
+  if(ht)ht.textContent=tip;if(rb)rb.title=tip;
+  if(!bn)return;
+  bn.hidden=!inPractice;if(!inPractice)return;
+  $('p',bn).textContent=done?'Practice round: your first try, '+s.r+'/'+s.n+', is still your score. Answers here are for practice and aren’t saved.'
+    :'Practice round: your first try so far ('+s.a+'/'+s.n+' answered) is still your score. Re-answers are for practice and aren’t saved; a question you haven’t tried yet still counts as your first try.';
+  $('#q-pp').textContent='practice: '+qfs.filter(f=>f.classList.contains('done')).length+'/'+s.n+' answered';
+}
+function startPractice(){inPractice=true;qfs.forEach(clearAnswer);gate();$('#q-practice').scrollIntoView({block:'start'});say('Practice round. Your first try stays your score; new answers are not saved.');}
+function endPractice(){inPractice=false;showFirst();gate();say('Showing your first try.');}
+
+/* runtime capabilities: absent on a local file; the page never needs them */
+let wipe=Promise.resolve();    /* a result write waits for a pending quiz-reset wipe: one write at a time per doc */
+let DB=null,UID=null,CM=null,pending=false,sent=!!S.get('sent:'+BF+':'+QH,false);
+function use(n){try{const c=W.claude;return c&&typeof c.use==='function'?Promise.resolve(c.use(n)).catch(()=>null):Promise.resolve(null);}catch(e){return Promise.resolve(null);}}
+function sendResult(){
+  const s=score();
+  if(sent||!s.n||s.a<s.n)return;
+  if(!DB||!UID){pending=true;return;}
+  let ref;try{ref=DB.doc('results/'+UID);}catch(e){return;}
+  const entry={};entry[BF]={line:resultLine(),correct:s.r,total:s.n,at:new Date().toISOString()};
+  sent=true;S.set('sent:'+BF+':'+QH,true);
+  /* update needs an existing doc; unknown codes count as unavailable, so only these are final (db.d.ts) */
+  const final=e=>e&&['invalid_argument','resource_exhausted','quota_exceeded','revoked','not_granted','capability_disabled','capability_removed','transform_error'].indexOf(e.code)>=0;
+  const put=()=>ref.update(entry).catch(e=>{if(e&&e.code==='invalid_argument')return ref.set(entry);throw e;});
+  wipe.then(put).catch(e=>{if(final(e))throw e;return new Promise(r=>setTimeout(r,400+Math.random()*800)).then(put);})
+    .catch(()=>{sent=false;S.set('sent:'+BF+':'+QH,false);});
+}
+/* Reset quiz: this build's first picks, sent flag and practice state, and the saved record's entry for this build.
+   The read ticks, Viewed and opt (the layout) stay: "Reset reading progress" covers those. */
+const WK='wipe:'+BF+':'+QH;    /* stored until the saved record is wiped: a reset made before the db resolved still reaches it */
+function wipeRecord(){
+  if(!DB||!UID)return;          /* the flag stays; the db callback below runs this once the db resolves */
+  /* db.d.ts (contract 0.2.96): update() merges nested objects recursively and there is no field-delete sentinel,
+     so dropping this build's key means get(), then set(rest) (full replace) or delete() when nothing else is left.
+     exists:false also covers a doc this viewer cannot see. sendResult() writes a fresh record on the next completed first try. */
+  let ref;try{ref=DB.doc('results/'+UID);}catch(e){return;}
+  wipe=wipe.then(()=>ref.get()).then(snap=>{
+    if(!snap||!snap.exists)return;
+    const rest=Object.assign({},snap.data());
+    if(!Object.prototype.hasOwnProperty.call(rest,BF))return;
+    delete rest[BF];
+    return Object.keys(rest).length?ref.set(rest):ref.delete();
+  }).then(()=>S.set(WK,null)).catch(()=>{});    /* a failed wipe keeps the flag and retries on the next load */
+}
+function resetQuiz(){
+  S.set(QK,null);S.set('sent:'+BF+':'+QH,null);
+  if(S.get('qkey',null)===QK)S.set('qkey',null);
+  const last=S.get('last',null);if(last&&last.b===BF)S.set('last',null);
+  first={};sent=false;pending=false;inPractice=false;
+  showFirst();gate();
+  say('Quiz reset: your quiz answers and first-try result are erased. Viewed files and read ticks are kept.');
+  S.set(WK,true);wipeRecord();
+}
+Promise.all([use('db'),use('user')]).then(r=>{
+  const db=r[0],u=r[1];
+  if(!db||!u||typeof u.id!=='function')return null;
+  const can=typeof u.can==='function'?Promise.resolve(u.can('data.write')).catch(()=>null):null;
+  return Promise.all([u.id(),can]).then(v=>{if(v[0]&&v[1]!==false){DB=db;UID=v[0];gate();
+    if(S.get(WK,false)){const s=score();if(s.n&&s.a===s.n)S.set(WK,null);else wipeRecord();}   /* a new first try since the reset overwrites the entry itself */
+    if(pending)sendResult();}});
+}).catch(()=>{});
+use('comments').then(cm=>{
+  if(!cm||typeof cm.openComposer!=='function')return;
+  CM=cm;
+  chs.forEach(s=>{const b=$('.ch-head',s);if(b)b.append(h('button',{type:'button',class:'cmt','data-cmt':s.id},'Comment'));});
+  const qh=$('#quiz>h2');if(qh)qh.after(h('button',{type:'button',class:'cmt','data-cmt':'quiz'},'Comment on the quiz'));
+}).catch(()=>{});
+function openComment(btn){
+  const sec=D.getElementById(btn.dataset.cmt);if(!CM||!sec)return;
+  Promise.resolve(CM.openComposer({element:sec})).catch(e=>{
+    const c=e&&e.code;
+    if(['unavailable','forbidden','not_granted','capability_disabled','capability_removed'].indexOf(c)>=0){$$('.cmt').forEach(x=>x.remove());CM=null;}
+  });
+}
+
+/* menu and help (the help lists only the keys that do something on this page) */
+const mb=$('#xd-menu-btn'),menu=$('#xd-menu'),help=$('#xd-help');
+[['j',chs.length],['/',$('#ff-q,#tf-q')],['←',$('.stp')]].forEach(([k,on])=>{if(on)return;
+  const dt=$$('#xd-help dt').find(x=>x.textContent.trim().charAt(0)===k);if(dt){dt.nextElementSibling.remove();dt.remove();}});
+function setMenu(open){if(!menu||!mb)return;menu.hidden=!open;mb.setAttribute('aria-expanded',String(open));if(open){const f=$$('button',menu).find(b=>b.getClientRects().length);if(f)f.focus();}}
+function toggleHelp(v){if(help)help.hidden=v==null?!help.hidden:!v;}
+/* without hover a title is never seen: the reset items and the carry tags write theirs out (CSS shows them only under (hover:none)) */
+$$('#xd-menu [data-act="reset"],#xd-menu [data-act="wipe"]').forEach(b=>b.after(h('p',{class:'mh'},b.title)));
+$$('b.tag[title]').forEach(b=>b.parentElement.append(h('span',{class:'tipx'},b.textContent+': '+b.title)));
+/* both resets take two clicks; the armed time and button are one pair, so arming one never fires the other */
+let armed=0,armedB=null;
+const ARMED={reset:'Click again to reset',wipe:'Click again to erase your quiz answers and first-try result (Viewed files and read ticks are kept)'};
+function disarm(b){armed=0;armedB=null;b.removeAttribute('data-armed');b.textContent=b.dataset.label;}
+/* "Expand all" is a toggle: it opens every section but leaves the file diffs closed; "Collapse all" closes everything */
+let expanded=false;
+function setExpand(open){
+  expanded=open;
+  $$('main details').forEach(d=>{if(!open||!d.closest('details.fdx'))d.open=open;});
+  $$('[data-act="expand"]').forEach(x=>{x.textContent=open?'Collapse all':'Expand all';if(x.id)x.title=open?'Close every section on the page':'Open every section on the page (file diffs stay closed)';});
+  say(open?'Expanded every section':'Collapsed every section');
+}
+function act(b){
+  const a=b.dataset.act;
+  if(a==='expand'){setExpand(!expanded);setMenu(false);}
+  else if(a==='files')setDrawer(!D.body.classList.contains('tree-open'),true);   /* closing (Files or the drawer's Close) returns focus to Files */
+  else if(a==='wide'||a==='wrap'){opt[a]=!opt[a];S.set('opt',opt);applyOpt();}
+  else if(a==='tree'){opt.notree=!opt.notree;S.set('opt',opt);applyOpt();const f=opt.notree?$('#xd-tree-btn'):$('#ftree .tbtn');if(f)f.focus();}
+  else if(a==='font'){opt.font=b.dataset.font;S.set('opt',opt);applyOpt();}
+  else if(a==='help'){setMenu(false);toggleHelp();}
+  else if(a==='reset'||a==='wipe'){
+    if(armedB===b&&Date.now()-armed<3000){disarm(b);if(a==='reset')resetReading();else resetQuiz();setMenu(false);}
+    else{
+      if(armedB)disarm(armedB);
+      b.dataset.label=b.dataset.label||b.textContent;armed=Date.now();armedB=b;b.setAttribute('data-armed','');b.textContent=ARMED[a];
+      setTimeout(()=>{if(armedB===b&&Date.now()-armed>=2900)disarm(b);},3000);
+    }
+  }
+}
+
+/* keyboard: j/k pieces (the ones on screen: a closed row's are skipped), / filter, ? help, Esc closes, arrows in a stepper */
+function jump(d){
+  const cs=chs.filter(s=>s.getClientRects().length);
+  if(!cs.length)return;
+  const off=s=>s.getBoundingClientRect().top-(parseFloat(getComputedStyle(s).scrollMarginTop)||0);
+  let t=null;
+  if(d>0)t=cs.find(s=>off(s)>2)||null;
+  else for(let i=cs.length-1;i>=0;i--){if(off(cs[i])<-2){t=cs[i];break;}}
+  if(!t)return;
+  t.scrollIntoView({block:'start'});
+  const hh=$('h2,h3',t);if(hh){hh.tabIndex=-1;hh.focus({preventScroll:true});}
+}
+D.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){const back=card&&!card.hidden&&card.contains(D.activeElement)?cardFor:null;hidePop();hideCard();setMenu(false);toggleHelp(false);backToTile(back);
+    if(D.body.classList.contains('tree-open'))setDrawer(false,true);return;}
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  const t=e.target;
+  if(t&&t.closest&&t.closest('input,textarea,select,[contenteditable]'))return;
+  const stp=t&&t.closest&&t.closest('.stp');
+  if(stp&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){e.preventDefault();stepSet(stp,(+stp.dataset.i||0)+(e.key==='ArrowRight'?1:-1));return;}
+  if(e.key==='j'||e.key==='k'){e.preventDefault();jump(e.key==='j'?1:-1);}
+  else if(e.key==='/'){const q=$('#ff-q')||$('#tf-q');if(q){e.preventDefault();reveal(q.closest('section')||q);q.focus({preventScroll:true});}}
+  else if(e.key==='?'){e.preventDefault();toggleHelp();}
+});
+
+/* one delegated click listener */
+D.addEventListener('click',e=>{
+  const t=e.target;if(!(t instanceof Element))return;
+  if(menu&&!menu.hidden&&!t.closest('#xd-menu,#xd-menu-btn'))setMenu(false);
+  if(card&&!card.hidden&&!t.closest('nav.strip'))hideCard();   /* a tap outside closes the strip's card */
+  if(!canHover&&popFor&&!t.closest('.ref'))hidePop();   /* a tap elsewhere closes a source preview */
+  let el;
+  /* on touch a source chip's first tap previews its quote and origin; the second opens its entry in Sources */
+  if(!canHover&&(el=t.closest('a.ref[data-ref]:not(.file)'))&&popFor!==el&&refTarget(el)){e.preventDefault();showPop(el);return;}
+  if(t.closest('.ftree-scrim')){setDrawer(false,true);return;}
+  if(D.body.classList.contains('tree-open')&&t.closest('#ftree a'))setDrawer(false);
+  /* touch has no hover, so a tile's first tap opens its card; a second tap on it (or the card's file link) opens the file */
+  if((el=t.closest('nav.strip>a'))&&touchy()&&e.detail>0&&!tapOpen){e.preventDefault();cardFor=null;showCard(el,true);return;}
+  if((el=t.closest('.tcard .tnav'))){const tl=$$('nav.strip>a'),n=tl[tl.indexOf(cardFor)+(+el.dataset.d)];if(n)showCard(n,true);return;}
+  if((el=t.closest('button.opt'))){
+    const fs=el.closest('fieldset.q');
+    if(!fs||fs.classList.contains('done')||!QM[fs.id])return;
+    const i=+el.dataset.i,firstPick=!has(fs.id);
+    if(firstPick){first[fs.id]=i;S.set(QK,first);S.set('qkey',QK);}
+    showAnswer(fs,i,!firstPick);
+    say((i===keyOf(fs.id)?'Correct':'Not quite')+(firstPick?'':'. Practice pick, not scored'));
+    gate();
+    if(firstPick)sendResult();
+    return;
+  }
+  if((el=t.closest("#xd-menu-btn"))){if(menu)setMenu(menu.hidden);return;}
+  if((el=t.closest('[data-act]'))){act(el);return;}
+  if((el=t.closest('button.copy'))){const fig=el.closest('figure');if(fig)copy(codeText(fig),$('pre',fig),el);return;}
+  if((el=t.closest('button.fx'))){const d=D.getElementById(el.getAttribute('aria-controls'));if(d)d.open=!d.open;return;}
+  if((el=t.closest('th button[data-sort]'))){sortBy(el.dataset.sort,el.closest('th'));return;}
+  if((el=t.closest('.stp [data-step]'))){
+    const box=el.closest('.stp'),v=el.dataset.step;
+    stepSet(box,v==='prev'?(+box.dataset.i||0)-1:v==='next'?(+box.dataset.i||0)+1:v==='reset'?0:+v);
+    return;
+  }
+  if((el=t.closest('#q-reset'))){startPractice();return;}
+  if((el=t.closest('#q-first'))){endPractice();return;}
+  if((el=t.closest('#q-copy,.q-copy'))){gate();copy(resultLine(),$('#q-line'),el.isConnected?el:$('#quiz .qnext .q-copy'));return;}    /* gate() redraws the box's inline button */
+  if((el=t.closest('button.cmt'))){openComment(el);return;}
+  if((el=t.closest('a[href="#top"]'))){e.preventDefault();hideCard();W.scrollTo(0,0);return;}   /* the bar's title and place name: back to the very top */
+  if((el=t.closest('a[href^="#"]'))){const id=el.getAttribute('href').slice(1),x=id&&D.getElementById(id);if(x){hideCard();hidePop();land(x);}}
+});
+D.addEventListener('change',e=>{
+  const t=e.target;if(!(t instanceof Element))return;
+  if(t.matches('input.read-ch')){const s=t.closest('section.ch');if(s){S.set(chKey(s),t.checked);markCh(s,t.checked);progress();}}
+  else if(t.matches('input.read-f')){const tr=t.closest('tr');if(tr){S.set(fKey(tr),t.checked);markRow(tr,t.checked);progress();}}
+  else if(t.closest('.ftools'))applyFilter();
+});
+D.addEventListener('input',e=>{if(e.target instanceof Element&&e.target.matches('.ftools input[type="search"]'))applyFilter();});
+
+/* lazy syntax colour: only when Prism loaded and knows the language */
+function paint(code){
+  if(code.dataset.hl||!W.Prism||typeof W.Prism.highlightElement!=='function'||!W.Prism.languages)return;
+  const dg=W.Prism.languages.diff;
+  if(dg&&!dg.xdHd){dg.coord=[{pattern:/^@@.*(?:\r\n?|\n|(?![\s\S]))/m,alias:'hd'}].concat(dg.coord||[]);Object.defineProperty(dg,'xdHd',{value:1});}
+  const m=/\blanguage-([\w-]+)/.exec(code.className);if(!m)return;
+  const d=/^diff-/.test(m[1]);
+  if(d?!W.Prism.languages.diff:!W.Prism.languages[m[1]])return;
+  code.dataset.hl='1';
+  try{W.Prism.highlightElement(code);}catch(e){}
+}
+const codes=$$('pre>code[class*="language-"]');
+if('IntersectionObserver' in W){
+  const io2=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){io2.unobserve(x.target);paint(x.target);}}),{rootMargin:'400px'});
+  codes.forEach(c=>io2.observe(c));
+}else codes.forEach(paint);
+
+/* print (local copy): open everything, clear filters, append the answer key from the JSON */
+let closedForPrint=[];
+W.addEventListener('beforeprint',()=>{
+  if(!closedForPrint.length)closedForPrint=$$('details:not([open])');closedForPrint.forEach(d=>{d.open=true;});
+  resetFilters();hidePop();
+  const old=$('#xd-key');if(old)old.remove();
+  if(!qfs.length)return;
+  const mainEl=$('main');if(!mainEl)return;
+  mainEl.append(h('section',{class:'sec print-key',id:'xd-key'},h('h2',null,'Answer key'),h('p',null,'Built from '+BF+'.'),
+    h('ul',null,...qfs.map(f=>{const q=QM[f.id],k=keyOf(f.id);return h('li',null,h('b',null,f.id+' · '+LET[k]+'. '),rich((q.feedback||[])[k]||''),q.chapter?' Decided in: '+chTitle(q.chapter)+'.':'');}))));
+});
+D.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('fdx')){const b=$('button.fx[aria-controls="'+d.id+'"]');if(b)b.setAttribute('aria-expanded',String(d.open));}},true);
+W.addEventListener('afterprint',()=>{closedForPrint.forEach(d=>{d.open=false;});closedForPrint=[];const k=$('#xd-key');if(k)k.remove();});
+
+/* a strip tile under 13 px wide hides its digit (its card still names the file and the piece) */
+function tileDigits(){$$('nav.strip>a').forEach(a=>a.classList.toggle('tiny',a.getBoundingClientRect().width<13));}
+tileDigits();W.addEventListener('resize',tileDigits);
+
+/* a tile is a file, so its click opens the file; hovering or focusing it shows a card with two destinations: the file
+   name (the same place) and its piece badge(s), each a link. The card sits after its tile, so Tab reaches its links; it stays
+   while the pointer moves into it and closes on leave, on Esc, and on a click inside it. Built from the tree row, not a copy. */
+const strip=$('nav.strip');
+let card=null,cardFor=null,quietCard=false;
+let cardT=0;
+function hideCard(){clearTimeout(cardT);if(card&&!card.hidden){card.hidden=true;card.textContent='';}cardFor=null;}
+const hideSoon=()=>{clearTimeout(cardT);cardT=setTimeout(hideCard,300);};   /* a pointer that overshoots gets 300 ms (a guess, tuned by hand) to come back */
+function showCard(tile,touch){
+  if(!strip||quietCard||cardFor===tile)return;
+  const id=tile.dataset.f,li=TL.get(id),tr=D.getElementById(id);if(!tr)return;
+  if(!card)card=h('div',{class:'tcard',role:'group','aria-label':'File and piece'});
+  const path=tr.dataset.path||'',nm=path.split('/').pop(),dir=path.slice(0,-nm.length);
+  const twin=rows.some(r=>r!==tr&&String(r.dataset.path).split('/').pop()===nm);     /* two .gitkeep files: show their folders */
+  card.textContent='';
+  card.append(h('a',{class:'ref file',href:'#'+id,title:'Open '+path+' in All '+rows.length+' files'},twin&&dir?h('span',{class:'pm'},dir):'',nm),
+    h('span',{class:'pm'},'+'+(tr.dataset.add||0)+' −'+(tr.dataset.del||0)));
+  const bs=li&&$('.bs',li);
+  if(bs&&$('a.pbl',bs))card.append(h('span',{class:'bs'},...Array.from(bs.childNodes).map(n=>n.cloneNode(true))));
+  else if(D.getElementById('ch-mech'))card.append(h('a',{href:'#ch-mech',title:'Go to Generated files'},'Generated files'));
+  if(touch){const tl=$$('nav.strip>a'),i=tl.indexOf(tile);   /* tiles narrower than a finger: the card steps to the neighbours */
+    card.append(h('span',{class:'tnav-w'},h('button',{type:'button',class:'tnav','data-d':'-1','aria-label':'Previous file',disabled:i<1},'‹'),
+      h('button',{type:'button',class:'tnav','data-d':'1','aria-label':'Next file',disabled:i>=tl.length-1},'›')));}
+  tile.after(card);card.hidden=false;cardFor=tile;
+  card.style.left='0px';
+  card.style.left=Math.max(0,Math.min(tile.offsetLeft,strip.clientWidth-card.offsetWidth))+'px';
+}
+/* the pointer type of the latest pointer, so touch never relies on hover (a touch tap also fires compat mouse events) */
+let lastPT='mouse',tapOpen=false;
+const touchy=()=>lastPT==='touch'||lastPT==='pen';
+['pointerover','pointerdown'].forEach(n=>D.addEventListener(n,e=>{lastPT=e.pointerType||'mouse';},{capture:true,passive:true}));
+if(strip){
+  strip.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('nav.strip>a');tapOpen=!!t&&cardFor===t;},{passive:true});
+  strip.addEventListener('mouseover',e=>{if(touchy())return;const t=e.target.closest&&e.target.closest('nav.strip>a');if(t)showCard(t);});
+  strip.addEventListener('mouseleave',()=>{if(!touchy())hideSoon();});
+  strip.addEventListener('mouseenter',()=>clearTimeout(cardT));   /* back on a tile or into the card (a child of the strip) */
+  strip.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest('nav.strip>a');if(t)showCard(t);});
+  strip.addEventListener('focusout',e=>{if(!strip.contains(e.relatedTarget))hideCard();});
+}
+/* Esc inside the card hands focus back to its tile without reopening the card */
+const backToTile=t=>{if(!t)return;quietCard=true;t.focus();quietCard=false;};
+
+/* the map's wires: the bus spans the first to the last asker's centre; its arrow enters the rule box (flow-shaped, no rule:
+   it points at the outcomes' middle); "so" leaves the rule box toward the outcomes' middle, kept inside the rule box */
+function fitWires(){
+  const map=$('.mapframe .map');if(!map)return;
+  const as=$$('.asker',map),bus=$('.wire.bus',map),so=$('.wire.plain',map),rule=$('.rule',map),outs=$$('.out',map);
+  if(!as.length||!bus||!(rule||outs.length))return;
+  if(getComputedStyle(map).gridTemplateColumns.trim().split(/\s+/).length<2){   /* stacked (one column): CSS draws plain down arrows */
+    [bus,so].forEach(x=>{if(x)['--t','--b','--y'].forEach(p=>x.style.removeProperty(p));});return;}
+  const c=r=>r.top+r.height/2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const w=bus.getBoundingClientRect(),f=as[0].getBoundingClientRect(),l=as[as.length-1].getBoundingClientRect(),r=rule&&rule.getBoundingClientRect();
+  const om=outs.length?(c(outs[0].getBoundingClientRect())+c(outs[outs.length-1].getBoundingClientRect()))/2:0;
+  bus.style.setProperty('--t',(c(f)-w.top)+'px');bus.style.setProperty('--b',(w.bottom-c(l))+'px');
+  bus.style.setProperty('--y',(clamp(r?c(r):om,c(f),c(l))-w.top)+'px');
+  if(r&&so&&outs.length)so.style.setProperty('--y',(clamp(om,r.top+12,r.bottom-12)-so.getBoundingClientRect().top)+'px');
+}
+fitWires();W.addEventListener('resize',fitWires);
+if(D.fonts&&D.fonts.ready)D.fonts.ready.then(fitWires).catch(()=>{});
+
+/* the bar names where you are: the last landmark whose top has passed the bar, plus the current file */
+const whereEl=$('#xd-where');
+function whereName(x){
+  if(PC[x.id])return String.fromCharCode(0x245F+PC[x.id].n)+' '+PC[x.id].title;
+  if(x.matches('details.row')){const p=$('section.ch[id]',x);if(p&&PC[p.id])return String.fromCharCode(0x245F+PC[p.id].n)+' '+PC[p.id].title;
+    return (($(':scope>summary',x)||{}).textContent||'').replace(/\s+/g,' ').trim();}
+  const t=x.matches('h2')?x:$(':scope>h2,:scope>header>h2',x);
+  return t?t.textContent.replace(/\s*#\s*$/,'').replace(/\s+/g,' ').trim():'';
+}
+function spyWhere(){
+  if(!whereEl)return;
+  const lim=(($('#bar')||{}).offsetHeight||48)+40;let cur=null;
+  $$('#map,#carry,#overview>#asked,#pieces,section.piece,#quiz,#deeper,#deeper>details.row[open]').forEach(x=>{if(x.getClientRects().length&&x.getBoundingClientRect().top<=lim)cur=x;});
+  let t=cur?whereName(cur):'';
+  const f=ft&&$('tbody tr.cur[data-path]',ft);
+  if(f&&cur&&cur.contains(f))t+=' › '+String(f.dataset.path).split('/').pop();
+  if(whereEl.textContent!==t)whereEl.textContent=t;
+  whereEl.title=t?'Back to the top (you are in: '+t+')':'Back to the top';whereEl.setAttribute('aria-label',whereEl.title);
+}
+{let tk=0;W.addEventListener('scroll',()=>{if(!tk)tk=requestAnimationFrame(()=>{tk=0;spyWhere();});},{passive:true});}
+
+/* first paint of state, then the hash */
+gate();
+progress();
+if(tree)spyFile();
+spyWhere();
+W.addEventListener('hashchange',()=>{try{const id=decodeURIComponent(location.hash.slice(1));if(id)reveal(id);}catch(e){}});
+try{const id=decodeURIComponent(location.hash.slice(1));if(id)setTimeout(()=>reveal(id),0);}catch(e){}
+})();
+</script>

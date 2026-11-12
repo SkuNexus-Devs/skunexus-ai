@@ -91,6 +91,13 @@ A PR description that mis-explains a mechanism is worse than one that says less.
      description: this PR describes only the new work, with a one-line reference to the earlier
      round (see the round-2 example in `references/example-prs.md`). Re-explaining already-merged
      work buries what the reviewer actually needs to look at.
+   - **Understanding check (any scope):** if `.ai/<TICKET>/explainer/artifact.md` exists, quote its
+     newest row's Quiz cell in the recap, marked stale when that row's head is not HEAD; otherwise,
+     when the diff is over ~400 changed lines, offer `skunexus-understand` before drafting. The
+     `open_questions` and `drift` in `explainer/plan.json` feed Step 1's why-gaps. When that
+     `artifact.md` has a URL, the body opens with the page's PR header and folds the regular
+     description under it (`skunexus-understand` `references/publish.md` "The PR header").
+     Declining changes nothing; never block on it.
 
 ### Step 1 — Understand the change
 
