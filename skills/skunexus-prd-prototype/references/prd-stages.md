@@ -75,7 +75,7 @@ Then check the top PO quotes against the source verbatim, and re-check any parap
 
 ## §6 Deviation check + panel
 
-**Goal:** surface edge cases, silent assumptions, contradictions and false code claims before anything is estimated. The panel flags; the developer decides. Pattern: `~/.claude/rules/multi-agent-perspective-review.md`.
+**Goal:** surface edge cases, silent assumptions, contradictions and false code claims before anything is estimated. The panel flags; the developer decides.
 
 1. **Freeze** `prd.md` as `review/prd-<VERSION>-<DATE>.md` (the header's version, v1 if none) and queue edits until the synthesis.
 2. **Deviation check** (when a baseline exists): classify every R, Non-Goal and baseline row into `review/deviations.md` (`review/baseline-BRIEF.md`, deviation checker). A deviation is a confirm-or-change item for the PO, not a defect.

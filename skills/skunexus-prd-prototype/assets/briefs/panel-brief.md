@@ -1,4 +1,4 @@
-<!-- Stage: PRD review panel (parallel-agents variant; for the Workflow-tool variant use assets/panel-workflow.js, only when the user opts into a workflow). Copy to .ai/<TICKET>/review/panel-BRIEF.md and fill it; the synthesis steps at the end are for the orchestrator. Pattern: ~/.claude/rules/multi-agent-perspective-review.md.
+<!-- Stage: PRD review panel (parallel-agents variant; for the Workflow-tool variant use assets/panel-workflow.js, only when the user opts into a workflow). Copy to .ai/<TICKET>/review/panel-BRIEF.md and fill it; the synthesis steps at the end are for the orchestrator.
      Extra placeholders: <FROZEN_PRD> (review/prd-<VERSION>-<DATE>.md; <VERSION> = the PRD header's version, v1 if none), <PERSONAS> (rows picked from the panel table), <CLAIMS> (named code claims for V1), <PROTOTYPE_QUESTIONS> (or "none"), <RELATED_SOURCES>, <REPO_SLUG> (the repo's ~/.claude/projects/ folder name). Standard placeholders: see SKILL.md. -->
 # <TICKET> PRD review panel brief
 
@@ -69,7 +69,7 @@ End with **Top 5** (finding ids) and **Confirmed OK** (what you checked and foun
    - source-truth: baseline, B0–B2, transcript, doc, Jira, and "is the PRD really saying this?";
    - code-truth: the repos and the research (code wins), file:line.
 
-   Each returns per cluster: refuted yes/no · confidence H/M/L · reason · evidence · corrected claim. Status: confirmed / contested / refuted / unverified. When stakes are high, use one skeptic per cluster: two batch skeptics confirmed 58 of 58 on FFD-14, which may mean they were lenient. Code skeptics run as `sn-scout`: a second model family checking Opus reviewers is the mixed-jury upgrade (`multi-agent-perspective-review.md`, "Upgrades"); the source skeptic runs as `sn-judge`. Compare the refuted and narrowed counts with the previous ticket's (FFD-35: 2 refuted and 13 narrowed of 44).
+   Each returns per cluster: refuted yes/no · confidence H/M/L · reason · evidence · corrected claim. Status: confirmed / contested / refuted / unverified. When stakes are high, use one skeptic per cluster: two batch skeptics confirmed 58 of 58 on FFD-14, which may mean they were lenient. Code skeptics run as `sn-scout`: a second model family checking Opus reviewers catches what copies of one model agree on wrongly; the source skeptic runs as `sn-judge`. Compare the refuted and narrowed counts with the previous ticket's (FFD-35: 2 refuted and 13 narrowed of 44).
 5. **Synthesizer** (`sn-writer`) writes `review/panel-synthesis.md` in this order:
    1. counts (raw findings → clusters → confirmed / contested / refuted / skipped) and the 5 decisions that change the most;
    2. `PD-1…PD-n`: panel decisions that change architecture or estimate, each with options, a recommendation, evidence and the R-ids affected;
